@@ -30,7 +30,7 @@ void ServerSocket::bind_socket()
 
 void ServerSocket::start_listen()
 {
-    if (listen(server_fd, 3) < 0)
+    if (listen(server_fd, BACKLOG) < 0)
     {
         std::cerr << "Listen failed" << std::endl;
         std::exit(EXIT_FAILURE);
