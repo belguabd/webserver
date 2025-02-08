@@ -1,26 +1,22 @@
 #pragma once
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
 #include <iostream>
-
-
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 #define BACKLOG 9
-class ServerSocket
-{
+class ServerSocket {
 private:
-    int server_fd;
-    int port;
-    struct sockaddr_in address;
+  int server_fd;
+  int port;
+  struct sockaddr_in address;
 
 public:
-    ServerSocket(int port);
-    void bind_socket();
-    void start_listen();
-    ~ServerSocket();
+  ServerSocket(int port);
+  void bind_socket();
+  void start_listen();
+  int getServer_fd() const { return this->server_fd; }
+  ~ServerSocket();
 };

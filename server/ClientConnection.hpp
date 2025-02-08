@@ -1,21 +1,21 @@
-#include <iostream>
 #include <cstring>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
 #include <fcntl.h>
+#include <iostream>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <vector>
 
-class ClientConnection
-{
+class ClientConnection {
 private:
-    int client_fd;
-    std::vector<char> readBuffer;
-    std::vector<char> writeBuffer;
+  int client_fd;
+  std::vector<char> readBuffer;
+  std::vector<char> writeBuffer;
 
 public:
-    ClientConnection(int client_fd);
-    void readData();
-    void writeData();
+  ClientConnection(int client_fd);
+  int readData();
+  int writeData();
+  int getfd() { return this->client_fd; }
 };
