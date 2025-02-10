@@ -53,7 +53,7 @@ void WebServer::handle_new_connection(int server_fd) {
     close(client_fd);
     return;
   }
-  connected_clients[client_fd] = new ClientConnection(client_fd);
+  connected_clients[client_fd] = new httpRequest(client_fd);
 }
 
 void WebServer::receive_from_client(int client_fd) {
@@ -62,9 +62,10 @@ void WebServer::receive_from_client(int client_fd) {
     return;
   }
 
-  ClientConnection *client = connected_clients[client_fd];
+  // ClientConnection *client = connected_clients[client_fd];
+  httpRequest client = *connected_clients[client_fd];
 
-  ssize_t bytes_read = client->readData();
+  ssize_t bytes_read = client.readData();
   if (bytes_read > 0) {
     struct kevent changes[1];
     EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
@@ -73,18 +74,16 @@ void WebServer::receive_from_client(int client_fd) {
       std::cerr << "Error setting write event: " << strerror(errno)
                 << std::endl;
       close(client_fd);
-      delete client;
       connected_clients.erase(client_fd);
       return;
     }
   } else {
-    delete client;
     connected_clients.erase(client_fd);
   }
 }
 
 void WebServer::respond_to_client(int client_fd) {
-  ClientConnection *client = connected_clients[client_fd];
+  httpRequest *client = connected_clients[client_fd];
   client->writeData();
   struct kevent changes[1];
   EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
@@ -94,7 +93,6 @@ void WebServer::respond_to_client(int client_fd) {
 
 void WebServer::run() {
 
-  while (true) {
     int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
     bool is_server_socket = false;
     for (size_t i = 0; i < nev; i++) {
@@ -114,5 +112,5 @@ void WebServer::run() {
         }
       }
     }
-  }
 }
+

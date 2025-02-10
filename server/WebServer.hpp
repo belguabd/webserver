@@ -9,14 +9,14 @@
 #include <map>
 #define MAX_EVENTS 1024
 #include "ServerSocket.hpp"
-#include "ClientConnection.hpp"
+#include "../request/httpRequest.hpp"
 
 class WebServer
 {
     private:
         int kqueue_fd;
         std::vector<ServerSocket> serverSockets;
-        std::map<int, ClientConnection *> connected_clients;
+        std::map<int, httpRequest *> connected_clients;
         struct kevent *events;
         int max_events;
         void initialize_kqueue();
