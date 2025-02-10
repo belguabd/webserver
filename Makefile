@@ -3,7 +3,7 @@ CPP = c++
 CPPFLAGS = #-Wall -Wextra -Werror -std=c++98
 RM = rm -f
 
-SRC = ./server/main.cpp ./server/ClientConnection.cpp ./server/ServerSocket.cpp  ./server/WebServer.cpp ./request/httpRequest.cpp
+SRC = main.cpp ./server/ServerSocket.cpp  ./server/WebServer.cpp ./request/httpRequest.cpp
 
 OBJ = $(SRC:.cpp=.o)
 all:$(NAME)
