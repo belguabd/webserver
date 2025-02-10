@@ -9,10 +9,10 @@ ClientConnection::ClientConnection(int client_fd) : client_fd(client_fd) {
 int ClientConnection::readData() {
   char buffer[4024];
   ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
-  if (bytes_received > 0)
-    readBuffer.insert(readBuffer.begin(), buffer, buffer + bytes_received);
-  for (size_t i = 0; i < readBuffer.size(); i++)
-    std::cout << readBuffer[i];
+  if (bytes_received > 0) {
+    buffer[bytes_received] = '\0';
+    readBuffer.append(buffer, bytes_received);
+  }
   if (bytes_received == 0)
     std::cout << "Client disconnected" << std::endl;
   return bytes_received;

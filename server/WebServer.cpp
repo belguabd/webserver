@@ -46,35 +46,13 @@ void WebServer::handle_new_connection(int server_fd) {
     return;
   }
   struct kevent changes[1];
-  EV_SET(&changes[0], client_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
-         NULL); // 2 indicates client socket
-
+  EV_SET(&changes[0], client_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
   if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
     std::cerr << "Error monitoring client socket: " << strerror(errno)
               << std::endl;
     close(client_fd);
     return;
   }
-  // struct kevent read_evt;
-  // EV_SET(&read_evt, client_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-  // if (kevent(kqueue_fd, &read_evt, 1, NULL, 0, NULL) == -1) {
-  //   std::cerr << "Error monitoring client socket for read: " <<
-  //   strerror(errno)
-  //             << std::endl;
-  //   close(client_fd);
-  //   return;
-  // }
-  // struct kevent write_evt;
-  // EV_SET(&write_evt, client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
-  // NULL); if (kevent(kqueue_fd, &write_evt, 1, NULL, 0, NULL) == -1) {
-  //   std::cerr << "Error monitoring client socket for write: " <<
-  //   strerror(errno)
-  //             << std::endl;
-  //   EV_SET(&read_evt, client_fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-  //   kevent(kqueue_fd, &read_evt, 1, NULL, 0, NULL);
-  //   close(client_fd);
-  //   return;
-  // }
   connected_clients[client_fd] = new ClientConnection(client_fd);
 }
 

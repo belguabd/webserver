@@ -10,7 +10,7 @@
 class ClientConnection {
 private:
   int client_fd;
-  std::vector<char> readBuffer;
+  std::string readBuffer;
   std::vector<char> writeBuffer;
 
 public:
