@@ -53,11 +53,11 @@ void WebServer::handle_new_connection(int server_fd) {
     close(client_fd);
     return;
   }
-  connected_clients[client_fd] = new ClientConnection(client_fd);
+  connected_clients[client_fd] = new httpRequest(client_fd);
 }
 
 void WebServer::receive_from_client(int client_fd) {
-  ClientConnection client = *connected_clients[client_fd];
+  httpRequest client = *connected_clients[client_fd];
 
   ssize_t bytes_read = client.readData();
   if (bytes_read <= 0) {
@@ -67,13 +67,12 @@ void WebServer::receive_from_client(int client_fd) {
 }
 
 void WebServer::respond_to_client(int client_fd) {
-  ClientConnection *client = connected_clients[client_fd];
+  httpRequest *client = connected_clients[client_fd];
   client->writeData();
 }
 
 void WebServer::run() {
 
-  while (true) {
     int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
     bool is_server_socket = false;
     for (size_t i = 0; i < nev; i++) {
@@ -93,5 +92,5 @@ void WebServer::run() {
         }
       }
     }
-  }
 }
+
