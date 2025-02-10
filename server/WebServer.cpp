@@ -57,11 +57,28 @@ void WebServer::handle_new_connection(int server_fd) {
 }
 
 void WebServer::receive_from_client(int client_fd) {
-  ClientConnection client = *connected_clients[client_fd];
+  if (connected_clients.find(client_fd) == connected_clients.end()) {
+    std::cerr << "Client FD not found: " << client_fd << std::endl;
+    return;
+  }
 
-  ssize_t bytes_read = client.readData();
-  if (bytes_read <= 0) {
-    delete connected_clients[client_fd];
+  ClientConnection *client = connected_clients[client_fd];
+
+  ssize_t bytes_read = client->readData();
+  if (bytes_read > 0) {
+    struct kevent changes[1];
+    EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
+           NULL);
+    if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+      std::cerr << "Error setting write event: " << strerror(errno)
+                << std::endl;
+      close(client_fd);
+      delete client;
+      connected_clients.erase(client_fd);
+      return;
+    }
+  } else {
+    delete client;
     connected_clients.erase(client_fd);
   }
 }
@@ -69,6 +86,10 @@ void WebServer::receive_from_client(int client_fd) {
 void WebServer::respond_to_client(int client_fd) {
   ClientConnection *client = connected_clients[client_fd];
   client->writeData();
+  struct kevent changes[1];
+  EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+  kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+  close(client_fd);
 }
 
 void WebServer::run() {

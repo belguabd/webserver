@@ -12,8 +12,9 @@ int ClientConnection::readData() {
   if (bytes_received > 0) {
     buffer[bytes_received] = '\0';
     readBuffer.append(buffer, bytes_received);
-  }
-  std::cout << readBuffer << "\n";
+
+  }  
+  std::cout << "Received: " << readBuffer << std::endl;
   if (bytes_received == 0)
     std::cout << "Client disconnected" << std::endl;
   return bytes_received;
