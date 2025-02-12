@@ -3,21 +3,21 @@
 /*                                                        :::      ::::::::   */
 /*   httpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
+/*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/10 17:49:59 by ataoufik         ###   ########.fr       */
+/*   Updated: 2025/02/12 15:42:15 by emagueri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "httpRequest.hpp"
+#include "HttpRequest.hpp"
 #include <cstdio>
-httpRequest::httpRequest(int client_fd) : client_fd(client_fd) {
+HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) {
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 }
 
-int httpRequest::readData() {
+int HttpRequest::readData() {
   char buffer[4024];
   ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
@@ -41,7 +41,7 @@ int httpRequest::readData() {
   return bytes_received;
 }
 
-int httpRequest::writeData() {
+int HttpRequest::writeData() {
     int bytes_send = 0;
 //   const char *msg = "Hi I am server";
 //   ssize_t bytes_send = send(client_fd, msg, strlen(msg), 0);
@@ -49,8 +49,8 @@ int httpRequest::writeData() {
 //     std::cerr << "Error sending message to client" << std::endl;
   return bytes_send;
 }
-httpRequest::~httpRequest() {}
-int httpRequest::defineTypeMethod(const string firstline) {
+HttpRequest::~HttpRequest() {}
+int HttpRequest::defineTypeMethod(const string firstline) {
   vector<string> words;
   size_t start;
   size_t i = 0, j;
@@ -99,7 +99,7 @@ vector<string> splitstring(const string &str) {
   }
   return (words);
 }
-string httpRequest ::checkHeaders(const string &str) {
+string HttpRequest ::checkHeaders(const string &str) {
   // if (str.length() == 0)
   //     this->sig++;
   // if (this->sig >1)
@@ -127,7 +127,7 @@ string httpRequest ::checkHeaders(const string &str) {
   return result;
 }
 
-// string httpRequest :: joinbuffer(string line)
+// string HttpRequest :: joinbuffer(string line)
 // {
 //     line +=this->buffer;
 //     this->buffer.clear();

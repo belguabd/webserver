@@ -1,9 +1,9 @@
-NAME = httpserver
+NAME = webserver
 CPP = c++ -fsanitize=address -g
 CPPFLAGS = #-Wall -Wextra -Werror -std=c++98
 RM = rm -f
 
-SRC = main.cpp ./server/ServerSocket.cpp  ./server/WebServer.cpp ./request/httpRequest.cpp 
+SRC = main.cpp ./server/ServerSocket.cpp  ./server/WebServer.cpp ./request/HttpRequest.cpp 
 
 OBJ = $(SRC:.cpp=.o)
 all:$(NAME)

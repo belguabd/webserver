@@ -57,14 +57,14 @@ void WebServer::handle_new_connection(int server_fd) {
     close(client_fd);
     return;
   }
-  connected_clients.push_back(new httpRequest(client_fd));
-  // connected_clients[client_fd] = new httpRequest(client_fd);
+  connected_clients.push_back(new HttpRequest(client_fd));
+  // connected_clients[client_fd] = new HttpRequest(client_fd);
 }
 
 void WebServer::receive_from_client(int client_fd) {
-  httpRequest *client;
+  HttpRequest *client;
 
-  std::vector<httpRequest *>::iterator it;
+  std::vector<HttpRequest *>::iterator it;
   for (it = connected_clients.begin(); it != connected_clients.end(); ++it) {
     if ((*it)->getfd() == client_fd) {
       client = *it;
@@ -91,7 +91,7 @@ void WebServer::receive_from_client(int client_fd) {
 }
 
 void WebServer::respond_to_client(int client_fd) {
-  httpRequest *client = connected_clients[client_fd];
+  HttpRequest *client = connected_clients[client_fd];
   client->writeData();
   struct kevent changes[1];
   EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);

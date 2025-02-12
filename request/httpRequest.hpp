@@ -9,10 +9,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-// class httpRequest;
+// class HttpRequest;
 
 using namespace std;
-class httpRequest
+class HttpRequest
 {
     private:
         string _path;
@@ -24,8 +24,8 @@ class httpRequest
     public:
         int client_fd;
         std::string readBuffer;
-        httpRequest(int client_fd);
-        ~httpRequest();
+        HttpRequest(int client_fd);
+        ~HttpRequest();
         int readData();
         int writeData();
         int getfd() { return this->client_fd; }
@@ -33,7 +33,7 @@ class httpRequest
         int defineTypeMethod(const string firstline);
         string checkHeaders(const string& str);
         void validRequestHeaders();
-        void setclient(httpRequest d);
+        void setclient(HttpRequest d);
         void display()
         {   
             std::cout << "Client fd: " << this->client_fd << std::endl;
