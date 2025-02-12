@@ -22,6 +22,10 @@ class WebServer
         void initialize_kqueue();
     public:
         WebServer();
+        std::map<int, httpRequest *> &getClients()
+        {
+            return connected_clients;
+        }
         void addServerSocket(int port);
         void handle_new_connection(int server_fd);
         void receive_from_client(int client_fd);
