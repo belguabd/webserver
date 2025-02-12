@@ -1,5 +1,6 @@
 
 #include "WebServer.hpp"
+#include <iostream>
 #include <sys/_types/_ssize_t.h>
 #include <sys/event.h>
 
@@ -65,6 +66,7 @@ void WebServer::receive_from_client(int client_fd) {
   httpRequest client = *connected_clients[client_fd];
 
   ssize_t bytes_read = client.readData();
+  connected_clients[client_fd] = &client;
   if (bytes_read > 0) {
     struct kevent changes[1];
     EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
@@ -92,24 +94,23 @@ void WebServer::respond_to_client(int client_fd) {
 
 void WebServer::run() {
 
-    int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
-    bool is_server_socket = false;
-    for (size_t i = 0; i < nev; i++) {
-      int event_fd = events[i].ident;
-      int filter = events[i].filter;
-      for (size_t i = 0; i < serverSockets.size(); i++) {
-        if (serverSockets[i].getServer_fd() == event_fd)
-          is_server_socket = true;
-      }
-      if (is_server_socket)
-        handle_new_connection(event_fd);
-      else {
-        if (filter == EVFILT_READ)
-          receive_from_client(event_fd);
-        else if (filter == EVFILT_WRITE) {
-          respond_to_client(event_fd);
-        }
+  int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
+  bool is_server_socket = false;
+  for (size_t i = 0; i < nev; i++) {
+    int event_fd = events[i].ident;
+    int filter = events[i].filter;
+    for (size_t i = 0; i < serverSockets.size(); i++) {
+      if (serverSockets[i].getServer_fd() == event_fd)
+        is_server_socket = true;
+    }
+    if (is_server_socket)
+      handle_new_connection(event_fd);
+    else {
+      if (filter == EVFILT_READ)
+        receive_from_client(event_fd);
+      else if (filter == EVFILT_WRITE) {
+        respond_to_client(event_fd);
       }
     }
+  }
 }
-

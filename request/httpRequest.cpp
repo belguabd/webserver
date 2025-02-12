@@ -17,14 +17,16 @@ httpRequest::httpRequest(int client_fd) : client_fd(client_fd) {
 }
 
 int httpRequest::readData() {
+  puts("readData");
   char buffer[4024];
   ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
   if (bytes_received > 0) {
     buffer[bytes_received] = '\0';
     readBuffer.append(buffer, bytes_received);
-    std::cout << "Received data from client " << client_fd << ": " << readBuffer
-              << "\n";
+    // std::cout << "Received data from client " << client_fd << ": " <<
+    // readBuffer
+    //           << "\n";
   } else if (bytes_received == 0) {
     std::cout << "Client " << client_fd << " disconnected\n";
     return -1;

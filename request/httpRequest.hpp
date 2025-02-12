@@ -17,13 +17,13 @@ class httpRequest
     private:
         int client_fd;
         string _path;
-        std::string readBuffer;
         std::vector<char> writeBuffer;
         //int method;
         // class methodPost obj; hassn
         // class methodDELETE obj; hassn
         string buffer;
     public:
+        std::string readBuffer;
         httpRequest(int client_fd);
         ~httpRequest();
         int readData();
@@ -34,5 +34,10 @@ class httpRequest
         string checkHeaders(const string& str);
         void validRequestHeaders();
         void setclient(httpRequest d);
+        void display()
+        {
+            std::cout << "Client fd: " << this->client_fd << std::endl;
+            std::cout << "buffer: " << this->buffer << std::endl;
+        }
 };
 vector<string> splitstring(const string &str);
