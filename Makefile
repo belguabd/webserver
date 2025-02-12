@@ -10,7 +10,7 @@ all:$(NAME)
 $(NAME):$(OBJ)
 	$(CPP) $(CPPFLAGS) -o $(NAME) $(OBJ) 
 
-%.o:%.cpp server.hpp 
+%.o:%.cpp ./server/ServerSocket.hpp  ./server/WebServer.hpp ./request/HttpRequest.hpp 
 	$(CPP) $(CPPFLAGS) -c $< -o $@ 
 
 clean:

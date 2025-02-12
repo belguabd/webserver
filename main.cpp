@@ -4,15 +4,12 @@
 
 int main()
 {
+    // std::string str = "hello";
+
+    // std::cout << str.substr(0) << "\n";
     WebServer server;
-    while(true)
+    while (true)
     {
         server.run();
-        // server.displayAllClients();
-        for (HttpRequest *client : server.connected_clients)
-        {
-            client->display();
-        }
     }
-    
 }

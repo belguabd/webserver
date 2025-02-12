@@ -30,10 +30,10 @@ public:
   void receive_from_client(int client_fd);
   void respond_to_client(int client_fd);
 
-  void displayAllClients() {
-    for (HttpRequest *client : connected_clients) {
-        client->display();
-    }
-  }
+  // void displayAllClients() {
+  //   for (HttpRequest *client : connected_clients) {
+  //       client->display();
+  //   }
+  // }
   void run();
 };

@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+
+
 void WebServer::initialize_kqueue() {
   kqueue_fd = kqueue();
   if (kqueue_fd < 0) {
@@ -85,6 +87,7 @@ void WebServer::receive_from_client(int client_fd) {
       // connected_clients.erase(client_fd);
       return;
     }
+    
   } else {
     // connected_clients.erase(client_fd);
   }

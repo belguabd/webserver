@@ -3,41 +3,53 @@
 /*                                                        :::      ::::::::   */
 /*   httpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/12 15:51:42 by emagueri         ###   ########.fr       */
+/*   Updated: 2025/02/12 19:35:49 by ataoufik         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
-#include <cstdio>
+
+void    handleRequest(HttpRequest request)
+{
+    string str_parse;
+    request.joinbuffer();
+    std::cout << request.get_line(str_parse);
+    std::cout << "buffer: " << request.getbuffer() << "\n";
+    exit(0);
+}
+
 HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) {
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 }
 
-int HttpRequest::readData() {
+
+int HttpRequest::readData()
+{
   char buffer[4024];
-  ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-
-  if (bytes_received > 0) {
-    buffer[bytes_received] = '\0'; // Null-terminate received data
-
-    // Store received data correctly
-    readBuffer.append(buffer, bytes_received);
-
-    // std::cout << "Received data from client " << client_fd << ": " << readBuffer
-    //           << "\n";
-  } else if (bytes_received == 0) {
-    std::cout << "Client " << client_fd << " disconnected\n";
-    return -1;
-  } else {
-    std::cerr << "Error receiving data from client " << client_fd << ": "
-              << strerror(errno) << "\n";
-    return -1;
+  ssize_t bytes_received;
+  while((bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0)) > 0)
+  {
+    if (bytes_received > 0)
+    {
+      buffer[bytes_received] = '\0';
+      readBuffer.append(buffer, bytes_received);
+      handleRequest(*this);
+    }
+    else if (bytes_received == 0)
+    {
+      std::cout << "Client " << client_fd << " disconnected\n";
+      return -1;
+    }
+    else
+    {
+      std::cerr << "Error receiving data from client " << client_fd << ": " << strerror(errno) << "\n";
+      return -1;
+    }
   }
-
   return bytes_received;
 }
 
@@ -69,7 +81,6 @@ int HttpRequest::defineTypeMethod(const string firstline) {
         exit(1);
       }
     }
-
     words.push_back(firstline.substr(start, i - start));
     i++;
   }
@@ -127,18 +138,24 @@ string HttpRequest ::checkHeaders(const string &str) {
   return result;
 }
 
-// string HttpRequest :: joinbuffer(string line)
-// {
-//     line +=this->buffer;
-//     this->buffer.clear();
+string HttpRequest :: get_line(string line)
+{
+    line +=this->buffer;
+    string str;
+    this->buffer.clear();
+    size_t pos = line.find("\r\n");
+    if (pos != string::npos)
+        str = line.substr(0,pos + 2);
+    else{
+        this->buffer = line;
+        return "";
+    }
+    this->buffer = line.substr(pos + 2); 
+    return (str);
+}
 
-//     size_t pos = line.find('\r');
-//     if (pos != string::npos)
-//         line = line.substr(0,pos +1);
-//     else{
-//         this->buffer = line.substr(pos +1);
-//         return "";
-//     }
-//     this->buffer = line.substr(pos +1);
-//     return (line);
-// }
+void HttpRequest :: joinbuffer()
+{
+    this->buffer += this->readBuffer;
+    this->readBuffer.clear();
+}
