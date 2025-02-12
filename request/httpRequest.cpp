@@ -6,12 +6,12 @@
 /*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/10 17:49:59 by ataoufik         ###   ########.fr       */
+/*   Updated: 2025/02/12 12:25:12 by ataoufik         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include"httpRequest.hpp"
-httpRequest::httpRequest(int client_fd) : client_fd(client_fd) {
+httpRequest::httpRequest(int client_fd) : client_fd(client_fd) ,flags(0) {
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 }
@@ -36,10 +36,10 @@ int httpRequest::writeData() {
     std::cerr << "Error sending message to client" << std::endl;
   return bytes_send;
 }
-httpRequest::~httpRequest()
-{
+httpRequest::~httpRequest() {
 
 }
+
 int httpRequest:: defineTypeMethod(const string firstline)
 {
     vector<string> words;
@@ -100,6 +100,7 @@ vector<string> splitstring(const string &str)
     }
     return (words);
 }
+
 string httpRequest :: checkHeaders(const string& str)
 {
     // if (str.length() == 0)
@@ -128,18 +129,26 @@ string httpRequest :: checkHeaders(const string& str)
     return result;
 }
 
-// string httpRequest :: joinbuffer(string line)
-// {
-//     line +=this->buffer;
-//     this->buffer.clear();
+string httpRequest :: get_line(string line)
+{
+    line +=this->buffer;
+    string str;
+    this->buffer.clear();
+    size_t pos = line.find('\r');
+    if (pos != string::npos)
+        str = line.substr(0,pos +1);
+    else{
+        this->buffer = line.substr(pos +1); 
+        return "";
+    }
+    this->buffer = line.substr(pos +1); 
+    return (str);
+}
 
-//     size_t pos = line.find('\r');
-//     if (pos != string::npos)
-//         line = line.substr(0,pos +1);
-//     else{
-//         this->buffer = line.substr(pos +1); 
-//         return "";
-//     }
-//     this->buffer = line.substr(pos +1); 
-//     return (line);
-// }
+void httpRequest :: joinbuffer()
+{
+    this->buffer += this->readBuffer;
+    std::cout<<"------ > "<< this->readBuffer <<std::endl;
+    this->readBuffer.clear();
+}
+

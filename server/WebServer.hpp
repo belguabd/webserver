@@ -27,5 +27,7 @@ class WebServer
         void receive_from_client(int client_fd);
         void respond_to_client(int client_fd);
         void run();
-        
+        const std::map<int, httpRequest *>& getConnectedClients() const {
+        return connected_clients;
+    }
 };

@@ -16,6 +16,7 @@ class httpRequest
 {
     private:
         int client_fd;
+        bool flags;
         string _path;
         std::string readBuffer;
         std::vector<char> writeBuffer;
@@ -30,6 +31,8 @@ class httpRequest
         int writeData();
         int getfd() { return this->client_fd; }
         // string joinbuffer(string line);
+       string get_line(string line);
+        void joinbuffer();
         int defineTypeMethod(const string firstline);
         string checkHeaders(const string& str);
         void validRequestHeaders();
