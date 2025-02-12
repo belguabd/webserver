@@ -15,7 +15,6 @@ using namespace std;
 class httpRequest
 {
     private:
-        int client_fd;
         string _path;
         std::vector<char> writeBuffer;
         //int method;
@@ -23,6 +22,7 @@ class httpRequest
         // class methodDELETE obj; hassn
         string buffer;
     public:
+        int client_fd;
         std::string readBuffer;
         httpRequest(int client_fd);
         ~httpRequest();
@@ -35,9 +35,9 @@ class httpRequest
         void validRequestHeaders();
         void setclient(httpRequest d);
         void display()
-        {
+        {   
             std::cout << "Client fd: " << this->client_fd << std::endl;
-            std::cout << "buffer: " << this->buffer << std::endl;
+            std::cout << "buffer: " << this->readBuffer << std::endl;
         }
 };
 vector<string> splitstring(const string &str);
