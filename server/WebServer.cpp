@@ -62,7 +62,6 @@ void WebServer::receive_from_client(int client_fd) {
     return;
   }
 
-  // ClientConnection *client = connected_clients[client_fd];
   httpRequest client = *connected_clients[client_fd];
 
   ssize_t bytes_read = client.readData();
