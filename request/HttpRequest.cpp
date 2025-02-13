@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   httpRequest.cpp                                    :+:      :+:    :+:   */
+/*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
+/*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/12 19:35:49 by ataoufik         ###   ########.fr       */
+/*   Updated: 2025/02/13 08:49:02 by emagueri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@ void    handleRequest(HttpRequest request)
     request.joinbuffer();
     std::cout << request.get_line(str_parse);
     std::cout << "buffer: " << request.getbuffer() << "\n";
-    exit(0);
 }
 
 HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) {
