@@ -6,13 +6,13 @@
 /*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/13 08:49:02 by emagueri         ###   ########.fr       */
+/*   Updated: 2025/02/13 14:27:37 by emagueri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
 
-void    handleRequest(HttpRequest request)
+void    handleRequest(HttpRequest &request)
 {
     string str_parse;
     request.joinbuffer();
@@ -86,7 +86,10 @@ int HttpRequest::defineTypeMethod(const string firstline) {
   if (words[0] == "GET")
     return 1;
   else if (words[0] == "POST")
+  {
+    // Post obj = Post(map); // here you will create an object of Post class
     return 2;
+  }
   else if (words[0] == "DELETE")
     return 3;
   cout << "Bad Request" << endl;
@@ -137,9 +140,9 @@ string HttpRequest ::checkHeaders(const string &str) {
   return result;
 }
 
-string HttpRequest :: get_line(string line)
+string HttpRequest :: get_line(string &line)
 {
-    line +=this->buffer;
+    line += this->buffer;
     string str;
     this->buffer.clear();
     size_t pos = line.find("\r\n");

@@ -1,5 +1,11 @@
 #pragma once
-#include <httprequest.hpp>
+#include "HttpRequest.hpp"
+#include <map>
+#include <cstdlib>
+#include <fstream>
+#include <sys/stat.h> 
+
+
 
 enum Body
 {
@@ -7,24 +13,22 @@ enum Body
     chunked,
     contentLength,
     boundaryChunked
-}
+};
 
 class Post
 {
 private:
-    Body body_type;
+    Body bodyType;
+    map <string, string> &headers;
+    string &bufferBody;
+    string remainingBuffer;
+    int handleChunked();
 public:
-
-    // Post(map <key, value> headers);
-    Post(/* args */);
+    int status;
+    void setBodyType();
+    Body getBodyType() { return bodyType; }
+    Post(map <string, string> &headers, string &bufferBody);
+    int proseRequest();
     ~Post();
 };
 
-Post::Post(/* args */)
-{
-    
-}
-
-Post::~Post()
-{
-}

@@ -1,23 +1,71 @@
-POST / HTTP/1.1
-Transfer-Encoding: chunked
+GET / HTTP/1.1
 Content-Type: multipart/form-data; boundary=--------------------------133190859058213102145445
+Transfer-Encoding: chunked
 User-Agent: PostmanRuntime/7.33.0
 Accept: */*
-Postman-Token: 58a581d9-2657-449d-ab37-a974e63a21f8
+Postman-Token: ff411f81-91ec-40e7-a346-a396d9384089
 Host: localhost:8080
 Accept-Encoding: gzip, deflate, br
 Connection: keep-alive
-Content-Length: 230
+Content-Length: 684
 
-e6
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="field1"
+92
+----------------------------133190859058213102145445
+Content-Disposition: form-data; name="file"; filename="main.cpp"
+Content-Type: text/x-c
 
-value1
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="field2"
 
-value2
-------WebKitFormBoundary7MA4YWxkTrZu0gW--
+1e0
+#include "./server/WebServer.hpp"
+#include "./request/httpRequest.hpp"
+#include <system_error>
+
+int main()
+{
+    WebServer server;
+    while(true)
+    {
+        server.run();
+        server.displayAllClients();
+        // std::map<int, httpRequest *> &map = server.getClients();
+        // for (std::map<int, httpRequest *>::iterator it = map.begin(); it != map.end(); ++it)
+        // {
+        //     std::cout << "->>>key: " << it->first << std::endl;
+        // }
+    }
+    
+}
+3a
+
+92
+----------------------------133190859058213102145445
+Content-Disposition: form-data; name="file"; filename="main2.cpp"
+Content-Type: text/x-c
+
+
+1e0
+#include "./server/WebServer.hpp"
+#include "./request/httpRequest.hpp"
+#include <system_error>
+
+int main()
+{
+    WebServer server;
+    while(true)
+    {
+        server.run();
+        server.displayAllClients();
+        // std::map<int, httpRequest *> &map = server.getClients();
+        // for (std::map<int, httpRequest *>::iterator it = map.begin(); it != map.end(); ++it)
+        // {
+        //     std::cout << "->>>key: " << it->first << std::endl;
+        // }
+    }
+    
+}
+3a
+
+----------------------------133190859058213102145445--
 
 0
+
