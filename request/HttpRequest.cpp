@@ -1,23 +1,30 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   httpRequest.cpp                                    :+:      :+:    :+:   */
+/*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
+/*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/10 17:49:59 by ataoufik         ###   ########.fr       */
+/*   Updated: 2025/02/13 08:49:02 by emagueri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "httpRequest.hpp"
-#include <cstdio>
-httpRequest::httpRequest(int client_fd) : client_fd(client_fd) {
+#include "HttpRequest.hpp"
+
+void handleRequest(HttpRequest request) {
+  string str_parse;
+  request.joinbuffer();
+  std::cout << request.get_line(str_parse);
+  std::cout << "buffer: " << request.getbuffer() << "\n";
+}
+
+HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) {
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 }
 
-int httpRequest::readData() {
+int HttpRequest::readData() {
   char buffer[40];
   ssize_t bytes_received;
   while ((bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0)) >
@@ -26,7 +33,7 @@ int httpRequest::readData() {
       buffer[bytes_received] = '\0'; // Null-terminate received data
 
       // Store received data correctly
-      readBuffer.append(buffer, bytes_received);
+      readBuffer = buffer;
       // std::cout << "Received data from client " << client_fd << ": "
       //           << readBuffer << "\n";
     } else if (bytes_received == 0) {
@@ -41,7 +48,7 @@ int httpRequest::readData() {
   return bytes_received;
 }
 
-int httpRequest::writeData() {
+int HttpRequest::writeData() {
   int bytes_send = 0;
   //   const char *msg = "Hi I am server";
   //   ssize_t bytes_send = send(client_fd, msg, strlen(msg), 0);
@@ -49,8 +56,8 @@ int httpRequest::writeData() {
   //     std::cerr << "Error sending message to client" << std::endl;
   return bytes_send;
 }
-httpRequest::~httpRequest() {}
-int httpRequest::defineTypeMethod(const string firstline) {
+HttpRequest::~HttpRequest() {}
+int HttpRequest::defineTypeMethod(const string firstline) {
   vector<string> words;
   size_t start;
   size_t i = 0, j;
@@ -69,7 +76,6 @@ int httpRequest::defineTypeMethod(const string firstline) {
         exit(1);
       }
     }
-
     words.push_back(firstline.substr(start, i - start));
     i++;
   }
@@ -99,7 +105,7 @@ vector<string> splitstring(const string &str) {
   }
   return (words);
 }
-string httpRequest ::checkHeaders(const string &str) {
+string HttpRequest ::checkHeaders(const string &str) {
   // if (str.length() == 0)
   //     this->sig++;
   // if (this->sig >1)
@@ -127,18 +133,22 @@ string httpRequest ::checkHeaders(const string &str) {
   return result;
 }
 
-// string httpRequest :: joinbuffer(string line)
-// {
-//     line +=this->buffer;
-//     this->buffer.clear();
+string HttpRequest ::get_line(string line) {
+  line += this->buffer;
+  string str;
+  this->buffer.clear();
+  size_t pos = line.find("\r\n");
+  if (pos != string::npos)
+    str = line.substr(0, pos + 2);
+  else {
+    this->buffer = line;
+    return "";
+  }
+  this->buffer = line.substr(pos + 2);
+  return (str);
+}
 
-//     size_t pos = line.find('\r');
-//     if (pos != string::npos)
-//         line = line.substr(0,pos +1);
-//     else{
-//         this->buffer = line.substr(pos +1);
-//         return "";
-//     }
-//     this->buffer = line.substr(pos +1);
-//     return (line);
-// }
+void HttpRequest ::joinbuffer() {
+  this->buffer += this->readBuffer;
+  this->readBuffer.clear();
+}

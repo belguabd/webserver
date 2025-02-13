@@ -1,11 +1,14 @@
 #include "./server/WebServer.hpp"
-#include "./request/httpRequest.hpp"
+#include "./request/HttpRequest.hpp"
 #include <system_error>
 
 int main()
 {
+    // std::string str = "hello";
+
+    // std::cout << str.substr(0) << "\n";
     WebServer server;
-    while(true)
+    while (true)
     {
         server.run();
         
@@ -17,5 +20,4 @@ int main()
         //     std::cout << "->>>key: " << it->first << std::endl;
         // }
     }
-    
 }
