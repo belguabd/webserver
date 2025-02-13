@@ -1,43 +1,70 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   httpRequest.cpp                                    :+:      :+:    :+:   */
+/*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/12 19:35:49 by ataoufik         ###   ########.fr       */
+/*   Updated: 2025/02/13 19:18:18 by ataoufik         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
-
-void    handleRequest(HttpRequest request)
+void    handleRequest(HttpRequest &request)
 {
     string str_parse;
-    request.joinbuffer();
-    std::cout << request.get_line(str_parse);
-    std::cout << "buffer: " << request.getbuffer() << "\n";
-    exit(0);
+    // if (this->flaaaa = 1)
+    // {
+    //   request._post.fun(readBuffer);
+    //   // fun(request._post,readBuffer);
+    // }
+    request.joinBuffer();
+    str_parse = request.partRquest();
+    if (request.getFirstTimeFlag() == 0)
+    {
+        request.setFirstTimeFlag(1);
+        int f = request.defineTypeMethod(str_parse);
+        if (f == 1)
+          std::cout<< "Method --->> GET  <---"<<std::endl;
+        if (f == 2)
+          std::cout<< "Method --->> POST  <---"<<std::endl;
+        if (f == 3)
+          std::cout<< "Method --->> DELETE  <---"<<std::endl;
+        size_t pos = str_parse.find("\r\n");
+        str_parse = str_parse.substr(pos + 2);
+        cout <<str_parse<<endl;
+        exit(0);
+    }
+    // MethodRequest()
+    request.parsePartRequest(str_parse);
+    
+    
+    // // std::cout << "--->" << str_parse << "\n";
+    // str_parse.clear();
+    // exit(0);
 }
 
-HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) {
+HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) ,firsttime(0) {
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+  
 }
 
 
 int HttpRequest::readData()
 {
-  char buffer[4024];
+  char buffer[40];
   ssize_t bytes_received;
+  
   while((bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0)) > 0)
   {
     if (bytes_received > 0)
     {
       buffer[bytes_received] = '\0';
-      readBuffer.append(buffer, bytes_received);
+      readBuffer = buffer;
       handleRequest(*this);
+      
     }
     else if (bytes_received == 0)
     {
@@ -138,24 +165,35 @@ string HttpRequest ::checkHeaders(const string &str) {
   return result;
 }
 
-string HttpRequest :: get_line(string line)
+string HttpRequest :: partRquest()
 {
-    line +=this->buffer;
-    string str;
-    this->buffer.clear();
-    size_t pos = line.find("\r\n");
-    if (pos != string::npos)
-        str = line.substr(0,pos + 2);
-    else{
-        this->buffer = line;
-        return "";
+  string line;
+  string str;
+  line += this->_buffer;
+  this->_buffer.clear();
+  size_t pos = line.rfind("\r\n");
+  if (pos != string::npos) {
+    str = line.substr(0,pos + 2);
+    this->_buffer = line.substr(pos + 2);
+  }
+  else {
+      this->_buffer = line;
+      return "";
     }
-    this->buffer = line.substr(pos + 2); 
     return (str);
 }
 
-void HttpRequest :: joinbuffer()
+void HttpRequest :: joinBuffer()
 {
-    this->buffer += this->readBuffer;
+    this->_buffer += this->readBuffer;
     this->readBuffer.clear();
 }
+
+void HttpRequest :: parsePartRequest(string str_parse)
+{
+  cout<<" -      ->  "<<str_parse <<endl;
+  
+}
+// GET / HTTP/1.1"\r\n"
+// Host: localhost:8080"\r\n"
+// U ser-Agent'\0'
