@@ -8,7 +8,9 @@ int main()
     while(true)
     {
         server.run();
-        server.displayAllClients();
+        
+        // server.displayAllClients();
+        
         // std::map<int, httpRequest *> &map = server.getClients();
         // for (std::map<int, httpRequest *>::iterator it = map.begin(); it != map.end(); ++it)
         // {

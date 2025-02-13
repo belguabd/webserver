@@ -18,35 +18,35 @@ httpRequest::httpRequest(int client_fd) : client_fd(client_fd) {
 }
 
 int httpRequest::readData() {
-  char buffer[4024];
-  ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+  char buffer[40];
+  ssize_t bytes_received;
+  while ((bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0)) >
+         0) {
+    if (bytes_received > 0) {
+      buffer[bytes_received] = '\0'; // Null-terminate received data
 
-  if (bytes_received > 0) {
-    buffer[bytes_received] = '\0'; // Null-terminate received data
-
-    // Store received data correctly
-    readBuffer.append(buffer, bytes_received);
-
-    // std::cout << "Received data from client " << client_fd << ": " << readBuffer
-    //           << "\n";
-  } else if (bytes_received == 0) {
-    std::cout << "Client " << client_fd << " disconnected\n";
-    return -1;
-  } else {
-    std::cerr << "Error receiving data from client " << client_fd << ": "
-              << strerror(errno) << "\n";
-    return -1;
+      // Store received data correctly
+      readBuffer.append(buffer, bytes_received);
+      // std::cout << "Received data from client " << client_fd << ": "
+      //           << readBuffer << "\n";
+    } else if (bytes_received == 0) {
+      std::cout << "Client " << client_fd << " disconnected\n";
+      return -1;
+    } else {
+      std::cerr << "Error receiving data from client " << client_fd << ": "
+                << strerror(errno) << "\n";
+      return -1;
+    }
   }
-
   return bytes_received;
 }
 
 int httpRequest::writeData() {
-    int bytes_send = 0;
-//   const char *msg = "Hi I am server";
-//   ssize_t bytes_send = send(client_fd, msg, strlen(msg), 0);
-//   if (bytes_send == -1)
-//     std::cerr << "Error sending message to client" << std::endl;
+  int bytes_send = 0;
+  //   const char *msg = "Hi I am server";
+  //   ssize_t bytes_send = send(client_fd, msg, strlen(msg), 0);
+  //   if (bytes_send == -1)
+  //     std::cerr << "Error sending message to client" << std::endl;
   return bytes_send;
 }
 httpRequest::~httpRequest() {}

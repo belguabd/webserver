@@ -85,6 +85,9 @@ void WebServer::receive_from_client(int client_fd) {
       // connected_clients.erase(client_fd);
       return;
     }
+    // handle_request(client);
+    std::cout << "Request: " << client->readBuffer << std::endl;
+
   } else {
     // connected_clients.erase(client_fd);
   }
@@ -98,8 +101,6 @@ void WebServer::respond_to_client(int client_fd) {
   kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
   close(client_fd);
 }
-
-
 
 void WebServer::run() {
 
@@ -116,8 +117,9 @@ void WebServer::run() {
       handle_new_connection(event_fd);
     else {
       if (filter == EVFILT_READ) {
-        puts("Reading from client");
+        puts("Receiving from client");
         receive_from_client(event_fd);
+
       } else if (filter == EVFILT_WRITE) {
         puts("Responding to client");
         respond_to_client(event_fd);
