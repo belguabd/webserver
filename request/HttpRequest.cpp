@@ -6,7 +6,7 @@
 /*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/14 12:28:15 by ataoufik         ###   ########.fr       */
+/*   Updated: 2025/02/14 18:12:13 by ataoufik         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,21 +41,15 @@ void    handleRequest(HttpRequest &request)
         // cout <<str_parse<<endl;
         // exit(0);
     }
-      request.parsePartRequest(str_parse);
-    
-    // cout <<str_parse<<endl;
-    // MethodRequest()
+    request.parsePartRequest(str_parse);
+      
     if (request.getbuffer().empty())
     {
       for (auto it = request.mapheaders.begin(); it != request.mapheaders.end(); ++it) {
         std::cout << "key =  " << it->first << "-->  "<< "value = " << it->second << std::endl;
       }
-
     }
-    // // std::cout << "--->" << str_parse << "\n";
-    // str_parse.clear();
-    // exit(0);
-}
+    }
 
 HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) ,firsttime(0) {
   int flags = fcntl(client_fd, F_GETFL, 0);
