@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <map>
 // class HttpRequest;
 
 using namespace std;
@@ -27,6 +28,7 @@ class HttpRequest
         // class methodDELETE obj; hassn
         string _buffer; 
     public:
+        map<string, string> mapheaders;
         HttpRequest(int client_fd);
         ~HttpRequest();
         int readData();
@@ -35,7 +37,6 @@ class HttpRequest
         void  joinBuffer();
         string partRquest();
         int defineTypeMethod(const string firstline);
-        string checkHeaders(const string& str);
 
         void parsePartRequest(string str_parse);
         int getFirstTimeFlag() const {
@@ -57,3 +58,4 @@ class HttpRequest
         }
 };
 vector<string> splitstring(const string &str);
+void    checkHeaders(string& str, map<string, string>& headersMap);

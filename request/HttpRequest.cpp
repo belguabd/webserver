@@ -6,7 +6,7 @@
 /*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/13 19:18:18 by ataoufik         ###   ########.fr       */
+/*   Updated: 2025/02/14 12:28:15 by ataoufik         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,23 +23,35 @@ void    handleRequest(HttpRequest &request)
     str_parse = request.partRquest();
     if (request.getFirstTimeFlag() == 0)
     {
-        request.setFirstTimeFlag(1);
-        int f = request.defineTypeMethod(str_parse);
-        if (f == 1)
-          std::cout<< "Method --->> GET  <---"<<std::endl;
-        if (f == 2)
-          std::cout<< "Method --->> POST  <---"<<std::endl;
-        if (f == 3)
-          std::cout<< "Method --->> DELETE  <---"<<std::endl;
         size_t pos = str_parse.find("\r\n");
-        str_parse = str_parse.substr(pos + 2);
-        cout <<str_parse<<endl;
-        exit(0);
+        if (pos != string::npos)
+        {
+          request.setFirstTimeFlag(1);
+          int f = request.defineTypeMethod(str_parse.substr(0,pos + 2));
+          if (f == 1)
+            std::cout<< "Method --->> GET  <---"<<std::endl;
+          else if (f == 2)
+            std::cout<< "Method --->> POST  <---"<<std::endl;
+          else if (f == 3)
+            std::cout<< "Method --->> DELETE  <---"<<std::endl;
+          // size_t pos = str_parse.find("\r\n");
+          str_parse = str_parse.substr(pos + 2);
+
+        }
+        // cout <<str_parse<<endl;
+        // exit(0);
     }
+      request.parsePartRequest(str_parse);
+    
+    // cout <<str_parse<<endl;
     // MethodRequest()
-    request.parsePartRequest(str_parse);
-    
-    
+    if (request.getbuffer().empty())
+    {
+      for (auto it = request.mapheaders.begin(); it != request.mapheaders.end(); ++it) {
+        std::cout << "key =  " << it->first << "-->  "<< "value = " << it->second << std::endl;
+      }
+
+    }
     // // std::cout << "--->" << str_parse << "\n";
     // str_parse.clear();
     // exit(0);
@@ -92,7 +104,7 @@ HttpRequest::~HttpRequest() {}
 int HttpRequest::defineTypeMethod(const string firstline) {
   vector<string> words;
   size_t start;
-  size_t i = 0, j;
+  size_t i = 0;
   while (i < firstline.length()) {
     start = i;
     while (i < firstline.length() && firstline[i] != ' ') {
@@ -108,6 +120,8 @@ int HttpRequest::defineTypeMethod(const string firstline) {
         exit(1);
       }
     }
+    // std::cout << " i  = "<< i <<std::endl;
+    // std::cout << " start  = "<< start <<std::endl;
     words.push_back(firstline.substr(start, i - start));
     i++;
   }
@@ -137,7 +151,7 @@ vector<string> splitstring(const string &str) {
   }
   return (words);
 }
-string HttpRequest ::checkHeaders(const string &str) {
+void  checkHeaders(string& str, map<string, string>& headersMap) {
   // if (str.length() == 0)
   //     this->sig++;
   // if (this->sig >1)
@@ -148,12 +162,12 @@ string HttpRequest ::checkHeaders(const string &str) {
   size_t pos = str.find(':');
   string result;
   vector<string> words;
-  if ((str.length() != 0 && (pos == string::npos) || str[pos - 1] == ' ' ||
-       str[pos - 1] == '\t')) {
-    cout << "Bad Request" << endl;
-    exit(1);
-  }
-  result += str.substr(0, pos + 1);
+  // if ((str.length() != 0 && (pos == string::npos) || str[pos - 1] == ' ' ||
+  //      str[pos - 1] == '\t')) {
+  //   cout << "Bad Request" << endl;
+  //   exit(1);
+  // }
+  // result += str.substr(0, pos + 1);
   words = splitstring(str.substr(pos + 1, str.length()));
   for (vector<string>::const_iterator it = words.begin(); it != words.end();
        ++it) {
@@ -161,8 +175,7 @@ string HttpRequest ::checkHeaders(const string &str) {
     result += ' ';
     result += words;
   }
-  result += "\r\n";
-  return result;
+  headersMap[str.substr(0, pos + 1)] = result;
 }
 
 string HttpRequest :: partRquest()
@@ -191,7 +204,20 @@ void HttpRequest :: joinBuffer()
 
 void HttpRequest :: parsePartRequest(string str_parse)
 {
-  cout<<" -      ->  "<<str_parse <<endl;
+  // cout<<" -      ->  "<<str_parse <<endl;
+  while(!str_parse.empty())
+  {
+    size_t pos = str_parse.find("\r\n");
+    string str = str_parse.substr(0,pos + 2);
+    // cout << " str =   "<<str<<endl;
+    str_parse = str_parse.substr(pos + 2);
+    // cout << " str_parse =   "<<str_parse<<endl;
+    checkHeaders(str,this->mapheaders);
+    str.clear();
+    // checkHeaders()
+    // if (str =="\r\n")
+    //   exit(0);
+  }
   
 }
 // GET / HTTP/1.1"\r\n"
