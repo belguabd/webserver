@@ -1,0 +1,9 @@
+
+clean:
+ $(RM) $(OBJ)
+
+fclean:clean
+ $(RM) $(NAME)
+
+re:fc
+0
