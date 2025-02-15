@@ -6,7 +6,7 @@
 /*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/14 18:14:23 by ataoufik         ###   ########.fr       */
+/*   Updated: 2025/02/15 18:58:20 by ataoufik         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,11 @@
 void    handleRequest(HttpRequest &request)
 {
     string str_parse;
-    // if (this->flaaaa = 1)
+    // if (request.getendHeaders() == 1)
     // {
-    //   request._post.fun(readBuffer);
-    //   // fun(request._post,readBuffer);
+    //   request.joinBuffer();
+    //   cout << request.getbuffer();
+    //   return;
     // }
     request.joinBuffer();
     str_parse = request.partRquest();
@@ -34,12 +35,9 @@ void    handleRequest(HttpRequest &request)
             std::cout<< "Method --->> POST  <---"<<std::endl;
           else if (f == 3)
             std::cout<< "Method --->> DELETE  <---"<<std::endl;
-          // size_t pos = str_parse.find("\r\n");
           str_parse = str_parse.substr(pos + 2);
 
         }
-        // cout <<str_parse<<endl;
-        // exit(0);
     }
     request.parsePartRequest(str_parse);
       
@@ -51,7 +49,7 @@ void    handleRequest(HttpRequest &request)
     }
     }
 
-HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) ,firsttime(0) {
+HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) ,firsttime(0) ,endHeaders(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   
@@ -100,25 +98,27 @@ int HttpRequest::defineTypeMethod(const string firstline) {
   size_t start;
   size_t i = 0;
   while (i < firstline.length()) {
-    start = i;
-    while (i < firstline.length() && firstline[i] != ' ') {
-      if (firstline[i] == '\t') {
-        cout << "Bad Request" << endl;
-        exit(1);
-      }
+    while (i < firstline.length() && (firstline[i] == ' ' ||firstline[i] == '\t') )
       i++;
-    }
+    start = i;
+    while (i < firstline.length() && firstline[i] != ' ')
+      i++;
     if (firstline[i] == ' ') {
       if (firstline[i + 1] == ' ' || firstline[i + 1] == '\t') {
         cout << "Bad Request" << endl;
         exit(1);
       }
     }
-    // std::cout << " i  = "<< i <<std::endl;
-    // std::cout << " start  = "<< start <<std::endl;
     words.push_back(firstline.substr(start, i - start));
     i++;
   }
+  if (words.size()!=3 || words[1][0]!='/')
+  {
+    cout<< "method error"<<endl;
+    exit(0);
+  }
+  this->_path = words[1];
+  
   if (words[0] == "GET")
     return 1;
   else if (words[0] == "POST")
@@ -145,23 +145,16 @@ vector<string> splitstring(const string &str) {
   }
   return (words);
 }
-void  checkHeaders(string& str, map<string, string>& headersMap) {
-  // if (str.length() == 0)
-  //     this->sig++;
-  // if (this->sig >1)
-  // {
-  //     cout<<"Forbidden"<<endl;
-  //     exit(1);
-  // }
+void  HttpRequest:: checkHeaders(string& str) {
+
   size_t pos = str.find(':');
   string result;
   vector<string> words;
-  // if ((str.length() != 0 && (pos == string::npos) || str[pos - 1] == ' ' ||
-  //      str[pos - 1] == '\t')) {
-  //   cout << "Bad Request" << endl;
-  //   exit(1);
-  // }
-  // result += str.substr(0, pos + 1);
+  if (str[pos - 1]==' ')
+  {
+    cout<<"bad request space : "<<endl;
+    exit(0);
+  }
   words = splitstring(str.substr(pos + 1, str.length()));
   for (vector<string>::const_iterator it = words.begin(); it != words.end();
        ++it) {
@@ -169,7 +162,7 @@ void  checkHeaders(string& str, map<string, string>& headersMap) {
     result += ' ';
     result += words;
   }
-  headersMap[str.substr(0, pos + 1)] = result;
+  this->mapheaders[str.substr(0, pos + 1)] = result;
 }
 
 string HttpRequest :: partRquest()
@@ -198,15 +191,32 @@ void HttpRequest :: joinBuffer()
 
 void HttpRequest :: parsePartRequest(string str_parse)
 {
-  // cout<<" -      ->  "<<str_parse <<endl;
+
   while(!str_parse.empty())
   {
     size_t pos = str_parse.find("\r\n");
+    if (pos == string::npos) break; 
     string str = str_parse.substr(0,pos + 2);
-    // cout << " str =   "<<str<<endl;
+    if(str == "\r\n")
+    {
+      std::cout << "---- End of headers ----" << std::endl;
+      str_parse = str_parse.substr(pos + 2);
+      size_t pos1 = str_parse.find("\r\n");
+      string str1 = str_parse.substr(0,pos1 + 2);
+      if(str1.find(":") == string::npos)
+      {
+        this->endHeaders = 1;
+        break;
+      }
+      else
+      {
+        cout << "error new line"<<endl;
+        exit(0);
+      }
+    }
     str_parse = str_parse.substr(pos + 2);
     // cout << " str_parse =   "<<str_parse<<endl;
-    checkHeaders(str,this->mapheaders);
+    checkHeaders(str);
     str.clear();
     // checkHeaders()
     // if (str =="\r\n")

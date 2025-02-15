@@ -18,12 +18,13 @@ class HttpRequest
     private:
         int client_fd;
         int firsttime;
+        int endHeaders;
         bool flags;
         string _path;
         std::vector<char> writeBuffer;
         std::string readBuffer;
         //int method;
-        // Post _post;  
+        // Post _post;
         // Delete _delete; 
         // class methodDELETE obj; hassn
         string _buffer; 
@@ -42,6 +43,9 @@ class HttpRequest
         int getFirstTimeFlag() const {
             return this->firsttime;
         }
+        int getendHeaders() const {
+            return this->endHeaders;
+        }
         void setFirstTimeFlag(int i) {
             this->firsttime = i;
         }
@@ -51,6 +55,10 @@ class HttpRequest
         string getbuffer() const {
             return this->_buffer;
         }
+        string getreadbuffer() const {
+            return this->readBuffer;
+        }
+        void    checkHeaders(string& str);
         void display()
         {   
             std::cout << "Client fd: " << this->client_fd << std::endl;
@@ -58,4 +66,3 @@ class HttpRequest
         }
 };
 vector<string> splitstring(const string &str);
-void    checkHeaders(string& str, map<string, string>& headersMap);
