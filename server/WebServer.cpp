@@ -96,7 +96,7 @@ void WebServer::receive_from_client(int client_fd) {
 void WebServer::respond_to_client(int client_fd) {
   HttpRequest *client = connected_clients[client_fd];
   
-  client->writeData();
+  // client->writeData();
   struct kevent changes[1];
   EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
   kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
