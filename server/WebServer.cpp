@@ -117,7 +117,7 @@ void WebServer::run() {
       handle_new_connection(event_fd);
     else {
       if (filter == EVFILT_READ) {
-        puts("Receiving from client");
+        // puts("Reading from client");
         receive_from_client(event_fd);
 
       } else if (filter == EVFILT_WRITE) {

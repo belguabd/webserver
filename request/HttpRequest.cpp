@@ -3,40 +3,75 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/13 08:49:02 by emagueri         ###   ########.fr       */
+/*   Updated: 2025/02/15 18:58:20 by ataoufik         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
+void    handleRequest(HttpRequest &request)
+{
+    string str_parse;
+    // if (request.getendHeaders() == 1)
+    // {
+    //   request.joinBuffer();
+    //   cout << request.getbuffer();
+    //   return;
+    // }
+    request.joinBuffer();
+    str_parse = request.partRquest();
+    if (request.getFirstTimeFlag() == 0)
+    {
+        size_t pos = str_parse.find("\r\n");
+        if (pos != string::npos)
+        {
+          request.setFirstTimeFlag(1);
+          int f = request.defineTypeMethod(str_parse.substr(0,pos + 2));
+          if (f == 1)
+            std::cout<< "Method --->> GET  <---"<<std::endl;
+          else if (f == 2)
+            std::cout<< "Method --->> POST  <---"<<std::endl;
+          else if (f == 3)
+            std::cout<< "Method --->> DELETE  <---"<<std::endl;
+          str_parse = str_parse.substr(pos + 2);
 
-void handleRequest(HttpRequest request) {
-  string str_parse;
-  request.joinbuffer();
-  std::cout << request.get_line(str_parse);
-  std::cout << "buffer: " << request.getbuffer() << "\n";
-}
+        }
+    }
+    request.parsePartRequest(str_parse);
+      
+    if (request.getbuffer().empty())
+    {
+      for (auto it = request.mapheaders.begin(); it != request.mapheaders.end(); ++it) {
+        std::cout << "key =  " << it->first << "-->  "<< "value = " << it->second << std::endl;
+      }
+    }
+    }
 
-HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) {
+HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) ,firsttime(0) ,endHeaders(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+  
 }
 
-int HttpRequest::readData() {
+
+int HttpRequest::readData()
+{
   char buffer[40];
   ssize_t bytes_received;
-  while ((bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0)) >
-         0) {
-    if (bytes_received > 0) {
-      buffer[bytes_received] = '\0'; // Null-terminate received data
-
-      // Store received data correctly
+  
+  while((bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0)) > 0)
+  {
+    if (bytes_received > 0)
+    {
+      buffer[bytes_received] = '\0';
       readBuffer = buffer;
-      // std::cout << "Received data from client " << client_fd << ": "
-      //           << readBuffer << "\n";
-    } else if (bytes_received == 0) {
+      handleRequest(*this);
+      
+    }
+    else if (bytes_received == 0)
+    {
       std::cout << "Client " << client_fd << " disconnected\n";
       return -1;
     } else {
@@ -60,16 +95,13 @@ HttpRequest::~HttpRequest() {}
 int HttpRequest::defineTypeMethod(const string firstline) {
   vector<string> words;
   size_t start;
-  size_t i = 0, j;
+  size_t i = 0;
   while (i < firstline.length()) {
-    start = i;
-    while (i < firstline.length() && firstline[i] != ' ') {
-      if (firstline[i] == '\t') {
-        cout << "Bad Request" << endl;
-        exit(1);
-      }
+    while (i < firstline.length() && (firstline[i] == ' ' ||firstline[i] == '\t') )
       i++;
-    }
+    start = i;
+    while (i < firstline.length() && firstline[i] != ' ')
+      i++;
     if (firstline[i] == ' ') {
       if (firstline[i + 1] == ' ' || firstline[i + 1] == '\t') {
         cout << "Bad Request" << endl;
@@ -79,6 +111,13 @@ int HttpRequest::defineTypeMethod(const string firstline) {
     words.push_back(firstline.substr(start, i - start));
     i++;
   }
+  if (words.size()!=3 || words[1][0]!='/')
+  {
+    cout<< "method error"<<endl;
+    exit(0);
+  }
+  this->_path = words[1];
+  
   if (words[0] == "GET")
     return 1;
   else if (words[0] == "POST")
@@ -105,23 +144,16 @@ vector<string> splitstring(const string &str) {
   }
   return (words);
 }
-string HttpRequest ::checkHeaders(const string &str) {
-  // if (str.length() == 0)
-  //     this->sig++;
-  // if (this->sig >1)
-  // {
-  //     cout<<"Forbidden"<<endl;
-  //     exit(1);
-  // }
+void  HttpRequest:: checkHeaders(string& str) {
+
   size_t pos = str.find(':');
   string result;
   vector<string> words;
-  if ((str.length() != 0 && (pos == string::npos) || str[pos - 1] == ' ' ||
-       str[pos - 1] == '\t')) {
-    cout << "Bad Request" << endl;
-    exit(1);
+  if (str[pos - 1]==' ')
+  {
+    cout<<"bad request space : "<<endl;
+    exit(0);
   }
-  result += str.substr(0, pos + 1);
   words = splitstring(str.substr(pos + 1, str.length()));
   for (vector<string>::const_iterator it = words.begin(); it != words.end();
        ++it) {
@@ -129,26 +161,68 @@ string HttpRequest ::checkHeaders(const string &str) {
     result += ' ';
     result += words;
   }
-  result += "\r\n";
-  return result;
+  this->mapheaders[str.substr(0, pos + 1)] = result;
 }
 
-string HttpRequest ::get_line(string line) {
-  line += this->buffer;
+string HttpRequest :: partRquest()
+{
+  string line;
   string str;
-  this->buffer.clear();
-  size_t pos = line.find("\r\n");
-  if (pos != string::npos)
-    str = line.substr(0, pos + 2);
-  else {
-    this->buffer = line;
-    return "";
+  line += this->_buffer;
+  this->_buffer.clear();
+  size_t pos = line.rfind("\r\n");
+  if (pos != string::npos) {
+    str = line.substr(0,pos + 2);
+    this->_buffer = line.substr(pos + 2);
   }
-  this->buffer = line.substr(pos + 2);
-  return (str);
+  else {
+      this->_buffer = line;
+      return "";
+    }
+    return (str);
 }
 
-void HttpRequest ::joinbuffer() {
-  this->buffer += this->readBuffer;
-  this->readBuffer.clear();
+void HttpRequest :: joinBuffer()
+{
+    this->_buffer += this->readBuffer;
+    this->readBuffer.clear();
 }
+
+void HttpRequest :: parsePartRequest(string str_parse)
+{
+
+  while(!str_parse.empty())
+  {
+    size_t pos = str_parse.find("\r\n");
+    if (pos == string::npos) break; 
+    string str = str_parse.substr(0,pos + 2);
+    if(str == "\r\n")
+    {
+      std::cout << "---- End of headers ----" << std::endl;
+      str_parse = str_parse.substr(pos + 2);
+      size_t pos1 = str_parse.find("\r\n");
+      string str1 = str_parse.substr(0,pos1 + 2);
+      if(str1.find(":") == string::npos)
+      {
+        this->endHeaders = 1;
+        break;
+      }
+      else
+      {
+        cout << "error new line"<<endl;
+        exit(0);
+      }
+    }
+    str_parse = str_parse.substr(pos + 2);
+    // cout << " str_parse =   "<<str_parse<<endl;
+    checkHeaders(str);
+    str.clear();
+    // checkHeaders()
+    // if (str =="\r\n")
+    //   exit(0);
+  }
+  
+}
+// GET / HTTP/1.1"\r\n"
+// Host: localhost:8080"\r\n"
+// U ser-Agent'\0'

@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <map>
 // class HttpRequest;
 
 using namespace std;
@@ -16,31 +17,48 @@ class HttpRequest
 {
     private:
         int client_fd;
+        int firsttime;
+        int endHeaders;
         bool flags;
         string _path;
         std::vector<char> writeBuffer;
         std::string readBuffer;
         //int method;
-        // class methodPost obj; hassn
+        // Post _post;
+        // Delete _delete; 
         // class methodDELETE obj; hassn
-        string buffer; 
+        string _buffer; 
     public:
+        map<string, string> mapheaders;
         HttpRequest(int client_fd);
         ~HttpRequest();
         int readData();
         int writeData();
         int getfd() { return this->client_fd; }
-        void  joinbuffer();
-        string get_line(string line);
+        void  joinBuffer();
+        string partRquest();
         int defineTypeMethod(const string firstline);
-        string checkHeaders(const string& str);
-        void validRequestHeaders();
+
+        void parsePartRequest(string str_parse);
+        int getFirstTimeFlag() const {
+            return this->firsttime;
+        }
+        int getendHeaders() const {
+            return this->endHeaders;
+        }
+        void setFirstTimeFlag(int i) {
+            this->firsttime = i;
+        }
         bool getflags() const {
             return this->flags;
         }
         string getbuffer() const {
-            return this->buffer;
+            return this->_buffer;
         }
+        string getreadbuffer() const {
+            return this->readBuffer;
+        }
+        void    checkHeaders(string& str);
         void display()
         {   
             std::cout << "Client fd: " << this->client_fd << std::endl;
