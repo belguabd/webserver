@@ -19,20 +19,26 @@ class HttpRequest
         int client_fd;
         int firsttime;
         int endHeaders;
+        bool flags;
         string _path;
+        std::vector<char> writeBuffer;
         std::string readBuffer;
+        //int method;
         // Post _post;
         // Delete _delete; 
+        // class methodDELETE obj; hassn
         string _buffer; 
     public:
         map<string, string> mapheaders;
         HttpRequest(int client_fd);
         ~HttpRequest();
         int readData();
+        int writeData();
         int getfd() { return this->client_fd; }
         void  joinBuffer();
         string partRquest();
         int defineTypeMethod(const string firstline);
+
         void parsePartRequest(string str_parse);
         int getFirstTimeFlag() const {
             return this->firsttime;
@@ -42,6 +48,9 @@ class HttpRequest
         }
         void setFirstTimeFlag(int i) {
             this->firsttime = i;
+        }
+        bool getflags() const {
+            return this->flags;
         }
         string getbuffer() const {
             return this->_buffer;

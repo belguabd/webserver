@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   httpRequest.cpp                                    :+:      :+:    :+:   */
+/*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/16 13:19:59 by ataoufik         ###   ########.fr       */
+/*   Updated: 2025/02/15 18:58:20 by ataoufik         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,12 @@
 void    handleRequest(HttpRequest &request)
 {
     string str_parse;
-    if (request.getendHeaders() == 1)
-    {
-      request.joinBuffer();
-      cout << request.getbuffer();
-      return;
-    }
+    // if (request.getendHeaders() == 1)
+    // {
+    //   request.joinBuffer();
+    //   cout << request.getbuffer();
+    //   return;
+    // }
     request.joinBuffer();
     str_parse = request.partRquest();
     if (request.getFirstTimeFlag() == 0)
@@ -41,12 +41,12 @@ void    handleRequest(HttpRequest &request)
     }
     request.parsePartRequest(str_parse);
       
-    // if (request.getbuffer().empty())
-    // {
-    //   for (auto it = request.mapheaders.begin(); it != request.mapheaders.end(); ++it) {
-    //     std::cout << "key =  " << it->first << "-->  "<< "value = " << it->second << std::endl;
-    //   }
-    // }
+    if (request.getbuffer().empty())
+    {
+      for (auto it = request.mapheaders.begin(); it != request.mapheaders.end(); ++it) {
+        std::cout << "key =  " << it->first << "-->  "<< "value = " << it->second << std::endl;
+      }
+    }
     }
 
 HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd) ,firsttime(0) ,endHeaders(0){
@@ -84,15 +84,14 @@ int HttpRequest::readData()
   return bytes_received;
 }
 
-// int HttpRequest::writeData() {
-//     int bytes_send = 0;
-    
-// //   const char *msg = "Hi I am server";
-// //   ssize_t bytes_send = send(client_fd, msg, strlen(msg), 0);
-// //   if (bytes_send == -1)
-// //     std::cerr << "Error sending message to client" << std::endl;
-//   return bytes_send;
-// }
+int HttpRequest::writeData() {
+    int bytes_send = 0;
+//   const char *msg = "Hi I am server";
+//   ssize_t bytes_send = send(client_fd, msg, strlen(msg), 0);
+//   if (bytes_send == -1)
+//     std::cerr << "Error sending message to client" << std::endl;
+  return bytes_send;
+}
 HttpRequest::~HttpRequest() {}
 int HttpRequest::defineTypeMethod(const string firstline) {
   vector<string> words;
@@ -225,3 +224,6 @@ void HttpRequest :: parsePartRequest(string str_parse)
   }
   
 }
+// GET / HTTP/1.1"\r\n"
+// Host: localhost:8080"\r\n"
+// U ser-Agent'\0'
