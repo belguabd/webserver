@@ -1,7 +1,13 @@
 
 #include "WebServer.hpp"
+#include <cstdio>
+#include <iostream>
 #include <sys/_types/_ssize_t.h>
 #include <sys/event.h>
+#include <utility>
+#include <vector>
+
+
 
 void WebServer::initialize_kqueue() {
   kqueue_fd = kqueue();
@@ -53,19 +59,23 @@ void WebServer::handle_new_connection(int server_fd) {
     close(client_fd);
     return;
   }
-  connected_clients[client_fd] = new httpRequest(client_fd);
+  connected_clients.push_back(new HttpRequest(client_fd));
+  // connected_clients[client_fd] = new HttpRequest(client_fd);
 }
 
 void WebServer::receive_from_client(int client_fd) {
-  if (connected_clients.find(client_fd) == connected_clients.end()) {
-    std::cerr << "Client FD not found: " << client_fd << std::endl;
-    return;
+  HttpRequest *client;
+
+  std::vector<HttpRequest *>::iterator it;
+  for (it = connected_clients.begin(); it != connected_clients.end(); ++it) {
+    if ((*it)->getfd() == client_fd) {
+      client = *it;
+      // connected_clients.erase(it);
+      break;
+    }
   }
-
-  // ClientConnection *client = connected_clients[client_fd];
-  httpRequest client = *connected_clients[client_fd];
-
-  ssize_t bytes_read = client.readData();
+  ssize_t bytes_read = client->readData();
+  // connected_clients.push_back(client);
   if (bytes_read > 0) {
     struct kevent changes[1];
     EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
@@ -74,16 +84,18 @@ void WebServer::receive_from_client(int client_fd) {
       std::cerr << "Error setting write event: " << strerror(errno)
                 << std::endl;
       close(client_fd);
-      connected_clients.erase(client_fd);
+      // connected_clients.erase(client_fd);
       return;
     }
+    
   } else {
-    connected_clients.erase(client_fd);
+    // connected_clients.erase(client_fd);
   }
 }
 
 void WebServer::respond_to_client(int client_fd) {
-  httpRequest *client = connected_clients[client_fd];
+  HttpRequest *client = connected_clients[client_fd];
+  
   client->writeData();
   struct kevent changes[1];
   EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
@@ -91,26 +103,29 @@ void WebServer::respond_to_client(int client_fd) {
   close(client_fd);
 }
 
+
+
 void WebServer::run() {
 
-    int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
-    bool is_server_socket = false;
-    for (size_t i = 0; i < nev; i++) {
-      int event_fd = events[i].ident;
-      int filter = events[i].filter;
-      for (size_t i = 0; i < serverSockets.size(); i++) {
-        if (serverSockets[i].getServer_fd() == event_fd)
-          is_server_socket = true;
-      }
-      if (is_server_socket)
-        handle_new_connection(event_fd);
-      else {
-        if (filter == EVFILT_READ)
-          receive_from_client(event_fd);
-        else if (filter == EVFILT_WRITE) {
-          respond_to_client(event_fd);
-        }
+  int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
+  bool is_server_socket = false;
+  for (size_t i = 0; i < nev; i++) {
+    int event_fd = events[i].ident;
+    int filter = events[i].filter;
+    for (size_t i = 0; i < serverSockets.size(); i++) {
+      if (serverSockets[i].getServer_fd() == event_fd)
+        is_server_socket = true;
+    }
+    if (is_server_socket)
+      handle_new_connection(event_fd);
+    else {
+      if (filter == EVFILT_READ) {
+        // puts("Reading from client");
+        receive_from_client(event_fd);
+      } else if (filter == EVFILT_WRITE) {
+        puts("Responding to client");
+        respond_to_client(event_fd);
       }
     }
+  }
 }
-

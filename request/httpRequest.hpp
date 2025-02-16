@@ -9,33 +9,56 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-// class httpRequest;
+#include <map>
+// class HttpRequest;
 
 using namespace std;
-class httpRequest
+class HttpRequest
 {
     private:
         int client_fd;
-        bool flags;
+        int firsttime;
+        int endHeaders;
         string _path;
+        // std::vector<char> writeBuffer;
         std::string readBuffer;
-        std::vector<char> writeBuffer;
         //int method;
-        // class methodPost obj; hassn
+        // Post _post;
+        // Delete _delete; 
         // class methodDELETE obj; hassn
-        string buffer;
+        string _buffer; 
     public:
-        httpRequest(int client_fd);
-        ~httpRequest();
+        map<string, string> mapheaders;
+        HttpRequest(int client_fd);
+        ~HttpRequest();
         int readData();
-        int writeData();
+        // int writeData();
         int getfd() { return this->client_fd; }
-        // string joinbuffer(string line);
-       string get_line(string line);
-        void joinbuffer();
+        void  joinBuffer();
+        string partRquest();
         int defineTypeMethod(const string firstline);
-        string checkHeaders(const string& str);
-        void validRequestHeaders();
-        void setclient(httpRequest d);
+
+        void parsePartRequest(string str_parse);
+        int getFirstTimeFlag() const {
+            return this->firsttime;
+        }
+        int getendHeaders() const {
+            return this->endHeaders;
+        }
+        void setFirstTimeFlag(int i) {
+            this->firsttime = i;
+        }
+        string getbuffer() const {
+            return this->_buffer;
+        }
+        string getreadbuffer() const {
+            return this->readBuffer;
+        }
+        void    checkHeaders(string& str);
+        void display()
+        {   
+            std::cout << "Client fd: " << this->client_fd << std::endl;
+            std::cout << "buffer: " << this->readBuffer << std::endl;
+        }
 };
 vector<string> splitstring(const string &str);
