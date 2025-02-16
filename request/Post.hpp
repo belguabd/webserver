@@ -1,15 +1,13 @@
 #pragma once
-#include "HttpRequest.hpp"
+// #include "HttpRequest.hpp"
 #include <map>
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
 #include <sys/stat.h> 
 
-struct Chunked
+class Post
 {
-    int sizeData;
-
-};
 
 enum Body
 {
@@ -18,22 +16,23 @@ enum Body
     contentLength,
     boundaryChunked
 };
-
-class Post
-{
 private:
     Body _bodyType;
     long _chunkSize;
-    map <string, string> &_headers;
-    string &_bufferBody;
-    string _remainingBuffer;
+    std::map <std::string, std::string> _headers;
+    std::map <std::string, std::string> _files;
+    std::string _bufferBody;
+    std::string _remainingBuffer;
     int handleChunked();
 public:
-    int status;
+    Post();
+    Post(std::map <std::string, std::string> &headers, std::string &bufferBody);
+    Post(std::map<std::string, std::string> &headers);
+    Post &operator=(const Post &);
+    ~Post();
+    void setHeaders(std::map<std::string, std::string> &headers);
+    int _status;
     void setBodyType();
     Body getBodyType() { return _bodyType; }
-    Post(map <string, string> &headers, string &bufferBody);
-    int proseRequest();
-    ~Post();
+    int proseRequest(std::string &buffer);
 };
-

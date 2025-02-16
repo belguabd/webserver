@@ -9,45 +9,57 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <map>
+#include "Post.hpp"
 // class HttpRequest;
 
 using namespace std;
 class HttpRequest
 {
-private:
-    int client_fd;
-    bool flags;
-    string _path;
-    std::vector<char> writeBuffer;
-    std::string readBuffer;
-    // int method;
-    //  Post obj; hassn
-    //  class methodDELETE obj; hassn
-    string buffer;
+    private:
+        int client_fd;
+        int firsttime;
+        bool flags;
+        string _path;
+        std::vector<char> writeBuffer;
+        std::string readBuffer;
+        //int method;
+        // Delete _delete; 
+        // class methodDELETE obj; hassn
+        string _buffer; 
+    public:
+        Post _post;
+        map<string, string> mapHeaders;
+        HttpRequest(int client_fd);
+        ~HttpRequest();
+        int readData();
+        int writeData();
+        int getfd() { return this->client_fd; }
+        void  joinBuffer();
+        string partRquest();
+        int defineTypeMethod(const string firstline);
 
-public:
-    HttpRequest(int client_fd);
-    ~HttpRequest();
-    int readData();
-    int writeData();
-    int getfd() { return this->client_fd; }
-    void joinbuffer();
-    string get_line(string &line);
-    int defineTypeMethod(const string firstline);
-    string checkHeaders(const string &str);
-    void validRequestHeaders();
-    bool getflags() const
-    {
-        return this->flags;
-    }
-    string getbuffer() const
-    {
-        return this->buffer;
-    }
-    void display()
-    {
-        std::cout << "Client fd: " << this->client_fd << std::endl;
-        std::cout << "buffer: " << this->readBuffer << std::endl;
-    }
+        void parsePartRequest(string str_parse);
+        int getFirstTimeFlag() const {
+            return this->firsttime;
+        }
+        void setFirstTimeFlag(int i) {
+            this->firsttime = i;
+        }
+        bool getflags() const {
+            return this->flags;
+        }
+        string getbuffer() const {
+            return this->_buffer;
+        }
+        string getReadbuffer() const {
+            return this->readBuffer;
+        }
+        void display()
+        {   
+            std::cout << "Client fd: " << this->client_fd << std::endl;
+            std::cout << "buffer: " << this->readBuffer << std::endl;
+        }
 };
 vector<string> splitstring(const string &str);
+void    checkHeaders(string& str, map<string, string>& headersMap);

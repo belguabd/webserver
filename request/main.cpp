@@ -1,39 +1,52 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include "Post.hpp"
+
+using namespace std;
 
 std::string readFile(const std::string &filename)
 {
     std::ifstream file(filename);
-    std::string buffer;
-    while(file)
+    if (!file)
     {
-        std::string line;
-        std::getline(file, line);
-        buffer += line + "\n";
+        std::cerr << "Error: Unable to open file " << filename << std::endl;
+        exit(1);
     }
-    return buffer;
-}
 
+    std::ostringstream buffer;
+    buffer << file.rdbuf();  // Read entire file content including newlines
+
+    return buffer.str();
+}
 int main(int argc, char const *argv[])
 {
-    map <string, string> headers;
+    map<string, string> headers;
 
     headers["Transfer-Encoding"] = "chunked";
     headers["Content-Type"] = "application/octet-stream";
     headers["Content-Length"] = "472";
 
-    
     string bufferBody = readFile("./files/test");
-    Post post = Post(headers, bufferBody);
-    std::cout << post.getBodyType() << std::endl;
-    post.proseRequest();
-    cout << "chyata ---------------------------\n";
-    bufferBody = readFile("./files/test2");
-    post.proseRequest();
+    Post post = Post(headers);
+    post.proseRequest(bufferBody);
+
+    // string bufferBody = readFile("./files/test1");
+    // Post post = Post(headers);
+    // post.proseRequest(bufferBody);
+    // cout << "chyata ---------------------------\n";
+    // bufferBody = readFile("./files/test2");
+    // cout << "file:\n" << bufferBody << "\n";
+    // post.proseRequest(bufferBody);
+
+    // Post post = Post(headers);
+    // std::string bufferBody = readFile("./files/newLine");
+    // std::cout << "file:\n"
+    //           << bufferBody << "\n=========\n"
+    //           << std::endl;
+    // post.proseRequest(bufferBody);
     return 0;
 }
-
 
 // # Direct chunked transfer using curl
 // curl -X POST \

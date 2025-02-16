@@ -3,14 +3,14 @@ CPP = c++ -fsanitize=address -g
 CPPFLAGS = #-Wall -Wextra -Werror -std=c++98
 RM = rm -f
 
-SRC = main.cpp ./server/ServerSocket.cpp  ./server/WebServer.cpp ./request/HttpRequest.cpp 
+SRC = main.cpp ./server/ServerSocket.cpp  ./server/WebServer.cpp ./request/HttpRequest.cpp ./request/Post.cpp
 
 OBJ = $(SRC:.cpp=.o)
 all:$(NAME)
 $(NAME):$(OBJ)
 	$(CPP) $(CPPFLAGS) -o $(NAME) $(OBJ) 
 
-%.o:%.cpp ./server/ServerSocket.hpp  ./server/WebServer.hpp ./request/HttpRequest.hpp 
+%.o:%.cpp ./server/ServerSocket.hpp  ./server/WebServer.hpp ./request/HttpRequest.hpp ./request/Post.hpp 
 	$(CPP) $(CPPFLAGS) -c $< -o $@ 
 
 clean:
