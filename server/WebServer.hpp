@@ -12,6 +12,7 @@
 #include <vector>
 #define MAX_EVENTS 1024
 #include "../request/HttpRequest.hpp"
+#include "../response/HttpResponse.hpp"
 #include "ServerSocket.hpp"
 
 class WebServer {

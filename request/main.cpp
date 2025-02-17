@@ -27,7 +27,7 @@ int main(int argc, char const *argv[])
     headers["Content-Type"] = "application/octet-stream";
     headers["Content-Length"] = "472";
 
-    string bufferBody = readFile("./files/test");
+    string bufferBody = readFile("/Users/emagueri/Desktop/download.jpg");
     Post post = Post(headers);
     post.proseRequest(bufferBody);
 
