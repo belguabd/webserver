@@ -21,8 +21,8 @@ private:
   bool flags;
   string _path;
   std::vector<char> writeBuffer;
-  // std::vector<char> readBuffer;
-  char *readBuffer;
+  std::string readBuffer;
+  // char *readBuffer;
 
   // std::string readBuffer;
 

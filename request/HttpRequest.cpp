@@ -64,21 +64,11 @@ HttpRequest::HttpRequest(int client_fd)
 int HttpRequest::readData() {
   char buffer[4000];
   ssize_t bytes_received;
-
-  bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+  std::memset(buffer, 0, sizeof(buffer));
+  bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
   if (bytes_received > 0) {
-    if (bytes_received < sizeof(buffer)) {
-      buffer[bytes_received] = '\0';
-    }
-    readBuffer = (char *)malloc(bytes_received + 1);
-    if (readBuffer == NULL) {
-      std::cerr << "Memory allocation failed!\n";
-      throw std::bad_alloc();
-    }
-    std::memcpy(readBuffer, buffer, bytes_received);
-    readBuffer[bytes_received] = '\0';
+    readBuffer.assign(buffer, bytes_received);
     handleRequest(*this);
-
   } else if (bytes_received == 0) {
     std::cout << "Client " << client_fd << " disconnected\n";
     return -1;
