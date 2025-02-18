@@ -1,0 +1,13 @@
+POST /upload HTTP/1.1
+Host: example.com
+Transfer-Encoding: chunked
+Content-Type: text/plain
+
+1388\r\n
+<5000 bytes of data>\r\n
+1388\r\n
+<5000 bytes of data>\r\n
+1388\r\n
+<5000 bytes of data>\r\n
+0\r\n
+\r\n

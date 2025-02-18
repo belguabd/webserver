@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <sys/stat.h> 
+#define FILENAME "output.json"
 
 class Post
 {
@@ -32,10 +33,10 @@ public:
     ~Post();
     void setHeaders(std::map<std::string, std::string> &headers);
     int _status;
-    int pasteInFile(std::string name, std::string &data);
     void setBodyType();
     Body getBodyType() { return _bodyType; }
     int start(std::map<std::string, std::string> &headers, std::string &buffer);
     int proseRequest(std::string &buffer);
 };
+int pasteInFile(std::string name, std::string &data);
  

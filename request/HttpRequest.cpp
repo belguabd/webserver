@@ -6,24 +6,38 @@
 /*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/17 17:18:43 by emagueri         ###   ########.fr       */
+/*   Updated: 2025/02/18 17:34:56 by emagueri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
+// #define SIZE 3
 #define SIZE 4000
-// #define SIZE 4000
+
+
+int pasteInFile(std::string name, std::string data)
+{
+	// if (fileExists(name))
+	// {
+	//     name += "_";
+	//     return pasteInFile(name, data);
+	// }
+	std::ofstream file(name, std::ios::app);
+	file << data;
+	return 1;
+}
+
 
 void HttpRequest::postBodyHandler()
 {
   _post.proseRequest(this->readBuffer);
-  
 }
 
 void handleRequest(HttpRequest &request)
 {
   string str_parse;
 
+  pasteInFile(CURREQ, request.getreadbuffer());
   if (request.getendHeaders() == 1)
   {
     // cout <<"lo  = "<<request.getendHeaders() <<endl;

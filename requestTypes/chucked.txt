@@ -1,5 +1,5 @@
 POST / HTTP/1.1
-buffer: Transfer-Encoding: chunked
+Transfer-Encoding: chunked
 User-Agent: PostmanRuntime/7.33.0
 Accept: */*
 Postman-Token: aa494d8a-f077-4776-ab8e-fc9e0a25db8d
@@ -33,3 +33,15 @@ fclean:clean
 
 re:fclean all
 0
+
+-----------
+
+printf "POST /your-endpoint HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\nContent-Type: application/json\r\n
+    \r\n
+    5\r\n
+    Hello\r\n
+    7\r\n
+    , World!\r\n
+    0\r\n
+    \r\n"
+    | nc localhost 8585

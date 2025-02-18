@@ -36,7 +36,7 @@ void WebServer::addServerSocket(int port) {
 WebServer::WebServer() : max_events(MAX_EVENTS) {
   initialize_kqueue();
   std::vector<int> ports;
-  ports.push_back(8080);
+  ports.push_back(8585);
 
   addServerSocket(ports[0]);
   //   for (size_t i = 0; i < ports.size(); ++i) {

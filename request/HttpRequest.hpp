@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 #include "./Post.hpp"
+#define CURREQ "curentReq"
 // class HttpRequest;
 
 using namespace std;

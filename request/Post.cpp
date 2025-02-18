@@ -75,22 +75,41 @@ bool fileExists(std::string &filePath)
 	return (stat(filePath.c_str(), &buffer) == 0);
 }
 
-// int pasteInFile(std::string name, std::string &data)
+int pasteInFile(std::string name, std::string &data)
+{
+	// if (fileExists(name))
+	// {
+	//     name += "_";
+	//     return pasteInFile(name, data);
+	// }
+	std::ofstream file(name, std::ios::app);
+	file << data;
+	return 1;
+}
+
+// int Post::pasteInFile(std::string fileName, std::string &data)
 // {
-// 	// if (fileExists(name))
-// 	// {
-// 	//     name += "_";
-// 	//     return pasteInFile(name, data);
-// 	// }
-// 	std::ofstream file(name, std::ios::app);
-// 	file << data;
-// 	return 1;
+// 	_files[fileName].append(data);
+// 	return (1);
 // }
 
-int Post::pasteInFile(std::string fileName, std::string &data)
+void printNonPrintableChars(const std::string &str) {
+    for (char ch : str) {
+        if (!isprint(static_cast<unsigned char>(ch))) {
+            std::cout << "(x" << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)ch << ")";
+        } else {
+            std::cout << ch;
+        }
+    }
+    std::cout << std::endl;
+}
+
+void eraseCrnl(std::string &str, int size)
 {
-	_files[fileName].append(data);
-	return (1);
+
+	if (str.size() >= size + 2 && str[size + 1] == '\n' && str[size + 2] == '\r')
+		str.erase(0, size + 2);
+	str.erase(0, size );
 }
 
 int Post::handleChunked()
@@ -98,10 +117,16 @@ int Post::handleChunked()
 	std::string fileData;
 	if (_chunkSize <= 0) // check is remending data
 	{
-		int i = _bufferBody.find("\n");
+		size_t i = _bufferBody.find("\n");
+		if (i == std::string::npos)
+			return 1;
+		// std::cout << "bufferBody: \n" ;
+		// printNonPrintableChars(_bufferBody);
+		// std::cout << "end of sizechunk: " << i << "\n";
 		std::string sizeChunkStr = _bufferBody.substr(0, i);
-		// std::cout << "sizeChunkStr : " << sizeChunkStr << std::endl;
-		_bufferBody.erase(0, i + 1); // + 1 for \n
+		_bufferBody.erase(0, i + 2); // + 1 for \n
+		// std::cout << "after erase: \n";
+		// printNonPrintableChars(_bufferBody);
 		// get the size chunk erase it in the _bufferBody
 		_chunkSize = strToLong(sizeChunkStr, 16);
 		// std::cout << "_chunkSize: " << _chunkSize << std::endl;
@@ -109,22 +134,32 @@ int Post::handleChunked()
 
 	if (_chunkSize == 0)
 	{
+		std::cout << "||";
+		// printNonPrintableChars(_bufferBody);
+		if (_bufferBody == "\r\n")
+		{
+
+			std::cout << "end of chunk\n";
+		}
 		return 1;
-	} // && _bufferBody.size() < 0)
+	}
+	// && _bufferBody.size() < 0)
 	fileData = _bufferBody.substr(0, _chunkSize);
 
-	// std::cout << "bufferbody :\n" << _bufferBody << std::endl;
-	// std::cout<< "filedata :\n|" << fileData << "\n|";;
-	_bufferBody.erase(0, _chunkSize + 1);
-
-	
-	pasteInFile("output", fileData);
+	std::cout << "fileData : " << fileData << "\n";
+ 	eraseCrnl(_bufferBody, _chunkSize); // !!!!!!! \r\n
+	// std::cout << 
+	// _bufferBody.erase(0, _chunkSize + 2);
+	pasteInFile(FILENAME, fileData);
 	_chunkSize -= (long)fileData.size();
 	// std::cout << "left size in chunk: " << _chunkSize << "\n";
 	
 	if (_chunkSize > 0) // uncompleted request
+	{
+		std::cout << "uncompleted request\n";
 		return (long)fileData.size(); // uncompleted request
-	// std::cout << "-----------\n";
+	}
+	std::cout << "next chunk ================== \n";
 	return handleChunked();
 }
 
@@ -140,11 +175,25 @@ int Post::proseRequest(std::string &buffer)
 	// size_t ;
 	// _bufferBody = buffer.substr(buffer.rfind("\n"));
 	// _remainingBuffer = bu
-	_bufferBody = buffer;
-	std::cout << _bufferBody ;
+	size_t pos = buffer.rfind("\n");
+	if (pos == std::string::npos)
+	{
+		_remainingBuffer += buffer;
+		return 1;
+	}
+	_bufferBody = _remainingBuffer;
+	// if (buffer.size() > pos + 1 && buffer.at(pos + 1) == '\r')
+	_remainingBuffer = buffer.substr(pos + 1);
+	_bufferBody += buffer.substr(0, pos + 1);
+
+	// _bufferBody = buffer;
+	// printNonPrintableChars(_bufferBody);
+
+	// std::cout << _bufferBody ;
 
 	if (this->_bodyType == chunked)
 	{
+		// check that chunk size is valid
 		handleChunked();
 	}
 	if (this->_bodyType == contentLength)
