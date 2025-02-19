@@ -56,14 +56,16 @@ void Post::setBodyType()
 long strToLong(std::string &str, int base)
 {
 	char *end;
-	
+	std::cout << "chunk head ---->";
+	printNonPrintableChars(str);
+
 	if (str.back() == '\r')
 		str.pop_back();
 	if (str.back() == '\n')
 		str.pop_back();
 	for (int i = 0; i < str.size() ; i++)
 	{
-		if (!std::isdigit(str[i]) && (str[i] < 'a' || str[i] > 'f'))
+		if (!std::isdigit(str[i]) && (str[i] < 'a' && str[i] > 'f'))
 			return 0;
 	}
 	return strtol(str.c_str(), &end, base);
@@ -117,7 +119,11 @@ int Post::handleChunked()
 	std::string fileData;
 	if (_chunkSize <= 0) // check is remending data
 	{
-		size_t i = _bufferBody.find("\n");
+		if (_bufferBody.substr(0, 2) == std::string("\r\n"))
+			_bufferBody.erase(0, 2);
+		size_t i = _bufferBody.find("\r\n");
+		std::cout << "head chunk -> :: " ; printNonPrintableChars(_bufferBody.substr(0, 10));
+		std::cout << "index of crln : " << i << "|||\n";
 		if (i == std::string::npos)
 			return 1;
 		// std::cout << "bufferBody: \n" ;
@@ -125,17 +131,18 @@ int Post::handleChunked()
 		// std::cout << "end of sizechunk: " << i << "\n";
 		std::string sizeChunkStr = _bufferBody.substr(0, i);
 		_bufferBody.erase(0, i + 2); // + 1 for \n
-		// std::cout << "after erase: \n";
-		// printNonPrintableChars(_bufferBody);
+		std::cout << "after erase: ";
+		printNonPrintableChars(_bufferBody.substr(0, 10));
 		// get the size chunk erase it in the _bufferBody
 		_chunkSize = strToLong(sizeChunkStr, 16);
-		// std::cout << "_chunkSize: " << _chunkSize << std::endl;
+		std::cout << "_chunkSize[][[[[[[[]]]]]]]: " << _chunkSize << std::endl;
 	}
 
 	if (_chunkSize == 0)
 	{
 		std::cout << "||";
 		// printNonPrintableChars(_bufferBody);
+			std::cout << "end of chunk\n";
 		if (_bufferBody == "\r\n")
 		{
 
@@ -153,17 +160,18 @@ int Post::handleChunked()
 	_chunkSize -= (long)fileData.size();
 	// std::cout << "left size in chunk: " << _chunkSize << "\n";
 	
+	std::cout << "_chunkSize: after set : " << _chunkSize << std::endl;
 	if (_chunkSize > 0) // uncompleted request
 	{
 		std::cout << "uncompleted request\n";
 		return (long)fileData.size(); // uncompleted request
 	}
-	std::cout << "next chunk ================== \n";
 	return handleChunked();
 }
 
 int Post::start( std::map<std::string, std::string> &headers, std::string &buffer)
 {
+	_chunkSize = -1;
 	setHeaders(headers);
 	setBodyType();
 	proseRequest(buffer);
@@ -174,6 +182,7 @@ int Post::proseRequest(std::string &buffer)
 	// size_t ;
 	// _bufferBody = buffer.substr(buffer.rfind("\n"));
 	// _remainingBuffer = bu
+	std::cout << "next chunk ================== \n";
 	size_t pos = buffer.rfind("\n");
 	if (pos == std::string::npos)
 	{
@@ -182,9 +191,19 @@ int Post::proseRequest(std::string &buffer)
 		return 1;
 	}
 	_bufferBody = _remainingBuffer;
-	// if (buffer.size() > pos + 1 && buffer.at(pos + 1) == '\r')
+	// if (buffer.size() > pos + 1 && buffer.at(pos - 1) == '\r')
 	_remainingBuffer = buffer.substr(pos + 1);
 	_bufferBody += buffer.substr(0, pos + 1);
+	std::cout << "buffer now : " << _bufferBody.substr(0, 100) << " || || || || || " << std::endl;
+
+	// std:: cout << "size -------> :: " << _chunkSize << std::endl; 
+	// std::cout << "_remainingBuffer :";
+	// printNonPrintableChars(_remainingBuffer);
+	
+	// std::cout << "_bufferBody :";
+	// printNonPrintableChars(_bufferBody);
+
+	// std::cout << "_bufferBody :" << _bufferBody << std::endl;
 
 	// _bufferBody = buffer;
 	// printNonPrintableChars(_bufferBody);

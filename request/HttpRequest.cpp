@@ -6,13 +6,13 @@
 /*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/18 20:12:12 by emagueri         ###   ########.fr       */
+/*   Updated: 2025/02/19 17:31:38 by emagueri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
 // #define SIZE 3
-#define SIZE 40
+#define SIZE 4000
 
 
 int pasteInFile(std::string name, std::string data)
@@ -37,7 +37,7 @@ void handleRequest(HttpRequest &request)
 {
   string str_parse;
 
-  pasteInFile(CURREQ, request.getreadbuffer());
+  // pasteInFile(CURREQ, request.getreadbuffer());
   if (request.getendHeaders() == 1)
   {
     // cout <<"lo  = "<<request.getendHeaders() <<endl;

@@ -1,0 +1,66 @@
+File curentReq has been emptied.
+File output.json has been emptied.
+Method --->> POST  <---
+---- End of headers ----
+Accept : */*
+Accept-Encoding : gzip, deflate, br
+Connection : keep-alive
+Content-Length : 5647
+Content-Type : text/x-c
+Host : localhost:8585
+Postman-Token : edecd6df-4fe6-439c-abe9-fa6b8f60bd1a
+Transfer-Encoding : chunked
+User-Agent : PostmanRuntime/7.33.0
+==============================================================================
+next chunk ================== 
+buffer now : 160f
+#include "./Post.hpp"
+
+Post::Post()
+{
+	setBodyType();
+	_chunkSize = -1;
+}
+
+Post::Post(std::map || || || || || 
+head chunk -> :: 160f(x0d)(x0a)#inc
+index of crln : 4|||
+after erase: #include "
+chunk head ---->160f
+_chunkSize[][[[[[[[]]]]]]]: 160f
+_chunkSize: after set : 793
+uncompleted request
+next chunk ================== 
+buffer now : 	// && _bufferBody.size() < 0)
+	fileData = _bufferBody.substr(0, _chunkSize);
+
+ 	eraseCrnl(_bufferBo || || || || || 
+_chunkSize: after set : 0
+head chunk -> :: 0(x0d)(x0a)(x0d)(x0a)
+index of crln : 1|||
+after erase: (x0d)(x0a)
+chunk head ---->0
+_chunkSize[][[[[[[[]]]]]]]: 0
+||end of chunk
+end of chunk
+Method --->> POST  <---
+---- End of headers ----
+Accept : */*
+Accept-Encoding : gzip, deflate, br
+Connection : keep-alive
+Content-Length : 3984
+Content-Type : image/jpeg
+Host : localhost:8585
+Postman-Token : 96a63e49-b4cc-4f45-bd3d-2bab0f166827
+Transfer-Encoding : chunked
+User-Agent : PostmanRuntime/7.33.0
+==============================================================================
+next chunk ================== 
+buffer now : f90
+ || || || || || 
+head chunk -> :: f90(x0d)(x0a)
+index of crln : 3|||
+after erase: 
+chunk head ---->f90
+_chunkSize[][[[[[[[]]]]]]]: f90
+_chunkSize: after set : f90

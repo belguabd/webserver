@@ -38,5 +38,6 @@ public:
     int start(std::map<std::string, std::string> &headers, std::string &buffer);
     int proseRequest(std::string &buffer);
 };
+void printNonPrintableChars(const std::string &str);
 int pasteInFile(std::string name, std::string &data);
  
