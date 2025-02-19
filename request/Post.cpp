@@ -146,7 +146,6 @@ int Post::handleChunked()
 	// && _bufferBody.size() < 0)
 	fileData = _bufferBody.substr(0, _chunkSize);
 
-	std::cout << "fileData : " << fileData << "\n";
  	eraseCrnl(_bufferBody, _chunkSize); // !!!!!!! \r\n
 	// std::cout << 
 	// _bufferBody.erase(0, _chunkSize + 2);
@@ -179,6 +178,7 @@ int Post::proseRequest(std::string &buffer)
 	if (pos == std::string::npos)
 	{
 		_remainingBuffer += buffer;
+		std::cout << "no newline \\n \n";
 		return 1;
 	}
 	_bufferBody = _remainingBuffer;

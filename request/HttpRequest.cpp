@@ -6,13 +6,13 @@
 /*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/18 17:34:56 by emagueri         ###   ########.fr       */
+/*   Updated: 2025/02/18 20:12:12 by emagueri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
 // #define SIZE 3
-#define SIZE 4000
+#define SIZE 40
 
 
 int pasteInFile(std::string name, std::string data)
