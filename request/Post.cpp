@@ -213,17 +213,18 @@ bool fileExists(std::string &filePath)
 	return (stat(filePath.c_str(), &buffer) == 0);
 }
 
-void Post::setFileName(std::string &name)
+void Post::setFileName(std::string extention)
 {
 	struct stat b;
+	std::string name = "./folder/filePost";
 	int n = 0;
 	std::cout << "filename: " << _fileName << std::endl;
-	while (stat(name.c_str(), &b) != -1)
+	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 	{
-		name = "_" + name;
-	std::cout << "filename: " << _fileName << std::endl;
+		name.append("_");
+		std::cout << "filename: " << _fileName << std::endl;
 	}
-	_fileName = name;
+	_fileName = name + extention;
 
 	std::cout << "filename: " << _fileName << std::endl;
 }
@@ -261,7 +262,10 @@ int Post::proseRequest(std::string &buffer)
 
 	if (this->_bodyType == chunked)
 	{
-		// check that chunk size is valid
+		handleChunked();
+	}
+	if (this->_bodyType == boundary)
+	{
 		handleChunked();
 	}
 	if (this->_bodyType == contentLength)

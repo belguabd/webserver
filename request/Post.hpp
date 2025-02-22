@@ -48,7 +48,7 @@ public:
     int _status;
     void setBodyType();
     Body getBodyType() { return _bodyType; }
-    void setFileName(std::string &extention);
+    void setFileName(std::string extention);
     int start(std::map<std::string, std::string> &headers, std::string &buffer);
     int proseRequest(std::string &buffer);
 };

@@ -1,4 +1,4 @@
-NAME = webserver
+NAME = webserve
 CPP = c++ -fsanitize=address -g
 CPPFLAGS = #-Wall -Wextra -Werror -std=c++98
 RM = rm -f
@@ -18,5 +18,6 @@ clean:
 
 fclean:clean
 	$(RM) $(NAME)
+	$(RM) -f ./folder/*
 
 re:fclean all
