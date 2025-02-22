@@ -1,6 +1,6 @@
 #include "./server/WebServer.hpp"
 #include "./request/HttpRequest.hpp"
-#include "./request/Post.hpp"
+#include "./request/Post/Post.hpp"
 #include <system_error>
 
 void makeFileEmpty(const std::string filename) {
