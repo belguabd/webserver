@@ -4,9 +4,9 @@
 #include <iostream>
 #include <sys/_types/_ssize_t.h>
 #include <sys/event.h>
+#include <unistd.h>
 #include <utility>
 #include <vector>
-
 
 
 void WebServer::initialize_kqueue() {
@@ -74,27 +74,74 @@ void WebServer::receive_from_client(int client_fd) {
     }
   }
   ssize_t bytes_read = client->readData();
-  // connected_clients.push_back(client);
-  if (bytes_read > 0) {
+  if (bytes_read == -1) {
+    std::cerr << "Error receiving data from client " << client_fd << ": "
+              << strerror(errno) << "\n";
+    close(client_fd);
+    connected_clients.erase(it);
+    return;
+  }
+  if (bytes_read == 0) {
+    std::cout << "Client disconnected" << std::endl;
+    close(client_fd);
+    connected_clients.erase(it);
+  }
+  if (client->getRequestStatus() == 1) {
     struct kevent changes[1];
     EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
            NULL);
     if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-      std::cerr << "Error setting write event: " << strerror(errno)
-                << std::endl;
+      std::cerr << "Error setting write event: " << strerror(errno) << std::endl;
       close(client_fd);
-      // connected_clients.erase(client_fd);
+      connected_clients.erase(it);
       return;
     }
-    
-  } else {
-    // connected_clients.erase(client_fd);
   }
+
+  // if (bytes_read == -1) {
+  //   std::cerr << "Error receiving data from client " << client_fd << ": "
+  //             << strerror(errno) << "\n";
+  //   return;
+  // }
+  // if (bytes_read == 0) {
+  //   if (requestStatus == 0) {
+  //     requestStatus = 1;
+  //   }
+  // }
+  // if(requestStatus == 1) {
+  //   struct kevent changes[1];
+  //   EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
+  //          NULL);
+  //   if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+  //     std::cerr << "Error setting write event: " << strerror(errno)
+  //               << std::endl;
+  //     close(client_fd);
+  //   }
+  //   requestStatus = 0;
+  // }
+
+  // connected_clients.push_back(client);
+  // if (bytes_read > 0) {
+  //   struct kevent changes[1];
+  //   EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
+  //          NULL);
+  //   if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+  //     std::cerr << "Error setting write event: " << strerror(errno)
+  //               << std::endl;
+  //     close(client_fd);
+  //     // connected_clients.erase(client_fd);
+  //     return;
+  //   }
+
+  // } else {
+  //   // connected_clients.erase(client_fd);
+  // }
 }
 
 void WebServer::respond_to_client(int client_fd) {
+  exit(0);
   // HttpRequest *client = connected_clients[client_fd];
-  
+
   // // client->writeData();
   // struct kevent changes[1];
   // EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
@@ -117,12 +164,9 @@ void WebServer::run() {
       handle_new_connection(event_fd);
     else {
       if (filter == EVFILT_READ) {
-        // puts("Reading from client");
-
         receive_from_client(event_fd);
-
       } else if (filter == EVFILT_WRITE) {
-        
+        puts("write");
         respond_to_client(event_fd);
       }
     }
