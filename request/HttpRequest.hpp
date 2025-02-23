@@ -12,9 +12,12 @@
 #include <vector>
 // class HttpRequest;
 
+
+
 using namespace std;
 class HttpRequest {
 private:
+  
   int client_fd;
   int firsttime;
   int endHeaders;

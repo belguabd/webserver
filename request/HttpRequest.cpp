@@ -68,6 +68,7 @@ int HttpRequest::readData() {
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
   if (bytes_received > 0) {
     readBuffer.assign(buffer, bytes_received);
+    std::cout << readBuffer ;
     handleRequest(*this);
   } else if (bytes_received == 0) {
     std::cout << "Client " << client_fd << " disconnected\n";
