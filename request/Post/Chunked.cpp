@@ -15,13 +15,11 @@ Chunked &Chunked::operator=(const Chunked &other)
 	return *this;
 }
 
-Chunked::Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers):
-    _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers)
+Chunked::Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
+    _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
 {
     _chunkSize = 0;
     initializeMimeTypes();
-	// std::cout << "name : "<< _mimeToExtension[_headers["Content-Type"]] << std::endl;
-    // setFileName(_mimeToExtension[_headers["Content-Type"]]);
 }
 
 void Chunked::setFileName(std::string extention)

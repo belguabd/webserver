@@ -19,25 +19,32 @@ std::string readFile(const std::string &filename)
 
     return buffer.str();
 }
+
+void setBoundaryString(std::string &val)
+{
+    
+}
+
 int main(int argc, char const *argv[])
 {
     map<string, string> headers;
 
-    headers["Transfer-Encoding"] = "chunked";
-    headers["Content-Type"] = "application/octet-stream";
+    headers["Content-Type"] = "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW";
     headers["Content-Length"] = "472";
+
+
 
     // string bufferBody = readFile("/Users/emagueri/Desktop/download.jpg");
     // Post post = Post(headers);
     // post.proseRequest(bufferBody);
 
-    string bufferBody = readFile("./files/test1");
-    Post post = Post(headers);
-    post.proseRequest(bufferBody);
-    cout << "chyata ---------------------------\n";
-    bufferBody = readFile("./files/test2");
-    cout << "file:\n" << bufferBody << "\n";
-    post.proseRequest(bufferBody);
+    // string bufferBody = readFile("./files/test1");
+    // Post post = Post(headers);
+    // post.proseRequest(bufferBody);
+    // cout << "chyata ---------------------------\n";
+    // bufferBody = readFile("./files/test2");
+    // cout << "file:\n" << bufferBody << "\n";
+    // post.proseRequest(bufferBody);
 
     // Post post = Post(headers);
     // std::string bufferBody = readFile("./files/newLine");

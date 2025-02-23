@@ -1,20 +1,26 @@
 #include "./Post.hpp"
 
-Post::Post():chunk(_bufferBody, _remainingBuffer, _headers)
+Post::Post()
+:chunk(_bufferBody, _remainingBuffer, _headers, _status),
+bound(_bufferBody, _remainingBuffer, _headers, _status)
 {
 	setBodyType();
 	_chunkSize = 0;
 }
 
 Post::Post(std::map<std::string, std::string> &headers, std::string &bufferBody)
-: _headers(headers), _bufferBody(bufferBody), chunk(_bufferBody, _remainingBuffer, _headers)
+: _headers(headers), _bufferBody(bufferBody), 
+chunk(_bufferBody, _remainingBuffer, _headers, _status),
+bound(_bufferBody, _remainingBuffer, _headers, _status)
 {
 	setBodyType();
 	_chunkSize = 0;
 }
 
 Post::Post(std::map<std::string, std::string> &headers) 
-	: _headers(headers), chunk(_bufferBody, _remainingBuffer, _headers)
+	: _headers(headers), 
+	chunk(_bufferBody, _remainingBuffer, _headers, _status),
+	bound(_bufferBody, _remainingBuffer, _headers, _status)
 {
 	setBodyType();
 	_chunkSize = -1;
@@ -42,12 +48,15 @@ void Post::setHeaders(std::map<std::string, std::string> &headers)
 
 void Post::setBodyType()
 {
-	if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("boundary") != std::string::npos)
+	if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("; boundary=") != std::string::npos)
 	{
 		if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
 			_bodyType = boundaryChunked;
 		else
+		{
 			_bodyType = boundary;
+			std::cout << "This is boundary\n";
+		}
 	}
 	else if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
 		_bodyType = chunked;
@@ -56,18 +65,6 @@ void Post::setBodyType()
 }
 
 
-// int pasteInFile(std::string name, std::string &data)
-// {
-// 	std::ofstream file(name, std::ios::app);
-// 	file << data;
-// 	return 1;
-// }
-
-// int Post::pasteInFile(std::string fileName, std::string &data)
-// {
-// 	_files[fileName].append(data);
-// 	return (1);
-// }
 
 void printNonPrintableChars(const std::string &str) {
 	for (std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
@@ -80,96 +77,11 @@ void printNonPrintableChars(const std::string &str) {
 	std::cout << std::endl;
 }
 
-// long Post::getChunkSize(std::string &buffer)
-// {
-// 	if (buffer == std::string("\r\n"))
-// 	{
-// 		// std::cout << "due i enter on this when the sizeChunk=0 which mean the [chunk is done] so we saved in [remainingBody] \n";
-// 		// std::cout << "this crln need set it in next part to make sure that is a valid chunkHead (\r\n0xN\r\n)\n";
-// 		this->_remainingBuffer.insert(0, buffer);
-// 		return 0;
-// 	}
-// 	if (buffer == std::string("\r\n0\r\n"))
-// 	{
-// 		// std::cout << "I need this to this to add it in next for bodyBuffer to make sure is completed\n";
-// 		this->_remainingBuffer.insert(0, buffer);
-// 		return 0;
-// 	}
-// 	if (std::string(buffer + _remainingBuffer) == std::string("\r\n0\r\n\r\n"))
-// 	{
-// 		std::cout << "end of req" << std::endl;
-// 		return 0;
-// 	}
-
-// 	if (buffer.substr(0,2) != std::string("\r\n"))
-// 	{
-// 		std::cout << "throw invalid head chunk1" << std::endl;
-// 		return 0;
-// 	}
-// 	size_t pos = buffer.find("\r\n", 2);
-// 	if (pos == std::string::npos)
-// 	{
-// 		std::cout << "throw invalid head chunk2\n" << std::endl;
-// 		return 0;
-// 	}
-//     std::cout << "pos: " << pos << std::endl;
-// 	for (int i = 2; i < pos; i++)
-// 		if (!std::isxdigit(buffer[i]))
-// 		{
-// 			std::cout << "throw invalid head chunk3\n" << std::endl;
-// 			return 0;
-// 		}
-//     long n = strtol(buffer.substr(2, pos).c_str(), NULL, 16);
-// 	buffer.erase(0, pos + 2);
-// 	return n;
-// }
-
-// int Post::handleChunked()
-// {
-// 	std::string fileData;
-// 	if (_chunkSize <= 0) // check is remending data
-// 	{
-// 		std::cout << "buffer head : "; printNonPrintableChars(_bufferBody.substr(0, 12));
-// 		_chunkSize = getChunkSize(_bufferBody);
-// 		if (_chunkSize == 0)
-// 			return 1;
-// 	}
-
-// 	fileData = _bufferBody.substr(0, _chunkSize);
-// 	_bufferBody.erase(0, _chunkSize);
-// 	pasteInFile(_fileName, fileData);
-// 	pasteInFile(FILENAME, fileData);
-// 	_chunkSize -= (long)fileData.size();
-// 	if (_chunkSize > 0)
-// 	{
-// 		std::cout << "uncompleted request\n";
-// 		return (long)fileData.size(); // uncompleted request
-// 	}
-// 	return handleChunked();
-// }
-
-
 bool fileExists(std::string &filePath)
 {
 	struct stat buffer;
 	return (stat(filePath.c_str(), &buffer) == 0);
 }
-
-// void Post::setFileName(std::string extention)
-// {
-// 	struct stat b;
-// 	std::string name = "./folder/filePost";
-// 	int n = 0;
-// 	std::cout << "filename: " << _fileName << std::endl;
-// 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
-// 	{
-// 		name.append("_");
-// 		std::cout << "filename: " << _fileName << std::endl;
-// 	}
-// 	_fileName = name + extention;
-
-// 	std::cout << "filename: " << _fileName << std::endl;
-// }
 
 int Post::start( std::map<std::string, std::string> &headers, std::string &buffer)
 {
@@ -179,6 +91,10 @@ int Post::start( std::map<std::string, std::string> &headers, std::string &buffe
 	setBodyType();
 	if (_bodyType == chunked)
 		chunk.setFileName(chunk._mimeToExtension[chunk._headers["Content-Type"]]);
+	if (_bodyType == boundary)
+		bound.setBoundaryString();
+
+
 	proseRequest(buffer);
 	return 1;
 }
@@ -203,6 +119,7 @@ int Post::proseRequest(std::string &buffer)
 	}
 	if (this->_bodyType == boundary)
 	{
+		bound.handleBoundary();
 		// handleChunked();
 	}
 	if (this->_bodyType == contentLength)

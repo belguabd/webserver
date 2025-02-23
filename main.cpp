@@ -16,7 +16,6 @@ void makeFileEmpty(const std::string filename) {
 int main()
 {
     makeFileEmpty(CURREQ);
-    makeFileEmpty(FILENAME);
     WebServer server;
     while (true)
     {

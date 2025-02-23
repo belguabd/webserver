@@ -7,6 +7,7 @@
 #include <sys/stat.h> 
 #define FILENAME "output.json"
 #include "Chunked.hpp"
+#include "Boundary.hpp"
 
 
 class Post
@@ -25,6 +26,7 @@ private:
     size_t _chunkSize;
     std::string _fileName;
     Chunked chunk;
+    Boundary bound;
     std::map <std::string, std::string> _headers;
     std::string _bufferBody;
     std::string _remainingBuffer;
@@ -43,5 +45,5 @@ public:
     int proseRequest(std::string &buffer);
 };
 void printNonPrintableChars(const std::string &str);
-// int pasteInFile(std::string name, std::string &data);
+int pasteInFile(std::string name, std::string &data);
  
