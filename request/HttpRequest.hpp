@@ -1,61 +1,65 @@
 #pragma once
+#include <string>
 #include <cstring>
 #include <fcntl.h>
-#include <fstream>
 #include <iostream>
-#include <map>
+#include <fstream>
 #include <netinet/in.h>
-#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <map>
 // class HttpRequest;
 
 using namespace std;
-class HttpRequest {
-private:
-  int client_fd;
-  int firsttime;
-  int endHeaders;
-  bool flags;
-  string _path;
-  std::vector<char> writeBuffer;
-  std::string readBuffer;
-  // char *readBuffer;
-
-  // std::string readBuffer;
-
-  // int method;
-  //  Post _post;
-  //  Delete _delete;
-  //  class methodDELETE obj; hassn
-  string _buffer;
-
-public:
-  map<string, string> mapheaders;
-  HttpRequest(int client_fd);
-  ~HttpRequest();
-  int readData();
-  int writeData();
-  int getfd() { return this->client_fd; }
-  void joinBuffer();
-  string partRquest();
-  int defineTypeMethod(const string firstline);
-
-  void parsePartRequest(string str_parse);
-  int getFirstTimeFlag() const { return this->firsttime; }
-  int getendHeaders() const { return this->endHeaders; }
-  void setFirstTimeFlag(int i) { this->firsttime = i; }
-  bool getflags() const { return this->flags; }
-  string getbuffer() const { return this->_buffer; }
-  // string getreadbuffer() const {
-  //     return this->readBuffer;
-  // }
-  void checkHeaders(string &str);
-  //   void display() {
-  //     std::cout << "Client fd: " << this->client_fd << std::endl;
-  //     std::cout << "buffer: " << this->readBuffer << std::endl;
-  //   }
+class HttpRequest
+{
+    private:
+        int client_fd;
+        int firsttime;
+        int endHeaders;
+        string _path;
+        vector<string> dataFirstLine;
+        map<string, string> queryParam;
+        std::string readBuffer;
+        // Post _post;
+        // Delete _delete;
+        string _buffer;
+    public:
+        map<string, string> mapheaders;
+        HttpRequest(int client_fd);
+        ~HttpRequest();
+        int readData();
+        int getfd() const { return this->client_fd; }
+        void  joinBuffer();
+        string partRquest();
+        int defineTypeMethod(string firstline);
+        void parsePartRequest(string str_parse);
+        int getFirstTimeFlag() const {
+            return this->firsttime;
+        }
+        int getendHeaders() const {
+            return this->endHeaders;
+        }
+        void setFirstTimeFlag(int i) {
+            this->firsttime = i;
+        }
+        string getbuffer() const {
+            return this->_buffer;
+        }
+        string getreadbuffer() const {
+            return this->readBuffer;
+        }
+        void    checkHeaders(string& str);
+        void requestLine();
+        void display()
+        {   
+            std::cout << "Client fd: " << this->client_fd << std::endl;
+            std::cout << "buffer: " << this->readBuffer << std::endl;
+        }
+        const std::map<std::string, std::string>& getHeaders() const { return mapheaders; }
+        const std::map<std::string, std::string>& getQueryParams() const { return queryParam; }
+        const std::vector<std::string>& getDataFirstLine() const { return dataFirstLine; }
 };
 vector<string> splitstring(const string &str);
