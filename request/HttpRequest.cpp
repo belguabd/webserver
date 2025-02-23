@@ -6,46 +6,40 @@
 /*   By: ataoufik <ataoufik@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/19 13:39:40 by ataoufik         ###   ########.fr       */
+/*   Updated: 2025/02/23 14:43:59 by ataoufik         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
-int HttpRequest::requestStatus = 0;
 void handleRequest(HttpRequest &request) {
-
   string str_parse;
-  if (request.getendHeaders() == 1) {
-    cout << request.getreadbuffer();
-    request.joinBuffer();
-    return;
-  }
-
-  request.getbuffer();
   request.joinBuffer();
   str_parse = request.partRquest();
   if (request.getFirstTimeFlag() == 0) {
     size_t pos = str_parse.find("\r\n");
     if (pos != string::npos) {
       request.setFirstTimeFlag(1);
-      int sig = request.defineTypeMethod(str_parse.substr(0, pos + 2));
+      request.sig = request.defineTypeMethod(str_parse.substr(0, pos + 2));
       request.requestLine();
       str_parse = str_parse.substr(pos + 2);
     }
   }
   request.parsePartRequest(str_parse);
 
-  // if (request.getbuffer().empty()) {
-  //   for (auto it = request.mapheaders.begin(); it !=
-  //   request.mapheaders.end(); ++it) {
-  //     std::cout << "key =  " << it->first << "-->  "<< "value =" <<
-  //     it->second << std::endl;
-  //   }
-  // }
+  if (request.sig == 1 && request.getendHeaders() == 1)
+  {
+    request.setRequestStatus(1);
+    cout <<"-------___------end headers----- get"<<endl;
+  }
+  else if (request.sig == 2&& request.getendHeaders() == 1)
+  {
+    cout <<"-------___------end headers----- post"<<endl;
+    request.joinBuffer();
+  }
 }
 
 HttpRequest::HttpRequest(int client_fd)
-    : client_fd(client_fd), firsttime(0), endHeaders(0) {
+    : client_fd(client_fd), firsttime(0), endHeaders(0),sig(0) {
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 }
@@ -91,10 +85,13 @@ int HttpRequest::defineTypeMethod(string firstline) {
     cout << "method error" << endl;
     exit(0);
   }
-  // cout<<"method = "<<words[0]<<endl;
-  // cout<<"url = "<<words[1]<<endl;
-  // cout<<"version = "<<words[2]<<endl;
   this->dataFirstLine = words;
+  if (words[0]=="GET")
+    return (1);
+  else if (words[0]=="POST")
+    return (2);
+  else if (words[0]=="DELETE")
+    return (3);
   return (0);
 }
 
@@ -135,6 +132,8 @@ void HttpRequest::checkHeaders(string &str) {
 }
 
 string HttpRequest ::partRquest() {
+  if (this->endHeaders == 1)
+    return "";
   string line;
   string str;
   line += this->_buffer;
@@ -157,12 +156,15 @@ string HttpRequest ::partRquest() {
 }
 void HttpRequest ::joinBuffer() {
 
+  if (this->endHeaders == 1)
+    return ;
   this->_buffer += this->readBuffer;
   this->readBuffer.clear();
 }
 
 void HttpRequest ::parsePartRequest(string str_parse) {
-  requestStatus = 1;
+  if (this->endHeaders==1)
+    return;
   while (!str_parse.empty()) {
     size_t pos = str_parse.find("\r\n");
     if (pos == string::npos)
@@ -170,7 +172,7 @@ void HttpRequest ::parsePartRequest(string str_parse) {
     string str = str_parse.substr(0, pos + 2);
     if (str == "\r\n") {
       this->endHeaders = 1;
-      break;
+      break ;
     }
     str_parse = str_parse.substr(pos + 2);
     checkHeaders(str);

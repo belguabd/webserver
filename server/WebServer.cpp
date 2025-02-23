@@ -73,6 +73,7 @@ void WebServer::receive_from_client(int client_fd) {
       break;
     }
   }
+  client->setRequestStatus(0);
   ssize_t bytes_read = client->readData();
   if (bytes_read == -1) {
     std::cerr << "Error receiving data from client " << client_fd << ": "
@@ -139,14 +140,26 @@ void WebServer::receive_from_client(int client_fd) {
 }
 
 void WebServer::respond_to_client(int client_fd) {
-  exit(0);
-  // HttpRequest *client = connected_clients[client_fd];
-
-  // // client->writeData();
-  // struct kevent changes[1];
-  // EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-  // kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
-  // close(client_fd);
+  HttpRequest *client;
+  std::vector<HttpRequest *>::iterator it;
+  for (it = connected_clients.begin(); it != connected_clients.end(); ++it) {
+    if ((*it)->getfd() == client_fd) {
+      client = *it;
+      // connected_clients.erase(it);
+      break;
+    }
+  }
+  HttpResponse *responseclient = new HttpResponse(client);
+  // 
+  responseclient->writeData();
+  struct kevent changes[1];
+  EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+  kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+  close(client_fd);
+  connected_clients.erase(it);
+  delete client;
+  delete responseclient;
+  
 }
 
 void WebServer::run() {
@@ -164,9 +177,10 @@ void WebServer::run() {
       handle_new_connection(event_fd);
     else {
       if (filter == EVFILT_READ) {
+        puts("read form client");
         receive_from_client(event_fd);
       } else if (filter == EVFILT_WRITE) {
-        puts("write");
+        puts("write form server");
         respond_to_client(event_fd);
       }
     }

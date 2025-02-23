@@ -17,7 +17,7 @@ class HttpRequest {
 private:
   int client_fd;
   int firsttime;
-  static int requestStatus;
+  int requestStatus;
   int endHeaders;
   string _path;
   vector<string> dataFirstLine;
@@ -29,6 +29,7 @@ private:
 
 public:
   map<string, string> mapheaders;
+  int sig;
   HttpRequest(int client_fd);
   ~HttpRequest();
   int getRequestStatus() { return this->requestStatus; }
@@ -41,6 +42,7 @@ public:
   int getFirstTimeFlag() const { return this->firsttime; }
   int getendHeaders() const { return this->endHeaders; }
   void setFirstTimeFlag(int i) { this->firsttime = i; }
+  void setRequestStatus(int i) { this->requestStatus = i; }
   string getbuffer() const { return this->_buffer; }
   string getreadbuffer() const { return this->readBuffer; }
   void checkHeaders(string &str);
