@@ -1,10 +1,14 @@
 #include "./server/WebServer.hpp"
+#include "./conf/ServerConfig.hpp"
 #include "./request/HttpRequest.hpp"
 #include <system_error>
 
-int main()
+int main(int arc,char *arv[])
 {
     WebServer server;
+    string str = arv[1];
+    ServerConfig config(str);
+    config.dataConfigFile();
     while (true)
     {
         server.run();

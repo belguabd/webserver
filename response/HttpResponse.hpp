@@ -1,4 +1,6 @@
 #pragma once
+#include <sys/stat.h>
+#include <dirent.h>
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
@@ -15,11 +17,17 @@
 using namespace std;
 class HttpResponse
 {
-    private:
-    public:
-        HttpRequest *request;
-    HttpResponse(HttpRequest *re);
-    ~HttpResponse();
-    int writeData();
+	private:
+	public:
+		HttpRequest *request;
+	HttpResponse(HttpRequest *re);
+	~HttpResponse();
+	int writeData();
+	void	notFound(int client_socket);
 
 };
+
+
+int checkTypePath(string &path);
+bool ExistFile(string&filePath);
+string autoindex(const string &dirPath);
