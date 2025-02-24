@@ -34,9 +34,10 @@ public:
     int setBoundaryHeadAndEraseBuffer();
     void setMetaData(std::string &headBoundary, std::string key);
     void setBoundaryHeadMetadata(std::string subBuffer);
-    int checkHeaderIsCompleted();
-    int checkBoundaryHead();
-    int handleBoundary();
+    bool checkHeaderIsCompleted();
+    // int checkBoundaryHead();
+    void handleBoundary();
+    int handleBoundaryRec();
     size_t getSizeOfBoundary();
     void setBoundaryString();
 };

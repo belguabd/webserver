@@ -85,7 +85,6 @@ bool fileExists(std::string &filePath)
 
 int Post::start( std::map<std::string, std::string> &headers, std::string &buffer)
 {
-	std::cout << "bound._boundaryHead: " << bound._boundaryString << std::endl;
 	buffer = "\r\n" + buffer;
 	_chunkSize = 0;
 	setHeaders(headers);
@@ -111,7 +110,8 @@ int Post::proseRequest(std::string &buffer)
 	_bufferBody = _remainingBuffer;
 	_remainingBuffer = buffer.substr(pos + 1);
 	_bufferBody += buffer.substr(0, pos + 1);
-	// std::cout << "buffer now : " ;
+	std::cout << "=<>=<>=<>=<>=<>=<>=<>=<>buffer body=<>=<>=<>=<>=<>=<>=<>=<>=<> \n"; printNonPrintableChars(_bufferBody);
+	std::cout << "==<>=<>=<>=<>=<>=<>=<>=<>=<>=<>=<>======<>=<>=<>=<>=<>=<>=<>=<>=<>=<>======<>=<>=<>=<>=<>=<>=<>\n";
 
 	if (this->_bodyType == chunked)
 	{

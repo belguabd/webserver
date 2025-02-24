@@ -68,6 +68,8 @@ void Boundary::setBoundaryHead(std::string subBuffer)
 
 void Boundary::setMetaData(std::string &headBoundary, std::string key)
 {
+    std::cout << "setMetadata> headBoundary: " << std::endl;
+    printNonPrintableChars(_bufferBody);
     std::string val;
     size_t posName = headBoundary.find(key + "=\"", _boundaryString.size());
     _boundaryHead.metadata[key] = "";
@@ -88,19 +90,25 @@ size_t Boundary::getSizeOfBoundary()
         // std::cout << "I am in _boundaryStringEnd\n";
         _boundaryHead.indexNextBoundary = _bufferBody.find(_boundaryStringEnd);
         if (_boundaryHead.indexNextBoundary == std::string::npos)
-            _boundaryHead.indexNextBoundary = _bufferBody.size();
+            _boundaryHead.indexNextBoundary = _bufferBody.size() - 2;
     }
     return _boundaryHead.indexNextBoundary; 
 }
 
 int Boundary::setBoundaryHeadAndEraseBuffer()
 {
-    if (_bufferBody.find(_boundaryString) != 0)
+    int n;
+    std::cout << "test1\n";
+    std::cout << "_boundaryString: "; printNonPrintableChars(_boundaryString);
+    std::cout << "_bufferBody    : "; printNonPrintableChars(_bufferBody);
+    if ((n = _bufferBody.find(_boundaryString)) != 0)
         return 0;
+    std::cout << "test2\n";
     if (_bufferBody.find(_boundaryString) == 0)
         std::cout << "is valid boundary\n";
-    _boundaryHead.isDone = false;
-    size_t sizeHeadBoundary = _bufferBody.find("\r\n\r\n");
+
+    size_t sizeHeadBoundary = _bufferBody.find("\r\n\r\n", n);
+    std::cout << "sizeHeadBoundary: " << sizeHeadBoundary << std::endl;
     if (sizeHeadBoundary == std::string::npos)
     {
         std::cout << "sizeHeadBoundary: " << sizeHeadBoundary << std::endl;
@@ -126,27 +134,35 @@ int Boundary::setBoundaryHeadAndEraseBuffer()
     return 1;
 }
 
-int Boundary::checkBoundaryHead()
+bool Boundary::checkHeaderIsCompleted()
 {
-    // int n = std::count(_bufferBody.begin(), _bufferBody.end(), "\r\n");
-    // if (n < 5)
-    //     return 1;
-    // n = _bufferBody.find(_boundaryString);
-    // if (n  == std::string::npos && n != 2)
-    //     return 1;
-    // setBoundaryHeadAndErase();
-
-    // std::string getContentDisposition(_bufferBody.substr(n + 1))
-    return 1;
+    if (_bufferBody[0] != '\r')
+        return true;
+    size_t countCrlf = std::count(_bufferBody.begin(), _bufferBody.end(), '\r');
+    if (countCrlf >= 5)
+        return true;
+    else 
+    return false;
 }
 
-int Boundary::checkHeaderIsCompleted()
+void Boundary::handleBoundary()
 {
-    
-    return 1;
-}
+    // if (!checkHeaderIsCompleted())
+    // {
+    //     std::cout << "is not completed\n";
+    //     _remainingBuffer = _bufferBody + _remainingBuffer;
+    //     return;
+    // }
+    // if (_bufferBody.size() <= 2)
+    // {
+    //     // std::cout << "is not completed\n";
+    //     _remainingBuffer = _bufferBody + _remainingBuffer;
+    //     return;
+    // }
 
-int Boundary::handleBoundary()
+    handleBoundaryRec();
+}
+int Boundary::handleBoundaryRec()
 {
     // if (_bufferBody.find("\r") != std::string::npos)
     // checkHeaderIsCompleted();
@@ -156,9 +172,10 @@ int Boundary::handleBoundary()
         _bufferBody = "";
         return 1;
     }
+    std::cout << "buffer : "; printNonPrintableChars(_bufferBody);
     if (setBoundaryHeadAndEraseBuffer() == 0)
     {
-        std::cout << "already seted\n";
+        std::cout << "the header boundary is not in the current buffer\n";
         _boundaryHead.indexNextBoundary = getSizeOfBoundary();
     }
     

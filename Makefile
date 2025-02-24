@@ -7,13 +7,16 @@ SRC = main.cpp ./server/ServerSocket.cpp  ./server/WebServer.cpp ./request/HttpR
 	./request/Post/Post.cpp ./request/Post/Chunked.cpp ./request/Post/Boundary.cpp
 
 OBJ = $(SRC:.cpp=.o)
-all:$(NAME)
+all:$(NAME) rm
 $(NAME):$(OBJ)
 	$(CPP) $(CPPFLAGS) -o $(NAME) $(OBJ) 
 
 %.o:%.cpp ./server/ServerSocket.hpp  ./server/WebServer.hpp ./request/HttpRequest.hpp \
 	./request/Post/Post.hpp ./request/Post/Chunked.hpp ./request/Post/Boundary.hpp 
 	$(CPP) $(CPPFLAGS) -c $< -o $@ 
+
+rm:
+	$(RM) -f ./data/*
 
 clean:
 	$(RM) $(OBJ)

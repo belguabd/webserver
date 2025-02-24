@@ -1,0 +1,209 @@
+File curentReq has been emptied.
+Method --->> POST  <---
+---- End of headers ----
+Accept : */*
+Accept-Encoding : gzip, deflate, br
+Connection : keep-alive
+Content-Length : 1406
+Content-Type : multipart/form-data; boundary=--------------------------956000537757912722420837
+Host : localhost:8585
+Postman-Token : a61beb43-0537-4999-aac6-fdf50e9f2fa3
+User-Agent : PostmanRuntime/7.33.0
+==============================================================================
+bound._boundaryHead: 
+This is boundary
+--------buffer now--------- 
+
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 2
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+----------------------------956000537757912722420837
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 54
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+Content-Disposition: form-data; name="test.cpp"; filename="test.cpp"
+Content-Type: text/x-c
+
+#include <iostream>
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 116
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+#include <string>
+#include <fstream>
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 37
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+#include <cstdlib> // Required for strtol
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 42
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+#include <cerrno>  // Required for errno
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 41
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+#include <map>  // Required for errno
+
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 39
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+std::map<std::string, std::string> metadata;
+
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 46
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+void setBoundaryHeadMetadata(std::string subBuffer)
+{
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 54
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+    size_t len = subBuffer.find_first_of(";\r");
+
+    if (subBuffer[0] == '\n')
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 80
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+        return;
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 16
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+    size_t pos = subBuffer.find("=");
+    if (pos > len)
+    {
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 63
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+        std::cout << "throw1\n"; // throw
+        return ;
+    }
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 65
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+    std::string key = subBuffer.substr(1, pos - 1); // set 1 to skip `espace` " "
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 82
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+    size_t pos1 = subBuffer.find_first_of(";\r", pos);
+	if (pos1 > len)
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 72
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+    {
+        std::cout << "throw2\n"; // throw
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 48
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+        return ;
+    }
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 23
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+    std::string value = subBuffer.substr(pos + 2, pos1 - pos - 3);
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 67
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+    metadata[key] = value;
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 27
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+	std::string param = subBuffer.substr(len+1);
+
+	setBoundaryHeadMetadata(param);
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 80
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+}
+
+
+int main()
+{
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 17
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+	// std::string str = " name=\"username\"\r\n\"";
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 50
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+	std::string str = " name=\"file\"; filename=\"example.txt\"\r\n";
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 67
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+	setBoundaryHeadMetadata(str);
+
+    std::cout << std::endl;
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 60
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+	for (auto it : metadata)
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 26
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+		std::cout << "|" << it.first << ":" << it.second << "|" << std::endl;
+
+
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 74
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+}
+
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 4
+_boundaryHead.metadata["filename"] :
+--------buffer now--------- 
+----------------------------956000537757912722420837--
+=-----------=====----------=====-------===
+the header boundary is not in the curent buffer
+_boundaryHead.indexNextBoundary: 56
+_boundaryHead.metadata["filename"] :
