@@ -37,6 +37,7 @@ public:
     int checkHeaderIsCompleted();
     int checkBoundaryHead();
     int handleBoundary();
+    size_t getSizeOfBoundary();
     void setBoundaryString();
 };
 void printNonPrintableChars(const std::string &str);

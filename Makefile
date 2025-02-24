@@ -17,9 +17,9 @@ $(NAME):$(OBJ)
 
 clean:
 	$(RM) $(OBJ)
+	$(RM) -f ./data/*
 
 fclean:clean
 	$(RM) $(NAME)
-	$(RM) -f ./data/*
 
 re:fclean all

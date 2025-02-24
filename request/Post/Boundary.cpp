@@ -80,6 +80,19 @@ void Boundary::setMetaData(std::string &headBoundary, std::string key)
     }
 }
 
+size_t Boundary::getSizeOfBoundary()
+{
+    _boundaryHead.indexNextBoundary = _bufferBody.find(_boundaryString);
+     if (_boundaryHead.indexNextBoundary == std::string::npos)
+    {
+        // std::cout << "I am in _boundaryStringEnd\n";
+        _boundaryHead.indexNextBoundary = _bufferBody.find(_boundaryStringEnd);
+        if (_boundaryHead.indexNextBoundary == std::string::npos)
+            _boundaryHead.indexNextBoundary = _bufferBody.size();
+    }
+    return _boundaryHead.indexNextBoundary; 
+}
+
 int Boundary::setBoundaryHeadAndEraseBuffer()
 {
     if (_bufferBody.find(_boundaryString) != 0)
@@ -105,6 +118,8 @@ int Boundary::setBoundaryHeadAndEraseBuffer()
     {
         // std::cout << "I am in _boundaryStringEnd\n";
         _boundaryHead.indexNextBoundary = _bufferBody.find(_boundaryStringEnd);
+        if (_boundaryHead.indexNextBoundary == std::string::npos)
+            _boundaryHead.indexNextBoundary = _bufferBody.size();
     }
     // std::cout << "headBoundary: ";
     // printNonPrintableChars(headBoundary);
@@ -127,7 +142,7 @@ int Boundary::checkBoundaryHead()
 
 int Boundary::checkHeaderIsCompleted()
 {
-    // if ()
+    
     return 1;
 }
 
@@ -136,17 +151,24 @@ int Boundary::handleBoundary()
     // if (_bufferBody.find("\r") != std::string::npos)
     // checkHeaderIsCompleted();
     if (_bufferBody.empty() || _bufferBody.substr(0, _boundaryStringEnd.size()) == _boundaryStringEnd)
+    {
+        std::cout << "end boundary" << std::endl;
+        _bufferBody = "";
         return 1;
-    setBoundaryHeadAndEraseBuffer();
-    // std::cout << "_boundaryHead.indexNextBoundary: " << _boundaryHead.indexNextBoundary << std::endl;
-    // std::cout << "_boundaryHead.metadata[\"filename\"] :" << _boundaryHead.metadata["filename"] << std::endl;
+    }
+    if (setBoundaryHeadAndEraseBuffer() == 0)
+    {
+        std::cout << "already seted\n";
+        _boundaryHead.indexNextBoundary = getSizeOfBoundary();
+    }
+    
+    std::cout << "_boundaryHead.indexNextBoundary: " << _boundaryHead.indexNextBoundary << std::endl;
+    std::cout << "_boundaryHead.metadata[\"filename\"] :" << _boundaryHead.metadata["filename"] << std::endl;
     if (!(_boundaryHead.metadata["filename"] == ""))
     {
         std::string fileData = _bufferBody.substr(0, _boundaryHead.indexNextBoundary);
-        // std::cout << "fileData :" <<  fileData << "||||||\n";
-        // std::ofstream file(std::string(PREFIXFILENAME) + _boundaryHead.metadata["filename"], std::ios::trunc);
-        // pasteInFile(std::string("./data/") + _boundaryHead.metadata["filename"], fileData);
-        pasteInFile(std::string("/Users/emagueri/goinfre/uploads/") + _boundaryHead.metadata["filename"], fileData);
+        // pasteInFile(std::string("/Users/emagueri/goinfre/uploads/") + _boundaryHead.metadata["filename"], fileData);
+        pasteInFile(std::string("./data/") + _boundaryHead.metadata["filename"], fileData);
         if (_boundaryHead.indexNextBoundary != std::string::npos)
         {
             _boundaryHead.isDone = true;
