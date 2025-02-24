@@ -85,6 +85,7 @@ bool fileExists(std::string &filePath)
 
 int Post::start( std::map<std::string, std::string> &headers, std::string &buffer)
 {
+	std::cout << "bound._boundaryHead: " << bound._boundaryString << std::endl;
 	buffer = "\r\n" + buffer;
 	_chunkSize = 0;
 	setHeaders(headers);
@@ -93,7 +94,6 @@ int Post::start( std::map<std::string, std::string> &headers, std::string &buffe
 		chunk.setFileName(chunk._mimeToExtension[chunk._headers["Content-Type"]]);
 	if (_bodyType == boundary)
 		bound.setBoundaryString();
-
 
 	proseRequest(buffer);
 	return 1;
