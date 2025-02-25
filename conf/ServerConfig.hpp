@@ -40,15 +40,17 @@ class ServerConfig
     public:
         ServerConfig(string &str);
         ~ServerConfig();
-        void dataConfigFile();
-        void validbrackets();
-        void parseServerConfig();
+        // void dataConfigFile();
+        // void separateServer();
+        void validbrackets(string &str);
+        void parseServerConfig(string &strdata);
         void checkGlobalConfig(string strConfig);
         void locationData(string &strlocat);
         void locationNormal(string &location);
         void locationUpload(string &location);
         void locationCgi(string &location);
         void locationRedirection(string &location);
+          string getdata() const {return this->data;}
 };
 
 string removeComments(string& input);

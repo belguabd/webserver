@@ -5,10 +5,12 @@
 
 int main(int arc,char *arv[])
 {
-    WebServer server;
+    if (!arv[1])
+        return 0;
     string str = arv[1];
-    ServerConfig config(str);
-    config.dataConfigFile();
+    WebServer server (str);
+    // ServerConfig config(str);
+    // config.dataConfigFile();
     while (true)
     {
         server.run();
