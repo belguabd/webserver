@@ -1,1 +1,197 @@
 File curentReq has been emptied.
+Method --->> POST  <---
+---- End of headers ----
+Accept : */*
+Accept-Encoding : gzip, deflate, br
+Cache-Control : no-cache
+Connection : keep-alive
+Content-Length : 897
+Content-Type : multipart/form-data; boundary=--------------------------161377349562845935774291
+Host : localhost:8585
+Postman-Token : 18d457da-2ad2-4c83-b965-9c7ded3d0301
+User-Agent : PostmanRuntime/7.33.0
+==============================================================================
+This is boundary
+buffer: ===>
+(x0d)(x0a)
+<=============>
+buffer: ===>
+(x0d)(x0a)--------------------------161377349562845935774291(x0d)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+(x0d)(x0a)
+<=============>
+buffer: ===>
+(x0d)(x0a)Content-Disposition: form-data; name=""; filename="Makefile"(x0d)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+(x0d)(x0a)
+<=============>
+buffer: ===>
+(x0d)(x0a)Content-Type: application/octet-stream(x0d)(x0a)(x0d)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+(x0d)(x0a)
+<=============>
+buffer: ===>
+(x0d)(x0a)NAME = webserve(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+e(x0a)
+<=============>
+buffer: ===>
+e(x0a)CPP = c++ -g -fsanitize=address (x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+ (x0a)
+<=============>
+buffer: ===>
+ (x0a)CPPFLAGS = #-Wall -Wextra -Werror -std=c++98(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+8(x0a)
+<=============>
+buffer: ===>
+8(x0a)RM = rm -f(x0a)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+(x0a)(x0a)
+<=============>
+buffer: ===>
+(x0a)(x0a)SRC = main.cpp ./server/ServerSocket.cpp  ./server/WebServer.cpp ./request/HttpRequest.cpp \(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+\(x0a)
+<=============>
+buffer: ===>
+\(x0a)(x09)./request/Post/Post.cpp ./request/Post/Chunked.cpp ./request/Post/Boundary.cpp(x0a)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+(x0a)(x0a)
+<=============>
+buffer: ===>
+(x0a)(x0a)OBJ = $(SRC:.cpp=.o)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+)(x0a)
+<=============>
+buffer: ===>
+)(x0a)all:$(NAME) rm(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+m(x0a)
+<=============>
+buffer: ===>
+m(x0a)$(NAME):$(OBJ)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+)(x0a)
+<=============>
+buffer: ===>
+)(x0a)(x09)$(CPP) $(CPPFLAGS) -o $(NAME) $(OBJ) (x0a)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+(x0a)(x0a)
+<=============>
+buffer: ===>
+(x0a)(x0a)%.o:%.cpp ./server/ServerSocket.hpp  ./server/WebServer.hpp ./request/HttpRequest.hpp \(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+\(x0a)
+<=============>
+buffer: ===>
+\(x0a)(x09)./request/Post/Post.hpp ./request/Post/Chunked.hpp ./request/Post/Boundary.hpp (x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+ (x0a)
+<=============>
+buffer: ===>
+ (x0a)(x09)$(CPP) $(CPPFLAGS) -c $< -o $@ (x0a)(x0a)rm:(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+:(x0a)
+<=============>
+buffer: ===>
+:(x0a)(x09)$(RM) -f ./data/*(x0a)(x0a)clean:(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+:(x0a)
+<=============>
+buffer: ===>
+:(x0a)(x09)$(RM) $(OBJ)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+)(x0a)
+<=============>
+buffer: ===>
+)(x0a)(x09)$(RM) -f ./data/*(x0a)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+(x0a)(x0a)
+<=============>
+buffer: ===>
+(x0a)(x0a)fclean:clean(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+n(x0a)
+<=============>
+buffer: ===>
+n(x0a)(x09)$(RM) $(NAME)(x0a)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+(x0a)(x0a)
+<=============>
+buffer: ===>
+(x0a)(x0a)re:fclean all(x0d)(x0a)
+<=============>
+test1
+the header boundary is not in the current buffer
+buffer: ===>
+(x0d)(x0a)
+<=============>
+buffer: ===>
+(x0d)(x0a)----------------------------161377349562845935774291--(x0d)(x0a)
+<=============>
+end boundary

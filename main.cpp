@@ -18,7 +18,5 @@ int main()
     makeFileEmpty(CURREQ);
     WebServer server;
     while (true)
-    {
         server.run();
-    }
 }

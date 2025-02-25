@@ -6,14 +6,15 @@
 /*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/24 18:54:13 by emagueri         ###   ########.fr       */
+/*   Updated: 2025/02/25 16:56:29 by emagueri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
-// #define SIZE 10
+// #define SIZE 11
 // #define SIZE 5000
-#define SIZE 55
+#define SIZE 5120
+// #define SIZE 52
 
 
 int pasteInFile(std::string name, std::string data)

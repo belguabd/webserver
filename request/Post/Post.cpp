@@ -110,8 +110,8 @@ int Post::proseRequest(std::string &buffer)
 	_bufferBody = _remainingBuffer;
 	_remainingBuffer = buffer.substr(pos + 1);
 	_bufferBody += buffer.substr(0, pos + 1);
-	std::cout << "=<>=<>=<>=<>=<>=<>=<>=<>buffer body=<>=<>=<>=<>=<>=<>=<>=<>=<> \n"; printNonPrintableChars(_bufferBody);
-	std::cout << "==<>=<>=<>=<>=<>=<>=<>=<>=<>=<>=<>======<>=<>=<>=<>=<>=<>=<>=<>=<>=<>======<>=<>=<>=<>=<>=<>=<>\n";
+	// std::cout << "=<>=<>=<>=<>=<>=<>=<>=<>buffer body=<>=<>=<>=<>=<>=<>=<>=<>=<> \n"; printNonPrintableChars(_bufferBody);
+	// std::cout << "==<>=<>=<>=<>=<>=<>=<>=<>=<>=<>=<>======<>=<>=<>=<>=<>=<>=<>=<>=<>=<>======<>=<>=<>=<>=<>=<>=<>\n";
 
 	if (this->_bodyType == chunked)
 	{

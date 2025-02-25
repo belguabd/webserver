@@ -37,12 +37,14 @@ void setBoundaryHeadMetadata(std::string subBuffer)
 int main()
 {
 	// std::string str = " name=\"username\"\r\n\"";
-	std::string str = " name=\"file\"; filename=\"example.txt\"\r\n";
-	setBoundaryHeadMetadata(str);
 
-    std::cout << std::endl;
-	for (auto it : metadata)
-		std::cout << "|" << it.first << ":" << it.second << "|" << std::endl;
+    std::cout << std::string::max_size() << std::endl;
+	// std::string str = " name=\"file\"; filename=\"example.txt\"\r\n";
+	// setBoundaryHeadMetadata(str);
+
+    // std::cout << std::endl;
+	// for (auto it : metadata)
+	// 	std::cout << "|" << it.first << ":" << it.second << "|" << std::endl;
 
 
 }

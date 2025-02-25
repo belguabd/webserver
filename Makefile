@@ -16,11 +16,11 @@ $(NAME):$(OBJ)
 	$(CPP) $(CPPFLAGS) -c $< -o $@ 
 
 rm:
-	$(RM) -f ./data/*
+	$(RM) -f ./upload/*
 
 clean:
 	$(RM) $(OBJ)
-	$(RM) -f ./data/*
+	$(RM) -f ./upload/*
 
 fclean:clean
 	$(RM) $(NAME)
