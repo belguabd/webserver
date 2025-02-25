@@ -22,6 +22,7 @@ private:
   struct kevent *events;
   int max_events;
   void initialize_kqueue();
+  
 
 public:
   WebServer();

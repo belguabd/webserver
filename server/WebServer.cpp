@@ -39,9 +39,9 @@ WebServer::WebServer() : max_events(MAX_EVENTS) {
   ports.push_back(8080);
 
   addServerSocket(ports[0]);
-  //   for (size_t i = 0; i < ports.size(); ++i) {
-  // addServerSocket(ports[i]);
-  //   }
+    // for (size_t i = 0; i < ports.size(); ++i) {
+    //     addServerSocket(ports[i]);
+    // }
 }
 
 void WebServer::handle_new_connection(int server_fd) {
