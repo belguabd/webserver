@@ -1,4 +1,5 @@
 #include "./server/WebServer.hpp"
+#include "./conf/ServerConfig.hpp"
 #include "./request/HttpRequest.hpp"
 #include "./request/Post/Post.hpp"
 #include <system_error>
@@ -13,10 +14,13 @@ void makeFileEmpty(const std::string filename) {
     }
 }
 
-int main()
+int main(int arc, char **arv)
 {
-    makeFileEmpty(CURREQ);
-    WebServer server;
+    if (!arv[1])
+        return 0;
+    string str = arv[1];
+    WebServer server (str);
+    // makeFileEmpty(CURREQ);
     while (true)
         server.run();
 }

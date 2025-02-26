@@ -6,170 +6,109 @@
 /*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/26 14:27:48 by emagueri         ###   ########.fr       */
+/*   Updated: 2025/02/26 18:49:41 by emagueri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
-// #define SIZE 11
-// #define SIZE 5000
-#define SIZE 5120
-// #define SIZE 52
+int i= 0;
 
-
-int pasteInFile(std::string name, std::string data)
-{
-	// if (fileExists(name))
-	// {
-	//     name += "_";
-	//     return pasteInFile(name, data);
-	// }
-	std::ofstream file(name, std::ios::app);
-	file << data;
-	return 1;
-}
-
-
-void HttpRequest::postBodyHandler()
-{
-  _post.proseRequest(this->readBuffer);
-}
-
-void handleRequest(HttpRequest &request)
-{
+void handleRequest(HttpRequest &request) {
   string str_parse;
-
-  if (std::strlen(CURREQ))
-    pasteInFile(CURREQ, request.getreadbuffer());
-  if (request.getendHeaders() == 1)
-  {
-    // cout <<"lo  = "<<request.getendHeaders() <<endl;
-    // cout << request.getreadbuffer() << "||||||";
-    request.postBodyHandler();
-    request.joinBuffer();
-    return;
-  }
   request.joinBuffer();
   str_parse = request.partRquest();
-  if (request.getFirstTimeFlag() == 0)
-  {
+  if (request.getFirstTimeFlag() == 0) {
     size_t pos = str_parse.find("\r\n");
-    if (pos != string::npos)
-    {
+    if (pos != string::npos) {
       request.setFirstTimeFlag(1);
-      int f = request.defineTypeMethod(str_parse.substr(0, pos + 2));
-      if (f == 1)
-        std::cout << "Method --->> GET  <---" << std::endl;
-      else if (f == 2)
-      {
-        // request._post.setHeaders(request.mapHeaders);
-        std::cout << "Method --->> POST  <---" << std::endl;
-      }
-      else if (f == 3)
-        std::cout << "Method --->> DELETE  <---" << std::endl;
-      // size_t pos = str_parse.find("\r\n");
+      request.sig = request.defineTypeMethod(str_parse.substr(0, pos + 2));
+      request.requestLine();
       str_parse = str_parse.substr(pos + 2);
     }
-    // cout <<str_parse<<endl;
-    // exit(0);
   }
   request.parsePartRequest(str_parse);
 
-  // if (request.getbuffer().empty())
-  // {
-  // for (auto it = request.mapHeaders.begin(); it != request.mapHeaders.end(); ++it) {
-  //   std::cout << "key =  " << it->first << "-->  "<< "value = " << it->second << std::endl;
-  // }
-  // }
+  if (request.sig == 1 && request.getendHeaders() == 1)
+  {
+    cout <<"-------___------end headers----- get"<<endl;
+    request.setRequestStatus(1);
+  }
+
+  else if (request.sig == 2&& request.getendHeaders() == 1)
+  {
+    string tmp;
+    // cout <<"-------___------end headers----- post"<<endl;
+    if (i == 0)
+    {
+      tmp = request.getbuffer();
+      // request.
+      request._post.start(request.mapheaders, tmp);
+      i=1;
+    }
+    else
+    {
+      tmp = request.getreadbuffer();
+      request._post.proseRequest(tmp);
+    }
+
+    request.joinBuffer();
+  }
 }
 
-HttpRequest::HttpRequest(int client_fd) : client_fd(client_fd), firsttime(0), endHeaders(0)
-{
+HttpRequest::HttpRequest(int client_fd)
+    : client_fd(client_fd), firsttime(0), endHeaders(0),sig(0) {
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 }
 
-int HttpRequest::readData()
-{
-  char buffer[SIZE];
+int HttpRequest::readData() {
+  char buffer[10];
   ssize_t bytes_received;
-
-  while ((bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0)) > 0)
-  {
-    if (bytes_received > 0)
-    {
-      buffer[bytes_received] = '\0';
-      // readBuffer = buffer;
-      readBuffer.assign(buffer, bytes_received);
-      handleRequest(*this);
-    }
-    else if (bytes_received == 0)
-    {
-      std::cout << "Client " << client_fd << " disconnected\n";
-      return -1;
-    }
-    else
-    {
-      std::cerr << "Error receiving data from client " << client_fd << ": " << strerror(errno) << "\n";
-      return -1;
-    }
+  std::memset(buffer, 0, sizeof(buffer));
+  bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
+  if (bytes_received > 0) {
+    readBuffer.assign(buffer, bytes_received);
+    // std::cout << readBuffer << "\n";
+    handleRequest(*this);
   }
   return bytes_received;
 }
-
-int HttpRequest::writeData()
-{
-  int bytes_send = 0;
-    // const char *msg = "Hi I am server";
-    // ssize_t bytes_send = send(client_fd, msg, strlen(msg), 0);
-    // if (bytes_send == -1)
-    //   std::cerr << "Error sending message to client" << std::endl;
-  return bytes_send;
-}
-HttpRequest::~HttpRequest() {}
-int HttpRequest::defineTypeMethod(const string firstline)
-{
-  vector<string> words;
-  size_t start;
-  size_t i = 0;
-  while (i < firstline.length())
-  {
-    while (i < firstline.length() && (firstline[i] == ' ' || firstline[i] == '\t'))
-      i++;
-    start = i;
-    while (i < firstline.length() && firstline[i] != ' ')
-      i++;
-    if (firstline[i] == ' ')
-    {
-      if (firstline[i + 1] == ' ' || firstline[i + 1] == '\t')
-      {
-        cout << "Bad Request" << endl;
-        exit(1);
-      }
-    }
-    // std::cout << " i  = "<< i <<std::endl;
-    // std::cout << " start  = "<< start <<std::endl;
-    words.push_back(firstline.substr(start, i - start));
-    i++;
+std::string trimNewline(std::string str) {
+  while (!str.empty() && (str.back() == '\n' || str.back() == '\r' ||
+                          str.back() == ' ' || str.back() == '\t')) {
+    str.pop_back();
   }
-  if (words.size() != 3 || words[1][0] != '/')
-  {
+  return str;
+}
+
+HttpRequest::~HttpRequest() {}
+int HttpRequest::defineTypeMethod(string firstline) {
+  firstline = trimNewline(firstline);
+  vector<string> words;
+  size_t i = 0;
+  while (i < firstline.length()) {
+    while (i < firstline.length() &&
+           (firstline[i] == ' ' || firstline[i] == '\t'))
+      i++;
+    if (i >= firstline.length())
+      break;
+    size_t pos = firstline.find_first_of(" \t", i);
+    if (pos == std::string::npos)
+      pos = firstline.length();
+    words.push_back(firstline.substr(i, pos - i));
+    i = pos + 1;
+  }
+  if (words.size() != 3 || words[1][0] != '/') {
     cout << "method error" << endl;
     exit(0);
   }
-  this->_path = words[1];
-
-  if (words[0] == "GET")
-    return 1;
-  else if (words[0] == "POST")
-  {
-    // Post obj = Post(map); // here you will create an object of Post class
-    return 2;
-  }
-  else if (words[0] == "DELETE")
-    return 3;
-  cout << "Bad Request" << endl;
-  // words[2] ??? check
+  this->dataFirstLine = words;
+  if (words[0]=="GET")
+    return (1);
+  else if (words[0]=="POST")
+    return (2);
+  else if (words[0]=="DELETE")
+    return (3);
   return (0);
 }
 
@@ -193,14 +132,14 @@ vector<string> splitstring(const string &str)
   }
   return (words);
 }
-void HttpRequest::checkHeaders(string &str)
-{
+void HttpRequest::checkHeaders(string &str) {
 
+
+  str = trimNewline(str);
   size_t pos = str.find(':');
   string result;
   vector<string> words;
-  if (str[pos - 1] == ' ')
-  {
+  if (pos == string::npos || (pos > 0 && str[pos - 1] == ' ')) {
     cout << "bad request space : " << endl;
     exit(0);
   }
@@ -212,83 +151,102 @@ void HttpRequest::checkHeaders(string &str)
     result += ' ';
     result += words;
   }
-
-  result = result.substr(1, result.size() - 3);
-  this->mapHeaders[str.substr(0, pos)] = result;
+  string headerName = str.substr(0, pos);
+  result.erase(0, result.find_first_not_of(" "));
+  this->mapheaders[headerName] = result;
 }
 
-string HttpRequest ::partRquest()
-{
+string HttpRequest ::partRquest() {
+  if (this->endHeaders == 1)
+    return "";
   string line;
   string str;
   line += this->_buffer;
   this->_buffer.clear();
   size_t pos = line.find("\r\n\r\n");
-  if (pos == string::npos)
-    pos = line.rfind("\r\n");
-
-  if (pos != string::npos)
-  {
+  if (pos != string::npos) {
     str = line.substr(0, pos + 4);
-
-    this->_buffer = line.substr(pos + 2);
-  }
-  else
-  {
-    this->_buffer = line;
-    return "";
+    this->_buffer = line.substr(pos + 4);
+  } else {
+    pos = line.rfind("\r\n");
+    if (pos != string::npos) {
+      str = line.substr(0, pos + 2);
+      this->_buffer = line.substr(pos + 2);
+    } else {
+      this->_buffer = line;
+      return "";
+    }
   }
   return (str);
 }
+void HttpRequest ::joinBuffer() {
 
-void HttpRequest ::joinBuffer()
-{
+  if (this->endHeaders == 1)
+    return ;
   this->_buffer += this->readBuffer;
   this->readBuffer.clear();
 }
 
-void HttpRequest ::parsePartRequest(string str_parse)
-{
-
-  while (!str_parse.empty())
-  {
+void HttpRequest ::parsePartRequest(string str_parse) {
+  if (this->endHeaders==1)
+    return;
+  while (!str_parse.empty()) {
     size_t pos = str_parse.find("\r\n");
     if (pos == string::npos)
       break;
     string str = str_parse.substr(0, pos + 2);
-    if (str == "\r\n")
-    {
-      std::cout << "---- End of headers ----" << std::endl;
-      str_parse = str_parse.substr(pos + 2);
-      size_t pos1 = str_parse.find("\r\n");
-      string str1 = str_parse.substr(0, pos1 + 2);
-      if (str1.find(":") == string::npos)
-      {
-        for (auto it : mapHeaders)
-          std::cout << it.first << " : " << it.second << std::endl;
-        this->endHeaders = 1;
-
-        _buffer.erase(0, 2);
-        std::cout << "==============================================================================\n";
-        _post.start(mapHeaders, _buffer);
-
-        break;
-      }
-      else
-      {
-        cout << "error new line" << endl;
-        exit(0);
-      }
+    if (str == "\r\n") {
+      this->endHeaders = 1;
+      break ;
     }
     str_parse = str_parse.substr(pos + 2);
-    // cout << " str_parse =   "<<str_parse<<endl;
     checkHeaders(str);
     str.clear();
-    // checkHeaders()
-    // if (str =="\r\n")
-    //   exit(0);
   }
 }
-// GET / HTTP/1.1"\r\n"
-// Host: localhost:8080"\r\n"
-// U ser-Agent'\0'
+void HttpRequest ::requestLine() {
+  string path;
+  string querydata;
+  path = this->dataFirstLine[1];
+  if (this->dataFirstLine[2].compare("HTTP/1.1") != 0) {
+    cout << "Not Supported" << endl;
+    return;
+  }
+  size_t pos = path.find("?");
+  if (pos == string::npos) {
+    pos = path.find("#");
+    if (pos == string::npos) {
+      return;
+    } else {
+      this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
+      cout << "-- > " << this->dataFirstLine[1] << endl;
+      return;
+    }
+  }
+  if (this->dataFirstLine[1][pos + 1] == '\0') {
+    cout << "erro ??" << endl;
+    this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
+    return;
+  }
+  querydata = this->dataFirstLine[1].substr(pos + 1);
+  this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
+  size_t i = 0;
+  while (i < querydata.length()) {
+    size_t endkey = querydata.find("=", i);
+    size_t endval = querydata.find("&", i);
+    if (endkey != string::npos) {
+      string key = querydata.substr(i, endkey - i);
+      string value;
+      if (endval != string::npos)
+        value = querydata.substr(endkey + 1, endval - endkey - 1);
+      else
+        value = querydata.substr(endkey + 1);
+      cout << "Key: " << key << ", Value: " << value << endl;
+      if (endval != string::npos)
+        i = endval + 1;
+      else
+        i = querydata.length();
+      this->queryParam[key] = value;
+    }
+  }
+}

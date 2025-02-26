@@ -86,6 +86,7 @@ bool fileExists(std::string &filePath)
 int Post::start( std::map<std::string, std::string> &headers, std::string &buffer)
 {
 	buffer = "\r\n" + buffer;
+	// std::cout <<"buffer "<<buffer<<std::endl;
 	_chunkSize = 0;
 	setHeaders(headers);
 	setBodyType();
@@ -94,6 +95,9 @@ int Post::start( std::map<std::string, std::string> &headers, std::string &buffe
 	if (_bodyType == boundary)
 		bound.setBoundaryString();
 
+	// for (const auto& header : _headers) {
+	// 	std::cout << header.first << ":{" << header.second << "}" << std::endl;
+	// }
 	proseRequest(buffer);
 	return 1;
 }

@@ -12,19 +12,23 @@
 #include <vector>
 #define MAX_EVENTS 1024
 #include "../request/HttpRequest.hpp"
+#include "../conf/ServerConfig.hpp"
 #include "../response/HttpResponse.hpp"
 #include "ServerSocket.hpp"
 
 class WebServer {
 private:
   int kqueue_fd;
+  string _data;
   std::vector<ServerSocket> serverSockets;
+  std::vector<ServerConfig> config;
   struct kevent *events;
   int max_events;
   void initialize_kqueue();
+  
 
 public:
-  WebServer();
+  WebServer(string &str);
   std::vector<HttpRequest *> connected_clients;
   void addServerSocket(int port);
   void handle_new_connection(int server_fd);
@@ -37,4 +41,8 @@ public:
   //   }
   // }
   void run();
+  void dataConfigFile();
+  void separateServer();
+
+  
 };
