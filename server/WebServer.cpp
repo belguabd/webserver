@@ -186,6 +186,7 @@ void WebServer:: separateServer()
     while(i < strserv.length())
     {
         size_t pos = strserv.find("server",i);
+        cout << "i = > "<<i<<endl;
         if (sig==1 &&pos == string::npos)
             break;
         if (pos == string::npos ) {
@@ -197,6 +198,8 @@ void WebServer:: separateServer()
             str = strserv.substr(0,pos);
         } else {
             str = strserv.substr(i-1,pos- i);
+            cout << str<<endl;
+            cout <<"------------------------------------------"<<endl;
             ServerConfig conf(str);
             conf.validbrackets(str);
             conf.parseServerConfig(str);
@@ -209,6 +212,8 @@ void WebServer:: separateServer()
         return;
    size_t pos = strserv.rfind("server");
     str = strserv.substr(pos);
+    cout << str<<endl;
+    cout <<"------------------------------------------"<<endl;
     ServerConfig conf(str);
     conf.validbrackets(str);
     conf.parseServerConfig(str);
@@ -218,7 +223,7 @@ void WebServer:: separateServer()
 void WebServer :: dataConfigFile()
 {
 	this->_data = removeComments(this->_data);
-    this->separateServer();
+  this->separateServer();
     // this->validbrackets();
     // this->parseServerConfig();
 }
@@ -243,6 +248,7 @@ void WebServer::run() {
         receive_from_client(event_fd);
       } else if (filter == EVFILT_WRITE) {
         puts("write form server");
+    
         respond_to_client(event_fd);
       }
     }

@@ -228,9 +228,67 @@ void ServerConfig :: locationData(string &strlocat) {
     }
 
 }
+
+void ServerConfig :: setGlobaleData(string &strConfig, string &str) {
+    size_t i = 0;
+    int cont = 0;
+    string val;
+    while(i < strConfig.length())
+    {
+        size_t pos = strConfig.find(str,i);
+        if (pos ==string::npos)
+            break;
+        size_t endKey = strConfig.find_first_of(" \t", pos);
+        size_t valStart = strConfig.find_first_not_of(" \t", endKey);
+        size_t lastpos = strConfig.find(';',valStart);
+        if (lastpos==string::npos) {
+			cout <<"error ; not found"<<endl;
+			exit(0) ;
+		}
+        if (valStart != std::string::npos && lastpos != std::string::npos) {
+            val = strConfig.substr(valStart,lastpos - valStart);
+            if (val.find("\n")!=string::npos) {
+			    cout <<"error newlinw in val"<<endl;
+			    exit(0) ;
+		    }
+            cont++;
+            cout << "var ----- > =  "<<val <<endl;
+            if (val.empty()) {
+			    cout <<"error empty val"<<endl;
+			    exit(0) ;
+		    }
+        }
+        strConfig.replace(pos, str.length(), " ");
+        i = pos + 1;
+    }
+    if (str!="listen"&& str!="index"&& cont!= 1) {
+        cout <<"error duplicate var "<<endl;
+        exit(0);
+    }
+    if (str == "listen") {
+        int a = atoi(val.c_str());
+        this->ports.push_back(a);
+    } else if (str == "host") {
+        this->host = val;
+    } else if (str == "client_max_body_size") {
+        this->client_max_body_size = val;
+    } else if (str == "autoindex") {
+        if (val=="on")
+            this->autoindex = true;
+    } else if (str == "error_page 4") {
+        this->errorClient = val;
+    } else if (str == "error_page 5") {
+        this->errorServer = val;
+    } else if (str == "index") {
+        this->index.push_back(val);
+    } else if (str == "root") {
+        this->root = val;
+    }
+
+}
 void ServerConfig :: checkGlobalConfig(string strConfig) {
-	map<string, string> globalvar;
-	string list[] = {"listen","host","client_max_body_size","error_page 4","error_page 5","root","index","autoindex"};
+
+	string list[] = {"listen","host","client_max_body_size","error_page 4","error_page 5","autoindex ","root","index"};
 	size_t listSize = sizeof(list) / sizeof(list[0]);
 	for (size_t i = 0; i < listSize; i++) {
 		if (strConfig.find(list[i]) == string::npos) {
@@ -239,27 +297,8 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
 		}
 	}
 	for (size_t i = 0; i < listSize; i++) {
-		size_t pos = strConfig.find(list[i]);
-		size_t endKey = strConfig.find_first_of(" \t", pos);
-		string key = strConfig.substr(pos, endKey - pos);
-		if (key.find(";")!=string::npos) {
-			cout <<"error"<<endl;
-			exit(0) ;
-		}
-		size_t valStart = strConfig.find_first_not_of(" \t", endKey);
-		size_t lastpos = strConfig.find(';',valStart);
-		if (lastpos==string::npos) {
-			cout <<"error"<<endl;
-			exit(0) ;
-		}
-		string val = strConfig.substr(valStart,lastpos - valStart);
-		if (val.find("\n")!=string::npos) {
-			cout <<"error"<<endl;
-			exit(0) ;
-		}
-		globalvar[key]=val;
+        this->setGlobaleData(strConfig,list[i]);
 	}
-	this->globalConfig = globalvar;
 }
 void ServerConfig :: validbrackets(string &str) {
     int sig = 0;
@@ -334,54 +373,45 @@ void ServerConfig :: parseServerConfig(string &strdata) {
 		locationData(loca);   
 	}
 }
-
-// void ServerConfig :: dataConfigFile()
-// {
-// 	this->data = removeComments(this->data);
-//     this->separateServer();
-//     // this->validbrackets();
-//     // this->parseServerConfig();
-// }
-// void ServerConfig :: separateServer()
-// {
-//     string strserv;
-//     string str;
-//     strserv = this->data;
-//     if (strserv.length()==0) {
-//         cout <<"error file config empty"<<endl;
-//         exit(0);
-//     }
-//     size_t i = 0;
-//     bool found = false;
-//     int sig = 0;
-//     while(i < strserv.length())
-//     {
-//         size_t pos = strserv.find("server",i);
-//         if (sig==1 &&pos == string::npos)
-//             break;
-//         if (pos == string::npos ) {
-//             cout <<"error server not found"<<endl;
-//             exit(0);
-//         }
-//         if (sig == 0) {
-//             sig = 1;
-//             str = strserv.substr(0,pos);
-//         } else {
-//             str = strserv.substr(i-1,pos- i);
-//             ServerConfig conf(str);
-//             this->validbrackets(str);
-//             this->parseServerConfig(str);
-//             config.push_back(conf);
-//         }
-//         found = true;
-//         i = pos+1;
-//     }
-//     if (found==false)
-//         return;
-//    size_t pos = strserv.rfind("server");
-//     str = strserv.substr(pos);
-//     ServerConfig conf(str);
-//     this->validbrackets(str);
-//     this->parseServerConfig(str);
-//     config.push_back(conf);
-// }
+void findLocation(string &str)
+{
+    int i = 0;
+    bool sig = false;
+    size_t pos  = str.find("location");
+    while (i< str.length()) {
+        if (isspace(str[i])) {
+            sig = false;
+        } else {
+            sig = true;
+            break;
+        }
+        i++;
+    }
+    if (sig == true && pos ==string::npos)
+    {
+        cout <<"error name of blocks not correct"<<endl;
+        exit(0);
+    }
+}
+void ServerConfig :: nameBlocks(string &strdata) {
+    size_t pos = strdata.size();
+    size_t i = 0;
+    while ((pos = strdata.rfind("{", pos)) != string::npos) {
+        if (pos == 0)
+            break;
+        i = pos -1;
+        while (i != 0) {
+            if (strdata[i] != '{' && strdata[i] != ';' && strdata[i] != '}') {
+                i--;
+            } else {
+                break;
+            }
+        }
+        if (i!=0)
+        {
+           string str = strdata.substr(i + 1, pos - i - 1);
+            findLocation(str);
+        }
+        pos--;
+    }
+}

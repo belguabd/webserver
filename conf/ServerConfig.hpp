@@ -33,7 +33,16 @@ class ServerConfig
 {
     private:
         string data;
-        map<string, string> globalConfig;
+        vector<int> ports;
+        string host;
+        string root;
+        vector<string> index;
+        bool autoindex;
+        string server_name;
+        string errorServer;
+        string errorClient;
+        string client_max_body_size;
+        // map<string, string> globalConfig;
         map<string, LocationConfig> configNormal;
         map<string, LocationUplaods> configUpload;
         map<string, LocationCgi> configcgi;
@@ -42,6 +51,7 @@ class ServerConfig
         ~ServerConfig();
         // void dataConfigFile();
         // void separateServer();
+        void setGlobaleData(string &strConfig,string &str);
         void validbrackets(string &str);
         void parseServerConfig(string &strdata);
         void checkGlobalConfig(string strConfig);
@@ -50,6 +60,7 @@ class ServerConfig
         void locationUpload(string &location);
         void locationCgi(string &location);
         void locationRedirection(string &location);
+        void nameBlocks(string &strdata);
           string getdata() const {return this->data;}
 };
 
