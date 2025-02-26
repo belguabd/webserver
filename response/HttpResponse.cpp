@@ -21,7 +21,7 @@ void	headersSending(int client_socket) {
 }
 void    sendResponse(HttpResponse &response)
 {
-  string str = "/Users/ataoufik/Desktop/webserver/doc/html/";
+  string str = "./doc/html/";
   int sig = response.request->sig;
   vector<std::string>  words = response.request->getDataFirstLine();
   cout << "--- >> " <<words[0]<<endl;
@@ -190,9 +190,9 @@ string autoindex(const string &dirPath) {
 
 int checkTypePath(string &path) {
   struct stat pathInfo;
-
+    cout <<"paht =  "<<path<<endl;
     if (stat(path.c_str(), &pathInfo) != 0) {
-        std::perror("stat");
+        std::perror("statz");
         return 0;
     }
 
