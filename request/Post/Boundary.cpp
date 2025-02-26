@@ -1,6 +1,4 @@
 #include "Boundary.hpp"
-#define UPLOAD_FOLDER "./upload/"
-// #define UPLOAD_FOLDER "/Users/emagueri/goinfre/server/"
 
 
 Boundary::Boundary(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
@@ -30,12 +28,10 @@ void Boundary::setFileName(std::string &fileName)
 	while (stat((std::string(UPLOAD_FOLDER + name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	fileName = name + extention;
-    std::cout << "fileName: " << fileName << std::endl;
 }
 
 void Boundary::setMetaData(std::string &headBoundary, std::string key)
 {
-    std::cout << "setMetadata> headBoundary: " << std::endl;
     std::string val;
     size_t posName = headBoundary.find(key + "=\"", _boundaryString.size());
     _metadata[key] = "";
@@ -64,20 +60,21 @@ size_t Boundary::getSizeOfBoundary()
 
 int Boundary::setBoundaryHeadAndEraseBuffer()
 {
-    int n;
-    std::cout << "test1\n";
-    if ((n = _bufferBody.find(_boundaryString)) != 0)
+    if ((_bufferBody.find(_boundaryString)) != 0)
         return 0;
 
     if (_bufferBody.find(_boundaryString) == 0)
+    {
+        std::cout << "filename: " << _metadata["filename"] << std::endl;
         std::cout << "is valid boundary\n";
+    }
 
-    size_t sizeHeadBoundary = _bufferBody.find("\r\n\r\n", n);
-    std::cout << "sizeHeadBoundary: " << sizeHeadBoundary << std::endl;
+    size_t sizeHeadBoundary = _bufferBody.find("\r\n\r\n");
     if (sizeHeadBoundary == std::string::npos)
         return -1;
 
     std::string headBoundary = _bufferBody.substr(0, sizeHeadBoundary + 4);
+
     _bufferBody.erase(0, sizeHeadBoundary + 4);
     setMetaData(headBoundary, "name");
     setMetaData(headBoundary, "filename");

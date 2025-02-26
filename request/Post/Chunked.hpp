@@ -1,5 +1,5 @@
 #pragma once
-#define PREFIXFILENAME "./data/filePost"
+#include "./Macros.hpp"
 #include <string>
 #include <map>
 #include <cstdlib>

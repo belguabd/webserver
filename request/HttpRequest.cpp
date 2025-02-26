@@ -6,7 +6,7 @@
 /*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/25 16:56:29 by emagueri         ###   ########.fr       */
+/*   Updated: 2025/02/26 14:27:48 by emagueri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,8 @@ void handleRequest(HttpRequest &request)
 {
   string str_parse;
 
-  pasteInFile(CURREQ, request.getreadbuffer());
+  if (std::strlen(CURREQ))
+    pasteInFile(CURREQ, request.getreadbuffer());
   if (request.getendHeaders() == 1)
   {
     // cout <<"lo  = "<<request.getendHeaders() <<endl;

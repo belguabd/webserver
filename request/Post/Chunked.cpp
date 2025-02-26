@@ -25,7 +25,7 @@ Chunked::Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map
 void Chunked::setFileName(std::string extention)
 {
 	struct stat b;
-	std::string name = PREFIXFILENAME;
+	std::string name = UPLOAD_FOLDER + std::string("filePost");
 	int n = 0;
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
@@ -57,7 +57,7 @@ int Chunked::handleChunked()
 
 int pasteInFile(std::string name, std::string &data)
 {
-	std::cout << "filename: " << name << "\n";
+	// std::cout << "filename: " << name << "\n";
 	std::ofstream file(name, std::ios::app);
 	file << data;
 	return 1;
@@ -97,7 +97,6 @@ size_t Chunked::getChunkSize(std::string &buffer)
 		std::cout << "throw invalid head chunk2\n" << std::endl;
 		return 0;
 	}
-    std::cout << "pos: " << pos << std::endl;
 	for (int i = 2; i < pos; i++)
 		if (!std::isxdigit(buffer[i]))
 		{

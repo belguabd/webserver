@@ -7,6 +7,10 @@
 #include <algorithm>
 #include <string>
 #include <sys/stat.h>
+#include "./Macros.hpp"
+
+// #define UPLOAD_FOLDER "./upload/"
+// #define UPLOAD_FOLDER "/Users/emagueri/goinfre/server/"
 // #ifndef PREFIXFILENAME "./data/"
 
 struct BoundaryHead
