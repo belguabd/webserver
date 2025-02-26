@@ -153,10 +153,20 @@ bool ExistFile(string&filePath) {
 string autoindex(const string &dirPath) {
     string html = "<!DOCTYPE html>\n"
                   "<html>\n"
-                  "<head><title>Directory Listing</title></head>\n"
+                  "<head>\n"
+                    "<meta charset=\"UTF-8\">\n"
+                    "<title>Autoindex</title>\n"
+                    "<style>\n"
+                      "body { font-family: Arial, sans-serif; margin: 20px; }\n"
+                      "h1 { font-size: 24px; }\n"
+                      "ul { list-style-type: none; padding: 0; }\n"
+                      "li { margin: 5px 0; }\n"
+                      "a { text-decoration: none; color: #3498db; }\n"
+                      "a:hover { text-decoration: underline; }\n"
+                    "</style>\n"
+                  "</head>\n"
                   "<body>\n"
-                  "<h1>Index of  dir</h1>\n"
-                  "<ul>\n";
+                  "<h1>Index of /</h1>\n";
 
     DIR *dir = opendir(dirPath.c_str());
     if (!dir) {

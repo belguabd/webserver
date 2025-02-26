@@ -33,8 +33,16 @@ void WebServer::addServerSocket(int port) {
   serverSockets.push_back(*newSocket);
 }
 
-WebServer::WebServer() : max_events(MAX_EVENTS) {
+WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
   initialize_kqueue();
+  ifstream file(str);
+	stringstream fileContent;
+	if (!file.is_open())
+		cout <<"error file not opened "<<endl;
+	fileContent << file.rdbuf();
+	this->_data = fileContent.str();
+  this->dataConfigFile();
+
   std::vector<int> ports;
   ports.push_back(8080);
 
@@ -161,7 +169,66 @@ void WebServer::respond_to_client(int client_fd) {
   delete responseclient;
   
 }
+/*----------------------------------------------------*/
 
+void WebServer:: separateServer()
+{
+    string strserv;
+    string str;
+    strserv = this->_data;
+    if (strserv.length()==0) {
+        cout <<"error file config empty"<<endl;
+        exit(0);
+    }
+    size_t i = 0;
+    bool found = false;
+    int sig = 0;
+    while(i < strserv.length())
+    {
+        size_t pos = strserv.find("server",i);
+        cout << "i = > "<<i<<endl;
+        if (sig==1 &&pos == string::npos)
+            break;
+        if (pos == string::npos ) {
+            cout <<"error server not found"<<endl;
+            exit(0);
+        }
+        if (sig == 0) {
+            sig = 1;
+            str = strserv.substr(0,pos);
+        } else {
+            str = strserv.substr(i-1,pos- i);
+            cout << str<<endl;
+            cout <<"------------------------------------------"<<endl;
+            ServerConfig conf(str);
+            conf.validbrackets(str);
+            conf.parseServerConfig(str);
+            config.push_back(conf);
+        }
+        found = true;
+        i = pos+1;
+    }
+    if (found==false)
+        return;
+   size_t pos = strserv.rfind("server");
+    str = strserv.substr(pos);
+    cout << str<<endl;
+    cout <<"------------------------------------------"<<endl;
+    ServerConfig conf(str);
+    conf.validbrackets(str);
+    conf.parseServerConfig(str);
+    config.push_back(conf);
+}
+
+void WebServer :: dataConfigFile()
+{
+	this->_data = removeComments(this->_data);
+  this->separateServer();
+    // this->validbrackets();
+    // this->parseServerConfig();
+}
+
+/*----------------------------------------------------*/
 void WebServer::run() {
 
   int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
@@ -181,6 +248,7 @@ void WebServer::run() {
         receive_from_client(event_fd);
       } else if (filter == EVFILT_WRITE) {
         puts("write form server");
+    
         respond_to_client(event_fd);
       }
     }
