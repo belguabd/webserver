@@ -281,8 +281,31 @@ int checkTypePath(string &path) {
 
 void HttpResponse::postResponse()
 {
-  vector<std::string>  words = this->request->getDataFirstLine();
+  vector<string>  words = this->request->getDataFirstLine();
   cout <<"URL = "<<words[1]<<endl;
+  if (words[1]!="/tmpbran/upload")// upload_store if path not support upload 
+  {
+
+  }
+
+  ifstream file("./doc/html/Upload_/successUpload.html");
+  stringstream fileContent;
+        
+  if (file) {
+      fileContent << file.rdbuf(); 
+      file.close();
+  }
+  status_line(this->request->getfd(),"HTTP/1.1 201 CREATED\r\n");
+  headersSending(this->request->getfd());
+  string body = fileContent.str();
+  stringstream response1;
+  response1 << "Content-Type: text/html\r\n"
+            << "Content-Length: " << body.size() << "\r\n"
+            << "Connection: close\r\n"
+            << "\r\n"
+            << body;
+  string responseStr = response1.str();
+  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
 }
 
 

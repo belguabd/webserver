@@ -17,6 +17,7 @@ using namespace std;
 class HttpRequest {
 private:
   int client_fd;
+  bool signRequest;
   int firsttime;
   int requestStatus;
   int endHeaders;
