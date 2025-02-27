@@ -1,6 +1,6 @@
 #include "HttpResponse.hpp"
 
-
+string str = "./doc/html";
 void	status_line(int client_socket,string status) {
 	// std::string status;
 	  // status = "HTTP/1.1 200 OK\r\n";
@@ -19,65 +19,148 @@ void	headersSending(int client_socket) {
 	// std::cout << header;
 	send(client_socket, header.c_str(), header.size(), 0);
 }
-void    sendResponse(HttpResponse &response)
+/*---------------------- Get method------------------------------------------*/
+void HttpResponse::fileDataSend(string &data)
 {
-  string str = "/Users/ataoufik/Desktop/webserver/doc/html/";
-  int sig = response.request->sig;
-  vector<std::string>  words = response.request->getDataFirstLine();
-  cout << "--- >> " <<words[0]<<endl;
-  cout <<"--- >> " <<words[1]<<endl;
-  cout << "---- > "<<sig <<endl;
-  if (words[1]!="/")
-    str +=words[1];
-
-  if (checkTypePath(str)==2) {
-    string str1 =str;
-    str1+="index.html";
-    if (ExistFile(str1)==false) {
-      status_line(response.request->getfd(),"HTTP/1.1 200 OK\r\n");
-      headersSending(response.request->getfd());
-      string body = autoindex(str);
-      std::stringstream response1;
-      response1 << "Content-Type: text/html\r\n"
-              << "Content-Length: " << body.size() << "\r\n"
-              << "Connection: close\r\n"
-              << "\r\n"
-              << body;
-      std::string responseStr = response1.str();
-      send(response.request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+  size_t pos = data.find(".py"); // depanding config file
+  if (pos!=string ::npos) {
+    // cgi handler
+    return ;
+  }
+  ifstream file(data);
+  stringstream fileContent;
+  fileContent << file.rdbuf();
+  if (file) {
+      fileContent << file.rdbuf(); 
+      file.close();
+  } else {
+      this->notFound(this->request->getfd());
       return ;
+  }
+  status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
+  headersSending(this->request->getfd());
+  string body = fileContent.str();
+  stringstream response1;
+  response1 << "Content-Type: text/html\r\n"
+            << "Content-Length: " << body.size() << "\r\n"
+            << "Connection: close\r\n"
+            << "\r\n"
+             << body;
+  string responseStr = response1.str();
+  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+
+}
+void HttpResponse:: forbidden(int client_socket)
+{
+  ifstream file("./doc/error/403/403.html");
+  stringstream fileContent;
+
+  if (file) {
+      fileContent << file.rdbuf(); 
+      file.close();
+  }
+  status_line(client_socket,"HTTP/1.1 403 FORBIDDEN\r\n");
+  headersSending(client_socket);
+  string body = fileContent.str();
+  stringstream response1;
+  response1 << "Content-Type: text/html\r\n"
+            << "Content-Length: " << body.size() << "\r\n"
+            << "Connection: close\r\n"
+            << "\r\n"
+            << body;
+  string responseStr = response1.str();
+  send(client_socket, responseStr.c_str(), responseStr.size(), 0);
+}
+
+void  HttpResponse::dirDataSend(string &data)
+{
+  // index names depend on the configuration file. I use a simple index called 'dir.html.' and same autoindex i use off
+  srand(static_cast<unsigned int>(time(0)));
+  bool autoindex = rand() % 2;
+
+  // bool autoindex =true;
+  string indexFile = "dir.html";
+  string str = data;
+  str +=indexFile;
+  if (ExistFile(str)==true) {
+    this->fileDataSend(str);
+  } else {
+    if (autoindex ==false)
+    {
+      this->forbidden(this->request->getfd());
+    } else {
+      status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
+      headersSending(this->request->getfd());
+      string body = dirAutoindex(data);
+      stringstream response1;
+          response1 << "Content-Type: text/html\r\n"
+            << "Content-Length: " << body.size() << "\r\n"
+            << "Connection: close\r\n"
+            << "\r\n"
+            << body;
+      string responseStr = response1.str();
+      send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
     }
   }
-  // if ()
-  // if (sig == 1)
-  //   getResponse();
-  // else if ()
-  // postRseponse();
-  // else if ()
-  //   deleteResponse();
-  string str2 = "index.html";
-  str +=str2;
-  std::ifstream file(str);
-  std::stringstream fileContent;
-        
-    if (file) {
-        fileContent << file.rdbuf(); 
-        file.close();
-    } else {
-        response.notFound(response.request->getfd());
-        return ;
-    }
-    status_line(response.request->getfd(),"HTTP/1.1 200 OK\r\n");
-    headersSending(response.request->getfd());
-    std::string body = fileContent.str();
-    std::stringstream response1;
-    response1 << "Content-Type: text/html\r\n"
-              << "Content-Length: " << body.size() << "\r\n"
-              << "Connection: close\r\n"
-              << "\r\n"
-              << body;
-    std::string responseStr = response1.str();
-    send(response.request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+}
+void    HttpResponse::getResponse()
+{
+  string data = str;
+  vector<std::string>  words = this->request->getDataFirstLine();
+  if (words[1]=="/")
+  {
+    this->defautlRoot();
+    return;
+  }
+  data+=words[1];
+  if (checkTypePath(data)==0) {
+    this->notFound(this->request->getfd());
+    return;
+  } else if (checkTypePath(data)==1) {
+    this->fileDataSend(data);
+  } else if (checkTypePath(data)==2) {
+    this->dirDataSend(data);
+  }
+
+
+}
+void HttpResponse::defautlRoot()
+{
+  string str2 = "/index.html";
+  string data = str ; 
+  data +=str2;
+  ifstream file(data);
+  stringstream fileContent;
+  fileContent << file.rdbuf();
+  if (file) {
+      fileContent << file.rdbuf(); 
+      file.close();
+  } else {
+      this->notFound(this->request->getfd());
+      return ;
+  }
+  status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
+  headersSending(this->request->getfd());
+  string body = fileContent.str();
+  stringstream response1;
+  response1 << "Content-Type: text/html\r\n"
+            << "Content-Length: " << body.size() << "\r\n"
+            << "Connection: close\r\n"
+            << "\r\n"
+             << body;
+  string responseStr = response1.str();
+  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+}
+
+void    sendResponse(HttpResponse &response)
+{
+  int sig = response.request->sig;
+
+  if (sig == 1) {
+    response.getResponse();
+  } else if (sig == 1) {
+    response.postResponse();
+  }
 
 }
 HttpResponse::HttpResponse(HttpRequest *re) :request(re) {
@@ -99,7 +182,7 @@ int HttpResponse::writeData() {
 
 
 void HttpResponse::notFound(int client_socket) {
-  	std::ifstream file("/Users/ataoufik/Desktop/webserver/doc/error/404/404.html");
+  	std::ifstream file("./doc/error/404/404.html");
     std::stringstream fileContent;
         
     if (file) {
@@ -119,9 +202,9 @@ void HttpResponse::notFound(int client_socket) {
     send(client_socket, responseStr.c_str(), responseStr.size(), 0);
 }
 
+/*--------------------------------------------------------------------------------------------*/
 
-
-/*----------------------------------------------------------------*/
+/*---------------------- fanction extern class used------------------------------------------*/
 
 bool ExistFile(string&filePath) {
   struct stat infoFile;
@@ -135,22 +218,7 @@ bool ExistFile(string&filePath) {
   return false;
 }
 
-// string autoindex(string &dirPath) {
-//   string str;
-//   DIR *dir = opendir(dirPath.c_str());
-//   struct dirent* entry;
-//   while ((entry = readdir(dir))!=nullptr) {
-//     if (strcmp(entry->d_name,".")!= 0 && strcmp(entry->d_name,"..")!= 0) {
-//       str += entry->d_name;
-//       str += "\n";
-//       cout <<str;
-//     }
-//   }
-//   closedir(dir);
-//   return str;
-// }
-
-string autoindex(const string &dirPath) {
+string dirAutoindex(string &dirPath) {
     string html = "<!DOCTYPE html>\n"
                   "<html>\n"
                   "<head>\n"
@@ -205,3 +273,18 @@ int checkTypePath(string &path) {
     } 
     return 0;
 }
+
+/*-------------------------------------------------------------------------------------------*/
+
+
+/*--------------------------------------Post method------------------------------------------*/
+
+void HttpResponse::postResponse()
+{
+  vector<std::string>  words = this->request->getDataFirstLine();
+  cout <<"URL = "<<words[1]<<endl;
+}
+
+
+
+/*--------------------------------------------------------------------------------------------*/

@@ -30,7 +30,7 @@ void handleRequest(HttpRequest &request) {
 
   if (request.sig == 1 && request.getendHeaders() == 1)
   {
-    cout <<"-------___------end headers----- get"<<endl;
+    // cout <<"-------___------end headers----- get"<<endl;
     request.setRequestStatus(1);
   }
 
@@ -62,7 +62,7 @@ HttpRequest::HttpRequest(int client_fd)
 }
 
 int HttpRequest::readData() {
-  char buffer[10];
+  char buffer[4000];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);

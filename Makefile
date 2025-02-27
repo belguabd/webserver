@@ -22,7 +22,7 @@ rm:
 
 clean:
 	$(RM) $(OBJ)
-	$(RM) -f ./upload/*
+	$(RM) ./upload/*
 
 fclean:clean
 	$(RM) $(NAME)

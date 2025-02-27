@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Page</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #f8f9fa, #e0e0e0);
+            color: #333;
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            margin-bottom: 30px;
+        }
+
+        .upload-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        label {
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        input[type="file"] {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            background-color: #f7f7f7;
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 1em;
+            color: #888;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Welcome to the File Upload</h1>
+    <h2>Upload Your Data</h2>
+    <div class="upload-container">
+        <form action="upload.php" method="POST" enctype="multipart/form-data">
+            <label for="file1">Choose file to upload:</label>
+            <input type="file" id="file1" name="upload" required>
+            <br>
+            <input type="submit" value="Upload">
+        </form>
+    </div>
+    <div class="footer">
+        <p>Powered by Your Company</p>
+    </div>
+</body>
+</html>
