@@ -1,29 +1,10 @@
 #include "./Post.hpp"
 
-Post::Post()
-:chunk(_bufferBody, _remainingBuffer, _headers, _status),
+Post::Post():chunk(_bufferBody, _remainingBuffer, _headers, _status),
 bound(_bufferBody, _remainingBuffer, _headers, _status)
 {
 	setBodyType();
-	_chunkSize = 0;
-}
-
-Post::Post(std::map<std::string, std::string> &headers, std::string &bufferBody)
-: _headers(headers), _bufferBody(bufferBody), 
-chunk(_bufferBody, _remainingBuffer, _headers, _status),
-bound(_bufferBody, _remainingBuffer, _headers, _status)
-{
-	setBodyType();
-	_chunkSize = 0;
-}
-
-Post::Post(std::map<std::string, std::string> &headers) 
-	: _headers(headers), 
-	chunk(_bufferBody, _remainingBuffer, _headers, _status),
-	bound(_bufferBody, _remainingBuffer, _headers, _status)
-{
-	setBodyType();
-	_chunkSize = -1;
+	_status = 0;
 }
 
 Post& Post::operator=(const Post& other)
@@ -32,7 +13,6 @@ Post& Post::operator=(const Post& other)
 		return *this;
 	
 	_bodyType = other._bodyType;
-	_chunkSize = other._chunkSize;
 	_headers = other._headers;
 	_bufferBody = other._bufferBody;
 	_remainingBuffer = other._remainingBuffer;
@@ -87,19 +67,17 @@ int Post::start( std::map<std::string, std::string> &headers, std::string &buffe
 {
 	buffer = "\r\n" + buffer;
 	// std::cout <<"buffer "<<buffer<<std::endl;
-	_chunkSize = 0;
 	setHeaders(headers);
 	setBodyType();
 	if (_bodyType == chunked)
 		chunk.setFileName(chunk._mimeToExtension[chunk._headers["Content-Type"]]);
-	if (_bodyType == boundary)
+	else if (_bodyType == boundary)
 		bound.setBoundaryString();
 
 	// for (const auto& header : _headers) {
 	// 	std::cout << header.first << ":{" << header.second << "}" << std::endl;
 	// }
-	proseRequest(buffer);
-	return 1;
+	return proseRequest(buffer);
 }
 
 int Post::proseRequest(std::string &buffer)
@@ -129,7 +107,7 @@ int Post::proseRequest(std::string &buffer)
 	if (this->_bodyType == contentLength)
 	{
 	}
-	return 1;
+	return _status;
 }
 
 Post::~Post()

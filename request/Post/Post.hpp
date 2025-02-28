@@ -23,8 +23,6 @@ enum Body
 private:
 
     Body _bodyType;
-    size_t _chunkSize;
-    std::string _fileName;
     Chunked chunk;
     Boundary bound;
     std::map <std::string, std::string> _headers;
@@ -33,8 +31,6 @@ private:
 public:
     Post();
     long getChunkSize(std::string &buffer);
-    Post(std::map <std::string, std::string> &headers, std::string &bufferBody);
-    Post(std::map<std::string, std::string> &headers);
     Post &operator=(const Post &);
     ~Post();
     void setHeaders(std::map<std::string, std::string> &headers);

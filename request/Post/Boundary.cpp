@@ -92,21 +92,23 @@ bool Boundary::checkHeaderIsCompleted()
     return false;
 }
 
-void Boundary::handleBoundary()
+int Boundary::handleBoundary()
 {
     if (_bufferBody.size() <= 2)
     {
         // std::cout << "is not completed\n";
         _remainingBuffer = _bufferBody + _remainingBuffer;
-        return;
+        return _status;
     }
     handleBoundaryRec();
+    return _status;
 }
 int Boundary::handleBoundaryRec()
 {
     if (_bufferBody.empty() || _bufferBody.substr(0, _boundaryStringEnd.size()) == _boundaryStringEnd)
     {
         std::cout << "end boundary" << std::endl;
+        _status = 1;
         _bufferBody = "";
         return 1;
     }
