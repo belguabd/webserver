@@ -68,6 +68,7 @@ int Post::start( std::map<std::string, std::string> &headers, std::string &buffe
 	buffer = "\r\n" + buffer;
 	// std::cout <<"buffer "<<buffer<<std::endl;
 	_status = 0;
+	_status = 0;
 	setHeaders(headers);
 	setBodyType();
 	if (_bodyType == chunked)
@@ -101,7 +102,9 @@ int Post::proseRequest(std::string &buffer)
 	}
 	if (this->_bodyType == boundary)
 	{
-		bound.handleBoundary();
+		int n = bound.handleBoundary();
+		std::cout << "return boundary: " << n << "\n";
+		return n;
 		// handleChunked();
 	}
 	if (this->_bodyType == contentLength)
