@@ -28,13 +28,14 @@ private:
     std::map <std::string, std::string> _headers;
     std::string _bufferBody;
     std::string _remainingBuffer;
+    int _status;
 public:
     Post();
     long getChunkSize(std::string &buffer);
+    int getStatus() {return _status;}
     Post &operator=(const Post &);
     ~Post();
     void setHeaders(std::map<std::string, std::string> &headers);
-    int _status;
     void setBodyType();
     Body getBodyType() { return _bodyType; }
     int start(std::map<std::string, std::string> &headers, std::string &buffer);

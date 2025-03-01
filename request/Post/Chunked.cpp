@@ -57,9 +57,14 @@ int Chunked::handleChunked()
 
 int pasteInFile(std::string name, std::string &data)
 {
-	// std::cout << "filename: " << name << "\n";
 	std::ofstream file(name, std::ios::app);
+	if (!file.is_open())
+	{
+		std::cout << "Failed to open file: " << name << std::endl;
+		return 0;
+	}
 	file << data;
+	file.close();
 	return 1;
 }
 
