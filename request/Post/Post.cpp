@@ -102,9 +102,7 @@ int Post::proseRequest(std::string &buffer)
 	}
 	if (this->_bodyType == boundary)
 	{
-		int n = bound.handleBoundary();
-		std::cout << "return boundary: " << n << "\n";
-		return n;
+		bound.handleBoundary();
 		// handleChunked();
 	}
 	if (this->_bodyType == contentLength)
