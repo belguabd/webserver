@@ -24,7 +24,7 @@ void HttpResponse::fileDataSend(string &data)
 {
   size_t pos = data.find(".py"); // depanding config file
   if (pos!=string ::npos) {
-    // cgi handler
+    // cgi handle with GET method
     return ;
   }
   ifstream file(data);
@@ -52,7 +52,7 @@ void HttpResponse::fileDataSend(string &data)
 }
 void HttpResponse:: forbidden(int client_socket)
 {
-  ifstream file("./doc/error/403/403.html");
+  ifstream file("./doc/error/4xx/403.html");
   stringstream fileContent;
 
   if (file) {
@@ -79,9 +79,11 @@ void  HttpResponse::dirDataSend(string &data)
   bool autoindex = rand() % 2;
 
   // bool autoindex =true;
+  // cout <<"after data ==  > " <<data<<endl;
   string indexFile = "dir.html";
   string str = data;
   str +=indexFile;
+  // cout <<"after str ==  > " <<data<<endl;
   if (ExistFile(str)==true) {
     this->fileDataSend(str);
   } else {
@@ -107,12 +109,13 @@ void    HttpResponse::getResponse()
 {
   string data = str;
   vector<std::string>  words = this->request->getDataFirstLine();
+  cout<<"data = > " << words[1] <<endl;
   if (words[1]=="/")
   {
     this->defautlRoot();
     return;
   }
-  data+=words[1];
+    data+=words[1];
   if (checkTypePath(data)==0) {
     this->notFound(this->request->getfd());
     return;
@@ -152,17 +155,22 @@ void HttpResponse::defautlRoot()
   send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
 }
 
+void HttpResponse:: checkDataResev()
+{
+  
+}
 void    sendResponse(HttpResponse &response)
 {
   int sig = response.request->sig;
-
+  response.checkDataResev();
   if (sig == 1) {
     response.getResponse();
-  } else if (sig == 1) {
+  } else if (sig == 2) {
     response.postResponse();
   }
 
 }
+
 HttpResponse::HttpResponse(HttpRequest *re) :request(re) {
 
 }
@@ -182,7 +190,7 @@ int HttpResponse::writeData() {
 
 
 void HttpResponse::notFound(int client_socket) {
-  	std::ifstream file("./doc/error/404/404.html");
+  	std::ifstream file("./doc/error/4xx/404.html");
     std::stringstream fileContent;
         
     if (file) {
@@ -219,6 +227,7 @@ bool ExistFile(string&filePath) {
 }
 
 string dirAutoindex(string &dirPath) {
+  cout <<"dirPath ---------  ==  > " << dirPath<<endl;
     string html = "<!DOCTYPE html>\n"
                   "<html>\n"
                   "<head>\n"
@@ -241,11 +250,11 @@ string dirAutoindex(string &dirPath) {
         cerr << "Error: Unable to open directory " << dirPath << "\n";
         return "<h1>Directory not found</h1>";
     }
-
+  string str = dirPath.substr(10);
     struct dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-            html += "<li><a href=\"" + dirPath + "/" + entry->d_name + "\">";
+            html += "<li><a href=\"" + str + "/" + entry->d_name + "\">";
             html += entry->d_name;
             html += "</a></li>\n";
         }
@@ -282,12 +291,22 @@ void HttpResponse::postResponse()
 {
   vector<string>  words = this->request->getDataFirstLine();
   cout <<"URL = "<<words[1]<<endl;
-  if (words[1]!="/tmpbran/upload")// upload_store if path not support upload 
-  {
+  //check if location upload is allowed
+  //check type of resource (cgi , html,.. )
+  // uploads success or other 
+  // if ("/tmpbran/upload")// upload_store if path not support upload 
+  // {
+  //   this->forbidden(this->request->getfd());
+  //   cout <<"hi"<<endl;
+  //   return ;
 
+  // }
+  size_t pos = words[1].find(".py"); // depanding config file
+  if (pos!=string ::npos) {
+    // cgi handle with Post method
+    return ;
   }
-
-  ifstream file("./doc/html/Upload_/successUpload.html");
+  ifstream file("./doc/html/Upload_/succ.html");
   stringstream fileContent;
         
   if (file) {

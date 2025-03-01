@@ -26,6 +26,7 @@ public:
   void getResponse();
   void postResponse();
   void defautlRoot();
+  void checkDataResev();
   void fileDataSend(string &data);
   void dirDataSend(string &data);
   void forbidden(int client_socket);

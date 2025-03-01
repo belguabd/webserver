@@ -33,7 +33,6 @@ class ServerConfig
 {
     private:
         string data;
-        vector<int> ports;
         string host;
         string root;
         vector<string> index;
@@ -47,6 +46,7 @@ class ServerConfig
         map<string, LocationUplaods> configUpload;
         map<string, LocationCgi> configcgi;
     public:
+        vector<int> ports;
         ServerConfig(string &str);
         ~ServerConfig();
         // void dataConfigFile();

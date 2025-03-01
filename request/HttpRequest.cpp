@@ -212,7 +212,7 @@ void HttpRequest ::requestLine() {
   path = this->dataFirstLine[1];
   if (this->dataFirstLine[2].compare("HTTP/1.1") != 0) {
     cout << "Not Supported" << endl;
-    return;
+    return ;
   }
   size_t pos = path.find("?");
   if (pos == string::npos) {

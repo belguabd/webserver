@@ -46,10 +46,11 @@ WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
   std::vector<int> ports;
   ports.push_back(8585);
 
+  // cout << config[0].ports.size()<<endl;
+  //   for (size_t i = 0; i < ports.size(); ++i) {
+  //       addServerSocket(config[0].ports[i]);
+  //   }
   addServerSocket(ports[0]);
-    // for (size_t i = 0; i < ports.size(); ++i) {
-    //     addServerSocket(ports[i]);
-    // }
 }
 
 void WebServer::handle_new_connection(int server_fd) {

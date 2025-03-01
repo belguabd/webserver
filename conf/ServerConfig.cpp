@@ -259,16 +259,17 @@ void ServerConfig :: setGlobaleData(string &strConfig, string &str) {
 		    }
         }
         strConfig.replace(pos, str.length(), " ");
+        if (str == "listen") {
+            int a = atoi(val.c_str());
+            this->ports.push_back(a);
+        }
         i = pos + 1;
     }
     if (str!="listen"&& str!="index"&& cont!= 1) {
         cout <<"error duplicate var "<<endl;
         exit(0);
     }
-    if (str == "listen") {
-        int a = atoi(val.c_str());
-        this->ports.push_back(a);
-    } else if (str == "host") {
+    if (str == "host") {
         this->host = val;
     } else if (str == "client_max_body_size") {
         this->client_max_body_size = val;
