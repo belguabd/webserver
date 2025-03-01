@@ -65,4 +65,4 @@ public:
 };
 vector<string> splitstring(const string &str);
 void    checkHeaders(string& str, map<string, string>& headersMap);
-void printNonPrintableChars(const std::string &str);
+void    printNonPrintableChars(const std::string &str);

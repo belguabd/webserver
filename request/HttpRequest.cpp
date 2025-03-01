@@ -6,7 +6,7 @@
 /*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/26 18:49:41 by emagueri         ###   ########.fr       */
+/*   Updated: 2025/02/28 11:06:48 by emagueri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,20 +37,22 @@ void handleRequest(HttpRequest &request) {
   else if (request.sig == 2&& request.getendHeaders() == 1)
   {
     string tmp;
+    int status = 0;
     // cout <<"-------___------end headers----- post"<<endl;
     if (i == 0)
     {
       tmp = request.getbuffer();
-      // request.
-      request._post.start(request.mapheaders, tmp);
-      i=1;
+      status = request._post.start(request.mapheaders, tmp);
+      i = 1;
     }
     else
     {
       tmp = request.getreadbuffer();
-      request._post.proseRequest(tmp);
+      status = request._post.proseRequest(tmp);
     }
-
+    if (status)
+      request.setRequestStatus(1);
+      
     request.joinBuffer();
   }
 }
@@ -62,7 +64,7 @@ HttpRequest::HttpRequest(int client_fd)
 }
 
 int HttpRequest::readData() {
-  char buffer[4000];
+  char buffer[5124];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);

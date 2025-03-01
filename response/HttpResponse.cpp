@@ -258,17 +258,16 @@ string dirAutoindex(string &dirPath) {
 
 int checkTypePath(string &path) {
   struct stat pathInfo;
-
     if (stat(path.c_str(), &pathInfo) != 0) {
         std::perror("stat");
         return 0;
     }
 
     if (S_ISREG(pathInfo.st_mode)) {
-        std::cout << path<< " is a file.\n";
+        // std::cout << path<< " is a file.\n";
         return 1;
     } else if (S_ISDIR(pathInfo.st_mode)) {
-        std::cout << path<< " is a directory.\n";
+        // std::cout << path<< " is a directory.\n";
         return 2;
     } 
     return 0;
