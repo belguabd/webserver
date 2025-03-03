@@ -348,11 +348,6 @@ void ServerConfig :: validbrackets(string &str) {
 }
 void ServerConfig :: parseServerConfig(string &strdata) {
 	size_t pos = strdata.find("server");
-	string str = strdata.substr(0,pos);
-	if (pos== string::npos ||checkCharacter(str,'}')) {
-		cout << "error :string before server" << endl;
-		exit(0);
-	}
 	size_t i = pos + 6;
 	while(i < strdata.length() && strdata[i]!='{') {
 		if (strdata[i]!='\t' &&  strdata[i]!=' '&& strdata[i]!='\n') {
@@ -361,6 +356,10 @@ void ServerConfig :: parseServerConfig(string &strdata) {
 		}
 		i++;
 	}
+    if (i==strdata.size()) {
+        cout <<"error server without brakets"<<endl;
+        exit(0);
+    }
 	i++;
 	
 	size_t  pos1 = strdata.rfind('}',i);

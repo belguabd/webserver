@@ -171,6 +171,17 @@ void WebServer::respond_to_client(int client_fd) {
   
 }
 /*----------------------------------------------------*/
+void dataBeforServer(string str)
+{
+  int i =0 ;
+  while(i < str.length()) {
+    if (str[i]!='\t' &&  str[i]!=' '&& str[i]!='\n') {
+      cout <<"error data befor server "<<endl;
+      exit(0);
+    }
+      i++;
+  }
+}
 
 void WebServer:: separateServer()
 {
@@ -197,6 +208,7 @@ void WebServer:: separateServer()
         if (sig == 0) {
             sig = 1;
             str = strserv.substr(0,pos);
+            dataBeforServer(str);
         } else {
             str = strserv.substr(i-1,pos- i);
             // cout << str<<endl;

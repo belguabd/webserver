@@ -46,3 +46,4 @@ public:
 
   
 };
+void dataBeforServer(string str);

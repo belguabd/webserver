@@ -16,24 +16,15 @@ void handleRequest(HttpRequest &request) {
   }
   request.parsePartRequest(str_parse);
 
-  if (request.sig == 1 && request.getendHeaders() == 1)
-  {
-    // cout <<"-------___------end headers----- get"<<endl;
+  if (request.sig == 1 && request.getendHeaders() == 1) {
     request.setRequestStatus(1);
-  }
-
-  else if (request.sig == 2&& request.getendHeaders() == 1)
-  {
+  } else if (request.sig == 2 && request.getendHeaders() == 1) {
     string tmp;
-    // cout <<"-------___------end headers----- post"<<endl;
-    if (i == 0)
-    {
+    if (i == 0) {
       tmp = request.getbuffer();
       request._post.start(request.mapheaders, tmp);
       i = 1;
-    }
-    else
-    {
+    } else {
       tmp = request.getreadbuffer();
       request._post.proseRequest(tmp);
     }
@@ -56,7 +47,6 @@ int HttpRequest::readData() {
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
   if (bytes_received > 0) {
     readBuffer.assign(buffer, bytes_received);
-    // std::cout << readBuffer << "\n";
     handleRequest(*this);
   }
   return bytes_received;
@@ -106,14 +96,11 @@ vector<string> splitstring(const string &str)
   size_t i = 0, j;
   while (i < str.length())
   {
-    if ((j = str.find_first_of(" \t", i)) != string::npos)
-    {
+    if ((j = str.find_first_of(" \t", i)) != string::npos) {
       if (j > i)
         words.push_back(str.substr(i, j - i));
       i = j + 1;
-    }
-    else
-    {
+    } else {
       words.push_back(str.substr(i));
       break;
     }
@@ -121,7 +108,6 @@ vector<string> splitstring(const string &str)
   return (words);
 }
 void HttpRequest::checkHeaders(string &str) {
-
 
   str = trimNewline(str);
   size_t pos = str.find(':');
@@ -133,8 +119,7 @@ void HttpRequest::checkHeaders(string &str) {
   }
   words = splitstring(str.substr(pos + 1, str.length()));
   for (vector<string>::const_iterator it = words.begin(); it != words.end();
-       ++it)
-  {
+       ++it) {
     const string &words = *it;
     result += ' ';
     result += words;
@@ -176,7 +161,7 @@ void HttpRequest ::joinBuffer() {
 }
 
 void HttpRequest ::parsePartRequest(string str_parse) {
-  if (this->endHeaders==1)
+  if (this->endHeaders == 1)
     return;
   while (!str_parse.empty()) {
     size_t pos = str_parse.find("\r\n");
@@ -192,6 +177,7 @@ void HttpRequest ::parsePartRequest(string str_parse) {
     str.clear();
   }
 }
+
 void HttpRequest ::requestLine() {
   string path;
   string querydata;
