@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <ostream>
 #include <sys/_types/_ssize_t.h>
@@ -20,21 +21,25 @@ void WebServer::initialize_kqueue() {
   events = new struct kevent[MAX_EVENTS];
 }
 void WebServer::addServerSocket(ServerConfig &conf) {
-  // std::cout << conf.getPorts()[0] << "\n";
-  // for (size_t i = 0; i < conf.getPorts().size(); i++) {
-  ServerSocket *newSocket = new ServerSocket(conf.getPorts()[0]);
-  newSocket->bind_socket();
-  newSocket->start_listen();
-  struct kevent monitor_socket;
-  EV_SET(&monitor_socket, newSocket->getServer_fd(), EVFILT_READ,
-         EV_ADD | EV_ENABLE, 0, 0, NULL);
-  if (kevent(kqueue_fd, &monitor_socket, 1, NULL, 0, NULL) == -1) {
-    std::cerr << "Error monitoring socket" << std::endl;
-    close(newSocket->getServer_fd());
-    std::exit(EXIT_FAILURE);
+  // for(size_t i =0 ; i < conf.getPorts().size() ; i++){
+  //   cout << conf.getPorts()[i] << "\n";;
+  // }
+  std::cout << conf.getPorts()[0] << "\n";
+  for (size_t i = 0; i < conf.getPorts().size(); i++) {
+    ServerSocket *newSocket = new ServerSocket(conf.getPorts()[i]);
+    newSocket->bind_socket();
+    newSocket->start_listen();
+    struct kevent monitor_socket;
+    EV_SET(&monitor_socket, newSocket->getServer_fd(), EVFILT_READ,
+           EV_ADD | EV_ENABLE, 0, 0, NULL);
+    if (kevent(kqueue_fd, &monitor_socket, 1, NULL, 0, NULL) == -1) {
+      std::cerr << "Error monitoring socket" << std::endl;
+      close(newSocket->getServer_fd());
+      std::exit(EXIT_FAILURE);
+    }
+    serverSockets.push_back(newSocket);
+    map_configs[newSocket->getServer_fd()] = conf;
   }
-  serverSockets.push_back(newSocket);
-  map_configs[newSocket->getServer_fd()] = conf;
 }
 
 WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
@@ -56,7 +61,6 @@ WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
   // std::cout << config.size() << "\n";
   for (size_t i = 0; i < config.size(); i++) {
     addServerSocket(config[i]);
-
   }
 }
 
@@ -167,9 +171,7 @@ void WebServer::respond_to_client(int client_fd) {
       break;
     }
   }
-  std::cout << "This is Host name : " << client->getServerConf().getHost()
-            << "\n";
-  exit(0);
+  std::cout << client->getServerConf().getHost() << "\n";
   HttpResponse *responseclient = new HttpResponse(client);
   //
   responseclient->writeData();

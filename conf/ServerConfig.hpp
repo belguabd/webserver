@@ -29,43 +29,42 @@ struct LocationCgi {
   string cgi_extension;
   string cgi_handler;
 };
-class ServerConfig {
-private:
-  string data;
-  string host;
-  string root;
-  vector<string> index;
-  bool autoindex;
-  string server_name;
-  string errorServer;
-  string errorClient;
-  string client_max_body_size;
-  // map<string, string> globalConfig;
-  map<string, LocationConfig> configNormal;
-  map<string, LocationUplaods> configUpload;
-  map<string, LocationCgi> configcgi;
-
-public:
-  vector<int> ports;
-  ServerConfig(){};
-  ServerConfig(string &str);
-  std::vector<int> &getPorts() { return ports; }
-
-  ~ServerConfig();
-  // void dataConfigFile();
-  // void separateServer();
-  void setGlobaleData(string &strConfig, string &str);
-  void validbrackets(string &str);
-  void parseServerConfig(string &strdata);
-  void checkGlobalConfig(string strConfig);
-  void locationData(string &strlocat);
-  void locationNormal(string &location);
-  void locationUpload(string &location);
-  void locationCgi(string &location);
-  void locationRedirection(string &location);
-  void nameBlocks(string &strdata);
-  string getdata() const { return this->data; }
-  string &getHost() { return host; }
+class ServerConfig
+{
+    private:
+        string data;
+        string host;
+        string root;
+        vector<string> index;
+        bool autoindex;
+        string server_name;
+        string errorServer;
+        string errorClient;
+        string client_max_body_size;
+        // map<string, string> globalConfig;
+        map<string, LocationConfig> configNormal;
+        map<string, LocationUplaods> configUpload;
+        map<string, LocationCgi> configcgi;
+    public:
+        vector<int> ports;
+        ServerConfig(){};
+        ServerConfig(string &str);
+        ~ServerConfig();
+        // void dataConfigFile();
+        // void separateServer();
+        void setGlobaleData(string &strConfig,string &str);
+        void validbrackets(string &str);
+        void parseServerConfig(string &strdata);
+        void checkGlobalConfig(string strConfig);
+        void locationData(string &strlocat);
+        void locationNormal(string &location);
+        void locationUpload(string &location);
+        void locationCgi(string &location);
+        void locationRedirection(string &location);
+        void nameBlocks(string &strdata);
+        string getdata() const {return this->data;}
+        string getHost(){return  host;}
+      std::vector<int> getPorts(){return ports;}
 };
 
 string removeComments(string &input);

@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   HttpRequest.cpp                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: emagueri <emagueri@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/02/10 10:27:32 by ataoufik          #+#    #+#             */
-/*   Updated: 2025/02/26 18:49:41 by emagueri         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "HttpRequest.hpp"
 int i = 0;
 
@@ -28,8 +16,9 @@ void handleRequest(HttpRequest &request) {
   }
   request.parsePartRequest(str_parse);
 
-  if (request.sig == 1 && request.getendHeaders() == 1) {
-    cout << "-------___------end headers----- get" << endl;
+  if (request.sig == 1 && request.getendHeaders() == 1)
+  {
+    // cout <<"-------___------end headers----- get"<<endl;
     request.setRequestStatus(1);
   }
 
@@ -38,14 +27,16 @@ void handleRequest(HttpRequest &request) {
     // cout <<"-------___------end headers----- post"<<endl;
     if (i == 0) {
       tmp = request.getbuffer();
-      // request.
       request._post.start(request.mapheaders, tmp);
       i = 1;
-    } else {
+    }
+    else
+    {
       tmp = request.getreadbuffer();
       request._post.proseRequest(tmp);
     }
-
+    request.setRequestStatus(request._post.getStatus());
+      
     request.joinBuffer();
   }
 }
@@ -57,7 +48,7 @@ HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
 }
 
 int HttpRequest::readData() {
-  char buffer[10];
+  char buffer[5124];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
@@ -199,7 +190,7 @@ void HttpRequest ::requestLine() {
   path = this->dataFirstLine[1];
   if (this->dataFirstLine[2].compare("HTTP/1.1") != 0) {
     cout << "Not Supported" << endl;
-    return;
+    return ;
   }
   size_t pos = path.find("?");
   if (pos == string::npos) {

@@ -57,9 +57,14 @@ int Chunked::handleChunked()
 
 int pasteInFile(std::string name, std::string &data)
 {
-	// std::cout << "filename: " << name << "\n";
 	std::ofstream file(name, std::ios::app);
+	if (!file.is_open())
+	{
+		std::cout << "Failed to open file: " << name << std::endl;
+		return 0;
+	}
 	file << data;
+	file.close();
 	return 1;
 }
 
@@ -69,7 +74,7 @@ size_t Chunked::getChunkSize(std::string &buffer)
 	if (buffer == std::string("\r\n"))
 	{
 		// std::cout << "due i enter on this when the sizeChunk=0 which mean the [chunk is done] so we saved in [remainingBody] \n";
-		// std::cout << "this crln need set it in next part to make sure that is a valid chunkHead (\r\n0xN\r\n)\n";
+		// std::cout << "this crlf need set it in next part to make sure that is a valid chunkHead (\r\n0xN\r\n)\n";
 		this->_remainingBuffer.insert(0, buffer);
 		return 0;
 	}
@@ -82,6 +87,7 @@ size_t Chunked::getChunkSize(std::string &buffer)
 	if (std::string(buffer + _remainingBuffer) == std::string("\r\n0\r\n\r\n"))
 	{
 		std::cout << "end of req" << std::endl;
+		_status = 1;
 		std::cout << "check file: " << _fileName << std::endl;
 		return 0;
 	}

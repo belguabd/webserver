@@ -18,6 +18,7 @@ using namespace std;
 class HttpRequest {
 private:
   int client_fd;
+  bool signRequest;
   int firsttime;
   int requestStatus;
   int endHeaders;
@@ -68,4 +69,4 @@ public:
 };
 vector<string> splitstring(const string &str);
 void    checkHeaders(string& str, map<string, string>& headersMap);
-void printNonPrintableChars(const std::string &str);
+void    printNonPrintableChars(const std::string &str);

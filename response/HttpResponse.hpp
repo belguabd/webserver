@@ -23,8 +23,15 @@ public:
   ~HttpResponse();
   int writeData();
   void notFound(int client_socket);
+  void getResponse();
+  void postResponse();
+  void defautlRoot();
+  void checkDataResev();
+  void fileDataSend(string &data);
+  void dirDataSend(string &data);
+  void forbidden(int client_socket);
 };
 
 int checkTypePath(string &path);
 bool ExistFile(string &filePath);
-string autoindex(const string &dirPath);
+string dirAutoindex(string &dirPath);
