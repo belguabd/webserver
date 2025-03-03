@@ -1,5 +1,5 @@
 #include "HttpRequest.hpp"
-int i= 0;
+int i = 0;
 
 void handleRequest(HttpRequest &request) {
   string str_parse;
@@ -34,8 +34,8 @@ void handleRequest(HttpRequest &request) {
   }
 }
 
-HttpRequest::HttpRequest(int client_fd)
-    : client_fd(client_fd), firsttime(0), endHeaders(0),sig(0) {
+HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
+    : client_fd(client_fd), firsttime(0), endHeaders(0), sig(0) , server_config(server_config){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 }
@@ -48,6 +48,7 @@ int HttpRequest::readData() {
   if (bytes_received > 0) {
     readBuffer.assign(buffer, bytes_received);
     handleRequest(*this);
+
   }
   return bytes_received;
 }
@@ -81,21 +82,19 @@ int HttpRequest::defineTypeMethod(string firstline) {
     exit(0);
   }
   this->dataFirstLine = words;
-  if (words[0]=="GET")
+  if (words[0] == "GET")
     return (1);
-  else if (words[0]=="POST")
+  else if (words[0] == "POST")
     return (2);
-  else if (words[0]=="DELETE")
+  else if (words[0] == "DELETE")
     return (3);
   return (0);
 }
 
-vector<string> splitstring(const string &str)
-{
+vector<string> splitstring(const string &str) {
   vector<string> words;
   size_t i = 0, j;
-  while (i < str.length())
-  {
+  while (i < str.length()) {
     if ((j = str.find_first_of(" \t", i)) != string::npos) {
       if (j > i)
         words.push_back(str.substr(i, j - i));
@@ -155,7 +154,7 @@ string HttpRequest ::partRquest() {
 void HttpRequest ::joinBuffer() {
 
   if (this->endHeaders == 1)
-    return ;
+    return;
   this->_buffer += this->readBuffer;
   this->readBuffer.clear();
 }
@@ -170,7 +169,7 @@ void HttpRequest ::parsePartRequest(string str_parse) {
     string str = str_parse.substr(0, pos + 2);
     if (str == "\r\n") {
       this->endHeaders = 1;
-      break ;
+      break;
     }
     str_parse = str_parse.substr(pos + 2);
     checkHeaders(str);

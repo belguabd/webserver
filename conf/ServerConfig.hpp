@@ -47,6 +47,7 @@ class ServerConfig
         map<string, LocationCgi> configcgi;
     public:
         vector<int> ports;
+        ServerConfig(){};
         ServerConfig(string &str);
         ~ServerConfig();
         // void dataConfigFile();
@@ -61,7 +62,9 @@ class ServerConfig
         void locationCgi(string &location);
         void locationRedirection(string &location);
         void nameBlocks(string &strdata);
-          string getdata() const {return this->data;}
+        string getdata() const {return this->data;}
+        string getHost(){return  host;}
+      std::vector<int> getPorts(){return ports;}
 };
 
 string removeComments(string &input);

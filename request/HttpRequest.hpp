@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <vector>
 #include "./Post/Post.hpp"
+#include "../conf/ServerConfig.hpp"
 // class HttpRequest;
 
 using namespace std;
@@ -25,14 +26,17 @@ private:
   vector<string> dataFirstLine;
   map<string, string> queryParam;
   std::string readBuffer;
+  ServerConfig server_config;
+
   // Delete _delete;
   string _buffer;
 
 public:
   Post _post;
+  ServerConfig &getServerConf() {return  this->server_config;}
   map<string, string> mapheaders;
   int sig;
-  HttpRequest(int client_fd);
+  HttpRequest(int client_fd , ServerConfig &server_config);
   ~HttpRequest();
   int getRequestStatus() { return this->requestStatus; }
   int readData();
