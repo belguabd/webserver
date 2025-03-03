@@ -1,13 +1,15 @@
 
 #include "WebServer.hpp"
+#include <cstddef>
 #include <cstdio>
 #include <iostream>
+#include <memory>
+#include <ostream>
 #include <sys/_types/_ssize_t.h>
 #include <sys/event.h>
 #include <unistd.h>
 #include <utility>
 #include <vector>
-
 
 void WebServer::initialize_kqueue() {
   kqueue_fd = kqueue();
@@ -17,11 +19,12 @@ void WebServer::initialize_kqueue() {
   }
   events = new struct kevent[MAX_EVENTS];
 }
-void WebServer::addServerSocket(int port) {
-  ServerSocket *newSocket = new ServerSocket(port);
+void WebServer::addServerSocket(ServerConfig &conf) {
+  // std::cout << conf.getPorts()[0] << "\n";
+  // for (size_t i = 0; i < conf.getPorts().size(); i++) {
+  ServerSocket *newSocket = new ServerSocket(conf.getPorts()[0]);
   newSocket->bind_socket();
   newSocket->start_listen();
-
   struct kevent monitor_socket;
   EV_SET(&monitor_socket, newSocket->getServer_fd(), EVFILT_READ,
          EV_ADD | EV_ENABLE, 0, 0, NULL);
@@ -30,26 +33,31 @@ void WebServer::addServerSocket(int port) {
     close(newSocket->getServer_fd());
     std::exit(EXIT_FAILURE);
   }
-  serverSockets.push_back(*newSocket);
+  serverSockets.push_back(newSocket);
+  map_configs[newSocket->getServer_fd()] = conf;
 }
 
 WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
   initialize_kqueue();
   ifstream file(str);
-	stringstream fileContent;
-	if (!file.is_open())
-		cout <<"error file not opened "<<endl;
-	fileContent << file.rdbuf();
-	this->_data = fileContent.str();
+  stringstream fileContent;
+  if (!file.is_open())
+    cout << "error file not opened " << endl;
+  fileContent << file.rdbuf();
+  this->_data = fileContent.str();
   this->dataConfigFile();
 
-  std::vector<int> ports;
-  ports.push_back(8585);
+  // std::vector<int> ports;
+  // ports.push_back(8585);
 
-  addServerSocket(ports[0]);
-    // for (size_t i = 0; i < ports.size(); ++i) {
-    //     addServerSocket(ports[i]);
-    // }
+  // for (size_t i = 0; i < config.size(); ++i) {
+  // puts("OK");
+  // std::cout <<  "size of ports  : " <<  config[0].ports.size() << "\n";
+  // std::cout << config.size() << "\n";
+  for (size_t i = 0; i < config.size(); i++) {
+    addServerSocket(config[i]);
+
+  }
 }
 
 void WebServer::handle_new_connection(int server_fd) {
@@ -67,7 +75,8 @@ void WebServer::handle_new_connection(int server_fd) {
     close(client_fd);
     return;
   }
-  connected_clients.push_back(new HttpRequest(client_fd));
+  connected_clients.push_back(
+      new HttpRequest(client_fd, map_configs[server_fd]));
   // connected_clients[client_fd] = new HttpRequest(client_fd);
 }
 
@@ -77,7 +86,6 @@ void WebServer::receive_from_client(int client_fd) {
   for (it = connected_clients.begin(); it != connected_clients.end(); ++it) {
     if ((*it)->getfd() == client_fd) {
       client = *it;
-      // connected_clients.erase(it);
       break;
     }
   }
@@ -98,9 +106,10 @@ void WebServer::receive_from_client(int client_fd) {
   if (client->getRequestStatus() == 1) {
     struct kevent changes[1];
     EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
-           NULL);
+           client);
     if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-      std::cerr << "Error setting write event: " << strerror(errno) << std::endl;
+      std::cerr << "Error setting write event: " << strerror(errno)
+                << std::endl;
       close(client_fd);
       connected_clients.erase(it);
       return;
@@ -148,6 +157,7 @@ void WebServer::receive_from_client(int client_fd) {
 }
 
 void WebServer::respond_to_client(int client_fd) {
+
   HttpRequest *client;
   std::vector<HttpRequest *>::iterator it;
   for (it = connected_clients.begin(); it != connected_clients.end(); ++it) {
@@ -157,8 +167,11 @@ void WebServer::respond_to_client(int client_fd) {
       break;
     }
   }
+  std::cout << "This is Host name : " << client->getServerConf().getHost()
+            << "\n";
+  exit(0);
   HttpResponse *responseclient = new HttpResponse(client);
-  // 
+  //
   responseclient->writeData();
   struct kevent changes[1];
   EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
@@ -167,65 +180,61 @@ void WebServer::respond_to_client(int client_fd) {
   connected_clients.erase(it);
   delete client;
   delete responseclient;
-  
 }
 /*----------------------------------------------------*/
 
-void WebServer:: separateServer()
-{
-    string strserv;
-    string str;
-    strserv = this->_data;
-    if (strserv.length()==0) {
-        cout <<"error file config empty"<<endl;
-        exit(0);
+void WebServer::separateServer() {
+  string strserv;
+  string str;
+  strserv = this->_data;
+  if (strserv.length() == 0) {
+    cout << "error file config empty" << endl;
+    exit(0);
+  }
+  size_t i = 0;
+  bool found = false;
+  int sig = 0;
+  while (i < strserv.length()) {
+    size_t pos = strserv.find("server", i);
+    // cout << "i = > "<<i<<endl;
+    if (sig == 1 && pos == string::npos)
+      break;
+    if (pos == string::npos) {
+      cout << "error server not found" << endl;
+      exit(0);
     }
-    size_t i = 0;
-    bool found = false;
-    int sig = 0;
-    while(i < strserv.length())
-    {
-        size_t pos = strserv.find("server",i);
-        // cout << "i = > "<<i<<endl;
-        if (sig==1 &&pos == string::npos)
-            break;
-        if (pos == string::npos ) {
-            cout <<"error server not found"<<endl;
-            exit(0);
-        }
-        if (sig == 0) {
-            sig = 1;
-            str = strserv.substr(0,pos);
-        } else {
-            str = strserv.substr(i-1,pos- i);
-            // cout << str<<endl;
-            // cout <<"------------------------------------------"<<endl;
-            ServerConfig conf(str);
-            conf.validbrackets(str);
-            conf.parseServerConfig(str);
-            config.push_back(conf);
-        }
-        found = true;
-        i = pos+1;
+    if (sig == 0) {
+      sig = 1;
+      str = strserv.substr(0, pos);
+    } else {
+      str = strserv.substr(i - 1, pos - i);
+      // cout << str<<endl;
+      // cout <<"------------------------------------------"<<endl;
+      ServerConfig conf(str);
+      conf.validbrackets(str);
+      conf.parseServerConfig(str);
+      config.push_back(conf);
     }
-    if (found==false)
-        return;
-   size_t pos = strserv.rfind("server");
-    str = strserv.substr(pos);
-    // cout << str<<endl;
-    // cout <<"------------------------------------------"<<endl;
-    ServerConfig conf(str);
-    conf.validbrackets(str);
-    conf.parseServerConfig(str);
-    config.push_back(conf);
+    found = true;
+    i = pos + 1;
+  }
+  if (found == false)
+    return;
+  size_t pos = strserv.rfind("server");
+  str = strserv.substr(pos);
+  // cout << str<<endl;
+  // cout <<"------------------------------------------"<<endl;
+  ServerConfig conf(str);
+  conf.validbrackets(str);
+  conf.parseServerConfig(str);
+  config.push_back(conf);
 }
 
-void WebServer :: dataConfigFile()
-{
-	this->_data = removeComments(this->_data);
+void WebServer ::dataConfigFile() {
+  this->_data = removeComments(this->_data);
   this->separateServer();
-    // this->validbrackets();
-    // this->parseServerConfig();
+  // this->validbrackets();
+  // this->parseServerConfig();
 }
 
 /*----------------------------------------------------*/
@@ -237,18 +246,16 @@ void WebServer::run() {
     int event_fd = events[i].ident;
     int filter = events[i].filter;
     for (size_t i = 0; i < serverSockets.size(); i++) {
-      if (serverSockets[i].getServer_fd() == event_fd)
+      if (serverSockets[i]->getServer_fd() == event_fd)
         is_server_socket = true;
     }
     if (is_server_socket)
       handle_new_connection(event_fd);
     else {
       if (filter == EVFILT_READ) {
-        // puts("read form client");
         receive_from_client(event_fd);
       } else if (filter == EVFILT_WRITE) {
-        puts("write form server");
-    
+
         respond_to_client(event_fd);
       }
     }
