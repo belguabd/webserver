@@ -58,12 +58,25 @@ int Chunked::handleChunked()
 int pasteInFile(std::string name, std::string &data)
 {
 	std::ofstream file(name, std::ios::app);
+	std::string d = data;
+	if (name == "currentRequest")
+	{
+		std::cout << "in current request\n";
+		std::string::size_type pos = 0;
+		const std::string from = "\r\n";
+		const std::string to = "\\r\\n\n";
+
+		while ((pos = d.find(from, pos)) != std::string::npos) {
+			d.replace(pos, from.length(), to);
+			pos += to.length(); // Move past the replacement
+		}
+	}
 	if (!file.is_open())
 	{
-		std::cout << "Failed to open file: " << name << std::endl;
+		std::cerr << "Failed to open file: " << name << " - " << std::strerror(errno) << std::endl;
 		return 0;
 	}
-	file << data;
+	file << d;
 	file.close();
 	return 1;
 }

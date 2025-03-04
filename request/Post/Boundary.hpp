@@ -40,6 +40,7 @@ public:
     size_t getSizeOfBoundary();
     void setBoundaryString();
     void setFileName(std::string &fileName);
+    std::string getBoundaryString();
 };
 void printNonPrintableChars(const std::string &str);
 int pasteInFile(std::string name, std::string &data);

@@ -8,6 +8,7 @@
 #define FILENAME "output.json"
 #include "Chunked.hpp"
 #include "Boundary.hpp"
+#include "BoundaryChunked.hpp"
 
 
 class Post
@@ -24,7 +25,8 @@ private:
 
     Body _bodyType;
     Chunked chunk;
-    Boundary bound;
+    Boundary *bound;
+    BoundaryChunked *boundChunk;
     std::map <std::string, std::string> _headers;
     std::string _bufferBody;
     std::string _remainingBuffer;

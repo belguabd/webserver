@@ -1,8 +1,16 @@
 #include "HttpRequest.hpp"
 int i= 0;
 
+void printRequest(HttpRequest &request)
+{
+  std::string tmp = "currentRequest";
+  std::string tmp2 = request.getreadbuffer();
+  pasteInFile(tmp, tmp2);
+}
+
 void handleRequest(HttpRequest &request) {
   string str_parse;
+  // printRequest(request);
   request.joinBuffer();
   str_parse = request.partRquest();
   if (request.getFirstTimeFlag() == 0) {
@@ -22,7 +30,7 @@ void handleRequest(HttpRequest &request) {
     request.setRequestStatus(1);
   }
 
-  else if (request.sig == 2&& request.getendHeaders() == 1)
+  else if (request.sig == 2 && request.getendHeaders() == 1)
   {
     string tmp;
     // cout <<"-------___------end headers----- post"<<endl;

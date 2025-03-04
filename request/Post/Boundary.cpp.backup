@@ -3,9 +3,7 @@
 
 Boundary::Boundary(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
     _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
-{
-    setBoundaryString();
-}
+{}
 
 void Boundary::setBoundaryString()
 {
@@ -30,11 +28,6 @@ void Boundary::setFileName(std::string &fileName)
 	while (stat((std::string(UPLOAD_FOLDER + name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	fileName = name + extention;
-}
-
-std::string Boundary::getBoundaryString()
-{
-    return _boundaryString;
 }
 
 void Boundary::setMetaData(std::string &headBoundary, std::string key)
@@ -112,7 +105,7 @@ int Boundary::handleBoundary()
 }
 int Boundary::handleBoundaryRec()
 {
-    if (_bufferBody.substr(0, _boundaryStringEnd.size()) == _boundaryStringEnd)
+    if (_bufferBody.empty() || _bufferBody.substr(0, _boundaryStringEnd.size()) == _boundaryStringEnd)
     {
         std::cout << "end boundary" << std::endl;
         _status = 1;
