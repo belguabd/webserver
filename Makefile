@@ -23,6 +23,8 @@ rm:
 clean:
 	$(RM) $(OBJ)
 	$(RM) ./upload/*
+	$(RM) ./currentRequest
+	$(RM) ./out.yaml
 
 fclean:clean
 	$(RM) $(NAME)
