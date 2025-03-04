@@ -18,20 +18,16 @@ void handleRequest(HttpRequest &request) {
 
   if (request.sig == 1 && request.getendHeaders() == 1)
   {
-    // cout <<"-------___------end headers----- get"<<endl;
     request.setRequestStatus(1);
   }
 
   else if (request.sig == 2 && request.getendHeaders() == 1) {
     string tmp;
-    // cout <<"-------___------end headers----- post"<<endl;
     if (i == 0) {
       tmp = request.getbuffer();
       request._post.start(request.mapheaders, tmp);
       i = 1;
-    }
-    else
-    {
+    } else {
       tmp = request.getreadbuffer();
       request._post.proseRequest(tmp);
     }
