@@ -289,7 +289,7 @@ void ServerConfig :: setGlobaleData(string &strConfig, string &str) {
 }
 void ServerConfig :: checkGlobalConfig(string strConfig) {
 
-	string list[] = {"listen","host","client_max_body_size","error_page 4","error_page 5","autoindex ","root","index"};
+	string list[] = {"listen","host","client_max_body_size","error_page 4","error_page 5","root"}; //autoindex defaut off
 	size_t listSize = sizeof(list) / sizeof(list[0]);
 	for (size_t i = 0; i < listSize; i++) {
 		if (strConfig.find(list[i]) == string::npos) {
@@ -297,11 +297,29 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
 			exit(0) ;
 		}
 	}
+    size_t index = strConfig.find("index");
+    int i = 0;
+    while (index!=string::npos)
+    {
+        string tmp = strConfig.substr(index-4,index+5);
+        if (strncmp(tmp.c_str(),"autoindex",9)!=0) {
+            i++;
+            break;
+        } else {
+            index = strConfig.find("index",index+1);
+        }
+    }
+    if (i==0) {
+			cout << "Error in global config" << endl;
+			exit(0) ;
+		}
+    // string list[] = {"listen","host","client_max_body_size","error_page 4","error_page 5","autoindex ","root","index"};
+	// size_t listSize = sizeof(list) / sizeof(list[0]);
 	for (size_t i = 0; i < listSize; i++) {
         this->setGlobaleData(strConfig,list[i]);
 	}
 }
-void ServerConfig :: validbrackets(string &str) {
+void validbrackets(string &str) {
     int sig = 0;
     string tmp;
     size_t firstpos =0;
@@ -348,11 +366,6 @@ void ServerConfig :: validbrackets(string &str) {
 }
 void ServerConfig :: parseServerConfig(string &strdata) {
 	size_t pos = strdata.find("server");
-	string str = strdata.substr(0,pos);
-	if (pos== string::npos ||checkCharacter(str,'}')) {
-		cout << "error :string before server" << endl;
-		exit(0);
-	}
 	size_t i = pos + 6;
 	while(i < strdata.length() && strdata[i]!='{') {
 		if (strdata[i]!='\t' &&  strdata[i]!=' '&& strdata[i]!='\n') {

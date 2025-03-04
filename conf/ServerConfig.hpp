@@ -53,7 +53,6 @@ class ServerConfig
         // void dataConfigFile();
         // void separateServer();
         void setGlobaleData(string &strConfig,string &str);
-        void validbrackets(string &str);
         void parseServerConfig(string &strdata);
         void checkGlobalConfig(string strConfig);
         void locationData(string &strlocat);
@@ -67,6 +66,7 @@ class ServerConfig
       std::vector<int> getPorts(){return ports;}
 };
 
+void validbrackets(string &str);
 string removeComments(string &input);
 bool checkCharacter(string &substr, char c);
 string removeLocationBlocks(string &configData);
