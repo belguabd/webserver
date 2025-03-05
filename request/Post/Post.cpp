@@ -1,10 +1,12 @@
 #include "./Post.hpp"
 
-Post::Post() : chunk(_bufferBody, _remainingBuffer, _headers, _status)
+Post::Post() 
+: chunk(_bufferBody, _remainingBuffer, _headers, _status)
 //, bound(_bufferBody, _remainingBuffer, _headers, _status)
 {
 	setBodyType();
 	_status = 0;
+	initializeMimeTypes();
 }
 
 Post &Post::operator=(const Post &other)
@@ -68,10 +70,27 @@ bool fileExists(std::string &filePath)
 	return (stat(filePath.c_str(), &buffer) == 0);
 }
 
-int Post::start(std::map<std::string, std::string> &headers, std::string &buffer)
+void Post::setFileName(std::string extention)
+{
+	struct stat b;
+	std::string name = UPLOAD_FOLDER + std::string("filePost");
+	int n = 0;
+	while (stat((std::string(name + extention)).c_str(), &b) != -1)
+		name.append("_");
+	_fileName = (name + extention);
+}
+
+void Post::handleContentLength(std::string &buffer)
+{
+	printNonPrintableChars(_bufferBody);
+	pasteInFile(_fileName, buffer);
+}
+
+int Post::start(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer)
 {
 	buffer = "\r\n" + buffer;
 	// std::cout <<"buffer "<<buffer<<std::endl;
+	_queryParam = queryParam;
 	_status = 0;
 	setHeaders(headers);
 	setBodyType();
@@ -85,25 +104,13 @@ int Post::start(std::map<std::string, std::string> &headers, std::string &buffer
 	else if (_bodyType == boundaryChunked)
 	{
 		buffer.insert(0, "\r\n2\r\n\r\n");
-		// size_t pos = buffer.find("\r\n", 2);
-		// if (pos != std::string::npos)
-		// {
-		// 	// if (buffer.substr(0,2) == "\r\n")
-		// 	for (int i = 2; i < pos; i++)
-		// 	{
-		// 		if (!std::isxdigit(buffer[i]))
-		// 		{
-		// 			std::cout << "throw invalid head chunk3\n" << std::endl;
-		// 			return 0;
-		// 		}
-		// 	}
-		// 	size_t n = strtol(buffer.substr(2, pos).c_str(), NULL, 16);
-		// 	buffer.erase(0, pos + 2);
-
-		// 	buffer.insert(pos, "\r\n");
-		// }
 		std::cout << "boundaryChunked\n";
 		boundChunk = new BoundaryChunked(_bufferBody, _remainingBuffer, _headers, _status);
+	}
+	else if (_bodyType == contentLength)
+	{
+		buffer.erase(0,2); // to remove \r\n
+		setFileName(_mimeToExtension[headers["Content-Type"]]);
 	}
 
 	// for (const auto& header : _headers) {
@@ -114,7 +121,9 @@ int Post::start(std::map<std::string, std::string> &headers, std::string &buffer
 
 int Post::proseRequest(std::string &buffer)
 {
-
+	if (this->_bodyType == contentLength)
+		handleContentLength(buffer);
+	std::cout << "=========buffer befor: =========";  printNonPrintableChars(buffer);
 	size_t pos = buffer.rfind("\n");
 	if (pos == std::string::npos)
 	{
@@ -124,6 +133,7 @@ int Post::proseRequest(std::string &buffer)
 	_bufferBody = _remainingBuffer;
 	_remainingBuffer = buffer.substr(pos + 1);
 	_bufferBody += buffer.substr(0, pos + 1);
+	std::cout << "=========buffer after: =========";  printNonPrintableChars(buffer);
 	// std::cout << "=<>=<>=<>=<>=<>=<>=<>=<>buffer body=<>=<>=<>=<>=<>=<>=<>=<>=<> \n"; printNonPrintableChars(_bufferBody);
 	// std::cout << "==<>=<>=<>=<>=<>=<>=<>=<>=<>=<>=<>======<>=<>=<>=<>=<>=<>=<>=<>=<>=<>======<>=<>=<>=<>=<>=<>=<>\n";
 	if (this->_bodyType == chunked)
@@ -140,12 +150,61 @@ int Post::proseRequest(std::string &buffer)
 		boundChunk->handleChunkedBoundary();
 		// handleChunked();
 	}
-	if (this->_bodyType == contentLength)
-	{
-	}
 	return _status;
 }
 
 Post::~Post()
 {
+}
+
+void Post::initializeMimeTypes() 
+{
+    // Text types
+    _mimeToExtension["text/plain"] = ".txt";
+    _mimeToExtension["text/html"] = ".html";
+    _mimeToExtension["text/css"] = ".css";
+    _mimeToExtension["text/javascript"] = ".js";
+    _mimeToExtension["text/markdown"] = ".md";
+    _mimeToExtension["text/csv"] = ".csv";
+    _mimeToExtension["text/x-c"] = ".cpp";
+    
+    // Application types
+    _mimeToExtension["application/json"] = ".json";
+    _mimeToExtension["application/xml"] = ".xml";
+    _mimeToExtension["application/pdf"] = ".pdf";
+    _mimeToExtension["application/zip"] = ".zip";
+    _mimeToExtension["application/x-rar-compressed"] = ".rar";
+    _mimeToExtension["application/x-tar"] = ".tar";
+    _mimeToExtension["application/gzip"] = ".gz";
+    _mimeToExtension["application/msword"] = ".doc";
+    _mimeToExtension["application/vnd.ms-excel"] = ".xls";
+    _mimeToExtension["application/vnd.openxmlformats-officedocument.wordprocessingml.document"] = ".docx";
+    _mimeToExtension["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] = ".xlsx";
+    _mimeToExtension["application/octet-stream"] = ".bin";
+    
+    // Image types
+    _mimeToExtension["image/jpeg"] = ".jpg";
+    _mimeToExtension["image/png"] = ".png";
+    _mimeToExtension["image/gif"] = ".gif";
+    _mimeToExtension["image/svg+xml"] = ".svg";
+    _mimeToExtension["image/webp"] = ".webp";
+    _mimeToExtension["image/tiff"] = ".tiff";
+    _mimeToExtension["image/bmp"] = ".bmp";
+    _mimeToExtension["image/x-icon"] = ".ico";
+    
+    // Audio types
+    _mimeToExtension["audio/mpeg"] = ".mp3";
+    _mimeToExtension["audio/wav"] = ".wav";
+    _mimeToExtension["audio/webm"] = ".weba";
+    
+    // Video types
+    _mimeToExtension["video/mp4"] = ".mp4";
+    _mimeToExtension["video/webm"] = ".webm";
+    _mimeToExtension["video/ogg"] = ".ogv";
+    
+    // Font types
+    _mimeToExtension["font/ttf"] = ".ttf";
+    _mimeToExtension["font/woff"] = ".woff";
+    _mimeToExtension["font/woff2"] = ".woff2";
+    _mimeToExtension["font/otf"] = ".otf";
 }

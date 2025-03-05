@@ -30,17 +30,23 @@ private:
     std::map <std::string, std::string> _headers;
     std::string _bufferBody;
     std::string _remainingBuffer;
+    std::map<std::string, std::string> _queryParam;
+    std::map<std::string, std::string> _mimeToExtension;
     int _status;
+    std::string _fileName;
+    size_t contentLengthSize;
+    void setFileName(std::string extention);
+    void initializeMimeTypes();
 public:
     Post();
-    long getChunkSize(std::string &buffer);
     int getStatus() {return _status;}
+    void handleContentLength(std::string &buffer);
     Post &operator=(const Post &);
     ~Post();
     void setHeaders(std::map<std::string, std::string> &headers);
     void setBodyType();
     Body getBodyType() { return _bodyType; }
-    int start(std::map<std::string, std::string> &headers, std::string &buffer);
+    int start(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer);
     int proseRequest(std::string &buffer);
 };
 void printNonPrintableChars(const std::string &str);

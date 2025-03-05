@@ -23,12 +23,12 @@ private:
   int endHeaders;
   string _path;
   vector<string> dataFirstLine;
-  map<string, string> queryParam;
   std::string readBuffer;
   // Delete _delete;
   string _buffer;
 
 public:
+  map<string, string> queryParam;
   Post _post;
   map<string, string> mapheaders;
   int sig;
