@@ -1,8 +1,6 @@
 #include "./Post.hpp"
 
 Post::Post() 
-: chunk(_bufferBody, _remainingBuffer, _headers, _status)
-//, bound(_bufferBody, _remainingBuffer, _headers, _status)
 {
 	setBodyType();
 	_status = 0;
@@ -28,6 +26,12 @@ void Post::setHeaders(std::map<std::string, std::string> &headers)
 	this->_headers = headers;
 }
 
+void Post::setContentLengthSize()
+{
+	if (_headers.find("Content-Length") != _headers.end())
+		_contentLengthSize = std::stoi(_headers["Content-Length"]);
+}
+
 void Post::setBodyType()
 {
 	if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("; boundary=") != std::string::npos)
@@ -40,6 +44,8 @@ void Post::setBodyType()
 			std::cout << "This is boundary\n";
 		}
 	}
+	else if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("x-www-form-urlencoded") != std::string::npos)
+		_bodyType = keyVal;
 	else if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
 		_bodyType = chunked;
 	else
@@ -80,11 +86,18 @@ void Post::setFileName(std::string extention)
 	_fileName = (name + extention);
 }
 
-void Post::handleContentLength(std::string &buffer)
+int Post::handleContentLength(std::string &buffer)
 {
-	printNonPrintableChars(_bufferBody);
-	pasteInFile(_fileName, buffer);
+	// printNonPrintableChars(buffer);
+	if (pasteInFile(_fileName, buffer) >= _contentLengthSize)
+		_status = 1;
+	return _status;
 }
+
+// int Post::handleKeyVal(std::string &buffer)
+// {
+// 	buffer
+// }
 
 int Post::start(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer)
 {
@@ -94,17 +107,14 @@ int Post::start(std::map<std::string, std::string> &headers, std::map<std::strin
 	_status = 0;
 	setHeaders(headers);
 	setBodyType();
+	setContentLengthSize();
 	if (_bodyType == chunked)
-		chunk.setFileName(chunk._mimeToExtension[chunk._headers["Content-Type"]]);
+		chunk = new Chunked(_bufferBody, _remainingBuffer, _headers, _status);
 	else if (_bodyType == boundary)
-	{
-		std::cout << "Chunked\n";
-		bound = new Boundary(_bufferBody, _remainingBuffer, _headers, _status);
-	}
+		bound = new Boundary(queryParam, _bufferBody, _remainingBuffer, _headers, _status);
 	else if (_bodyType == boundaryChunked)
 	{
 		buffer.insert(0, "\r\n2\r\n\r\n");
-		std::cout << "boundaryChunked\n";
 		boundChunk = new BoundaryChunked(_bufferBody, _remainingBuffer, _headers, _status);
 	}
 	else if (_bodyType == contentLength)
@@ -112,6 +122,10 @@ int Post::start(std::map<std::string, std::string> &headers, std::map<std::strin
 		buffer.erase(0,2); // to remove \r\n
 		setFileName(_mimeToExtension[headers["Content-Type"]]);
 	}
+	// else if (_bodyType == keyVal)
+	// {
+
+	// }
 
 	// for (const auto& header : _headers) {
 	// 	std::cout << header.first << ":{" << header.second << "}" << std::endl;
@@ -119,42 +133,41 @@ int Post::start(std::map<std::string, std::string> &headers, std::map<std::strin
 	return proseRequest(buffer);
 }
 
-int Post::proseRequest(std::string &buffer)
+size_t Post::manipulateBuffer(std::string &buffer)
 {
-	if (this->_bodyType == contentLength)
-		handleContentLength(buffer);
-	std::cout << "=========buffer befor: =========";  printNonPrintableChars(buffer);
 	size_t pos = buffer.rfind("\n");
 	if (pos == std::string::npos)
 	{
 		_remainingBuffer += buffer;
-		return 1;
+		return pos;
 	}
 	_bufferBody = _remainingBuffer;
 	_remainingBuffer = buffer.substr(pos + 1);
 	_bufferBody += buffer.substr(0, pos + 1);
-	std::cout << "=========buffer after: =========";  printNonPrintableChars(buffer);
-	// std::cout << "=<>=<>=<>=<>=<>=<>=<>=<>buffer body=<>=<>=<>=<>=<>=<>=<>=<>=<> \n"; printNonPrintableChars(_bufferBody);
-	// std::cout << "==<>=<>=<>=<>=<>=<>=<>=<>=<>=<>=<>======<>=<>=<>=<>=<>=<>=<>=<>=<>=<>======<>=<>=<>=<>=<>=<>=<>\n";
+	return pos;
+}
+
+int Post::proseRequest(std::string &buffer)
+{
+	if (this->_bodyType == contentLength)
+		return handleContentLength(buffer);
+	if (this->_bodyType == keyVal)
+		std::cout << "keyVal\n";
+	// std::cout << "=========buffer befor: =========";  printNonPrintableChars(buffer);
+	if (manipulateBuffer(buffer) == std::string::npos)
+		return _status;
 	if (this->_bodyType == chunked)
-	{
-		chunk.handleChunked();
-	}
+		chunk->handleChunked();
 	if (this->_bodyType == boundary)
-	{
 		bound->handleBoundary();
-		// handleChunked();
-	}
 	if (this->_bodyType == boundaryChunked)
-	{
 		boundChunk->handleChunkedBoundary();
-		// handleChunked();
-	}
 	return _status;
 }
 
 Post::~Post()
 {
+
 }
 
 void Post::initializeMimeTypes() 

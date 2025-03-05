@@ -10,7 +10,7 @@ void printRequest(HttpRequest &request)
 
 void handleRequest(HttpRequest &request) {
   string str_parse;
-  // printRequest(request);
+  printRequest(request);
   request.joinBuffer();
   str_parse = request.partRquest();
   if (request.getFirstTimeFlag() == 0) {
@@ -58,7 +58,7 @@ HttpRequest::HttpRequest(int client_fd)
 }
 
 int HttpRequest::readData() {
-  char buffer[20];
+  char buffer[2];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);

@@ -19,12 +19,13 @@ enum Body
     boundary,
     chunked,
     contentLength,
+    keyVal,
     boundaryChunked
 };
 private:
 
     Body _bodyType;
-    Chunked chunk;
+    Chunked *chunk;
     Boundary *bound;
     BoundaryChunked *boundChunk;
     std::map <std::string, std::string> _headers;
@@ -34,13 +35,16 @@ private:
     std::map<std::string, std::string> _mimeToExtension;
     int _status;
     std::string _fileName;
-    size_t contentLengthSize;
+    size_t _contentLengthSize;
     void setFileName(std::string extention);
     void initializeMimeTypes();
+    size_t manipulateBuffer(std::string &buffer);
+    void setContentLengthSize();
 public:
     Post();
     int getStatus() {return _status;}
-    void handleContentLength(std::string &buffer);
+    int handleKeyVal(std::string &buffer);
+    int handleContentLength(std::string &buffer);
     Post &operator=(const Post &);
     ~Post();
     void setHeaders(std::map<std::string, std::string> &headers);
@@ -50,5 +54,5 @@ public:
     int proseRequest(std::string &buffer);
 };
 void printNonPrintableChars(const std::string &str);
-int pasteInFile(std::string name, std::string &data);
+size_t pasteInFile(std::string name, std::string &data);
  

@@ -76,7 +76,7 @@ int BoundaryChunked::handleChunkedRec()
 	return handleChunkedRec();
 }
 
-// int pasteInFile(std::string name, std::string &data)
+// size_t pasteInFile(std::string name, std::string &data)
 // {
 // 	std::ofstream file(name, std::ios::app);
 // 	if (!file.is_open())

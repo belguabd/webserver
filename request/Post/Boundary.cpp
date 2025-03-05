@@ -7,6 +7,13 @@ Boundary::Boundary(std::string &bufferBody, std::string &remainingBuffer, std::m
     setBoundaryString();
 }
 
+Boundary::Boundary(std::map<std::string, std::string> queryParam, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
+    _queryParam(queryParam), _bufferBody(bufferBody), 
+    _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
+{
+    setBoundaryString();
+}
+
 void Boundary::setBoundaryString()
 {
     std::string str = _headers["Content-Type"];
@@ -117,6 +124,9 @@ int Boundary::handleBoundaryRec()
         std::cout << "end boundary" << std::endl;
         _status = 1;
         _bufferBody = "";
+        std::cout << "_queryParam\n";
+        for (auto map : _queryParam)
+            std::cout << map.first << "|" << map.second << std::endl;
         return _status;
     }
     
@@ -127,11 +137,16 @@ int Boundary::handleBoundaryRec()
         return -1;
     }
     _indexNextBoundary = getSizeOfBoundary();
+    std::string content = _bufferBody.substr(0, _indexNextBoundary);
     if (!(_metadata["filename"] == "")) // filename
     {
-        std::string fileData = _bufferBody.substr(0, _indexNextBoundary);
-        pasteInFile(std::string(UPLOAD_FOLDER) + _metadata["filename"], fileData);
+        pasteInFile(std::string(UPLOAD_FOLDER) + _metadata["filename"], content);
         // this is can be something
+    }
+    else
+    {
+        std::string key = _metadata["name"];
+        _queryParam[key].append(content);
     }
     _bufferBody.erase(0, _indexNextBoundary);
     handleBoundary();

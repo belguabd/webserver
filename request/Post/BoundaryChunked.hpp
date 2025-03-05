@@ -31,5 +31,5 @@ public:
     int boundaryPart();
     void initializeMimeTypes();
 };
-int pasteInFile(std::string name, std::string &data);
+size_t pasteInFile(std::string name, std::string &data);
 void    printNonPrintableChars(const std::string &str);
