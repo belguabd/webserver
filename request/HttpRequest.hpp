@@ -65,6 +65,7 @@ public:
   const std::vector<std::string> &getDataFirstLine() const {
     return dataFirstLine;
   }
+  ServerConfig &getServerConfig()  {return server_config; }
 };
 vector<string> splitstring(const string &str);
 // void    checkHeaders(string& str, map<string, string>& headersMap);
