@@ -35,23 +35,21 @@ class ServerConfig
         string data;
         string host;
         string root;
-        vector<string> index;
+        string index;
         bool autoindex;
         string server_name;
         string errorServer;
         string errorClient;
         string client_max_body_size;
         // map<string, string> globalConfig;
+    public:
         map<string, LocationConfig> configNormal;
         map<string, LocationUplaods> configUpload;
         map<string, LocationCgi> configcgi;
-    public:
         vector<int> ports;
         ServerConfig(){};
         ServerConfig(string &str);
         ~ServerConfig();
-        // void dataConfigFile();
-        // void separateServer();
         void setGlobaleData(string &strConfig,string &str);
         void parseServerConfig(string &strdata);
         void checkGlobalConfig(string strConfig);
@@ -61,8 +59,12 @@ class ServerConfig
         void locationCgi(string &location);
         void locationRedirection(string &location);
         void nameBlocks(string &strdata);
+        void setVal(string &str,string &val);
         string getdata() const {return this->data;}
         string getHost(){return  host;}
+        string getRoot() const {return this->root;}
+        string getIndex() const {return this->index;}
+        string getServerName(){return  server_name;}
       std::vector<int> getPorts(){return ports;}
 };
 
@@ -72,3 +74,4 @@ bool checkCharacter(string &substr, char c);
 string removeLocationBlocks(string &configData);
 string trim(string &str);
 void checkcontent(string substr);
+void isNumber(string& str);

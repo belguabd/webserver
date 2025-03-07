@@ -1,5 +1,4 @@
 #include "HttpRequest.hpp"
-int i = 0;
 
 void handleRequest(HttpRequest &request) {
   string str_parse;
@@ -18,20 +17,15 @@ void handleRequest(HttpRequest &request) {
 
   if (request.sig == 1 && request.getendHeaders() == 1)
   {
-    // cout <<"-------___------end headers----- get"<<endl;
     request.setRequestStatus(1);
   }
-
   else if (request.sig == 2 && request.getendHeaders() == 1) {
     string tmp;
-    // cout <<"-------___------end headers----- post"<<endl;
-    if (i == 0) {
+    if (request.firstPartBody == 0) {
       tmp = request.getbuffer();
       request._post.start(request.mapheaders, tmp);
-      i = 1;
-    }
-    else
-    {
+      request.firstPartBody = 1;
+    } else {
       tmp = request.getreadbuffer();
       request._post.proseRequest(tmp);
     }
@@ -42,7 +36,7 @@ void handleRequest(HttpRequest &request) {
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), sig(0) , server_config(server_config){
+    : client_fd(client_fd), firsttime(0), endHeaders(0), sig(0) , server_config(server_config),firstPartBody(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 }
@@ -187,6 +181,7 @@ void HttpRequest ::parsePartRequest(string str_parse) {
 void HttpRequest ::requestLine() {
   string path;
   string querydata;
+  this->dataFirstLine[1] = encodeUrl(this->dataFirstLine[1]);
   path = this->dataFirstLine[1];
   if (this->dataFirstLine[2].compare("HTTP/1.1") != 0) {
     cout << "Not Supported" << endl;
@@ -230,3 +225,133 @@ void HttpRequest ::requestLine() {
     }
   }
 }
+
+string encodeUrl(string &str)
+{
+  size_t pos = 0;
+  string tmp;
+  while ((pos=str.find("%",pos))!=string::npos)
+  {
+    tmp = str.substr(pos+1,2);
+    char c = characterEncodeing(tmp);
+    str.replace(pos,3,1,c);
+    pos++;
+  }
+  return (str);
+}
+
+char characterEncodeing(string &tmp)
+{
+  // cout <<"tmp [0] = "<<tmp[0]<<endl; 
+  // cout <<"tmp +[1] = "<<endl; 
+  printNonPrintableChars(tmp);
+  if (tmp[0]<'2' || tmp[0]>'7'||(!isdigit(tmp[1])&& (tmp[1]<'A' || tmp[1]>'F'))) {
+    cout << "character not allowed"<<endl;
+    exit (0);
+  }
+  return (static_cast<char>(stol(tmp, nullptr, 16)));
+}
+/*
+find("%");
+str.substr(pos ,pos+3);
+%1
+www.val.com/path/id?key=val&name=mohamed ayd
+
+space         %20  
+!             %21
+"             %22
+#             %23
+$             %24
+%             %25
+&             %26
+'             %27
+(             %28
+)             %29
+*             %2A
++             %2B
+,             %2C
+-             %2D
+.             %2E
+/             %2F
+0             %30
+1             %31
+2             %32
+3             %33
+4             %34
+5             %35
+6             %36
+7             %37
+8             %38
+9             %39
+:             %3A
+;             %3B
+<             %3C
+=             %3D
+>             %3E
+?             %3F
+@             %40
+A             %41
+B             %42
+C             %43
+D             %44
+E             %45
+F             %46
+G             %47
+H             %48
+I             %49
+J             %4A
+K             %4B
+L             %4C
+M             %4D
+N             %4E
+O             %4F
+P             %50
+Q             %51
+R             %52
+S             %53
+T             %54
+U             %55
+V             %56
+W             %57
+X             %58
+Y             %59
+Z             %5A
+[             %5B
+\             %5C
+]             %5D
+^             %5E
+_             %5F
+`             %60
+a             %61
+b             %62
+c             %63
+d             %64
+e             %65
+f             %66
+g             %67
+h             %68
+i             %69
+j             %6A
+k             %6B
+l             %6C
+m             %6D
+n             %6E
+o             %6F
+p             %70
+q             %71
+r             %72
+s             %73
+t             %74
+u             %75
+v             %76
+w             %77
+x             %78
+y             %79
+z             %7A
+{             %7B
+|             %7C
+}             %7D
+~             %7E
+
+
+*/

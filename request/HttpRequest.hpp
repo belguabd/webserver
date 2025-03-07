@@ -18,11 +18,9 @@ using namespace std;
 class HttpRequest {
 private:
   int client_fd;
-  bool signRequest;
   int firsttime;
   int requestStatus;
   int endHeaders;
-  string _path;
   vector<string> dataFirstLine;
   map<string, string> queryParam;
   std::string readBuffer;
@@ -36,6 +34,7 @@ public:
   ServerConfig &getServerConf() {return  this->server_config;}
   map<string, string> mapheaders;
   int sig;
+  int firstPartBody;
   HttpRequest(int client_fd , ServerConfig &server_config);
   ~HttpRequest();
   int getRequestStatus() { return this->requestStatus; }
@@ -68,5 +67,7 @@ public:
   }
 };
 vector<string> splitstring(const string &str);
-void    checkHeaders(string& str, map<string, string>& headersMap);
+// void    checkHeaders(string& str, map<string, string>& headersMap);
 void    printNonPrintableChars(const std::string &str);
+char characterEncodeing(string &tmp);
+string encodeUrl(string &str);

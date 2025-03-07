@@ -22,14 +22,15 @@ public:
   HttpResponse(HttpRequest *re);
   ~HttpResponse();
   int writeData();
-  void notFound(int client_socket);
+  // void notFound(int client_socket);
   void getResponse();
-  void postResponse();
+  // void postResponse();
   void defautlRoot();
   void checkDataResev();
-  void fileDataSend(string &data);
-  void dirDataSend(string &data);
-  void forbidden(int client_socket);
+  void getLocationNormalResponse(LocationConfig &normal,string &str,ServerConfig &config);
+  void fileDataSend(string &data,ServerConfig &config);
+  void dirDataSend(string &data,LocationConfig &normal,ServerConfig &config);
+  // void forbidden(int client_socket);
 };
 
 int checkTypePath(string &path);

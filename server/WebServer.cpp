@@ -24,7 +24,7 @@ void WebServer::addServerSocket(ServerConfig &conf) {
   // for(size_t i =0 ; i < conf.getPorts().size() ; i++){
   //   cout << conf.getPorts()[i] << "\n";;
   // }
-  std::cout << conf.getPorts()[0] << "\n";
+  // std::cout << conf.getPorts()[0] << "\n";
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
     ServerSocket *newSocket = new ServerSocket(conf.getPorts()[i]);
     newSocket->bind_socket();
@@ -205,7 +205,9 @@ void WebServer::separateServer() {
     }
     size_t pos = 0;
     bool found = false;
+    bool sig;
     while (!strserv.empty()&&(pos = strserv.find("server", pos)) != string::npos) {
+      sig = false;
       if (beforStart(strserv.substr(0,pos))==1) {
         cout <<"error : data befor server "<<endl;
         exit(0);
@@ -228,7 +230,13 @@ void WebServer::separateServer() {
         strserv= strserv.substr(end+1);
         ServerConfig conf(server);
         conf.parseServerConfig(server);
-        config.push_back(conf);
+        for (size_t i = 0; i < config.size(); i++) {
+          if ((config[i].getHost()==conf.getHost())&& (config[i].getServerName()==conf.getServerName())) {
+            sig = true;
+          }
+        }
+        if (!sig)
+          this->config.push_back(conf);
         found = true;
         pos = 0;
     }
