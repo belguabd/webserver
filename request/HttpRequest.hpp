@@ -14,6 +14,14 @@
 #include "../conf/ServerConfig.hpp"
 // class HttpRequest;
 
+enum Method
+{
+  NONE = 0,
+  GET = 1,
+  POST = 2,
+  DELETE = 3
+};
+
 using namespace std;
 class HttpRequest {
 private:
@@ -28,13 +36,14 @@ private:
 
   // Delete _delete;
   string _buffer;
+  void handleRequest();
 
 public:
-  Post _post;
+  // Post _post;
+  Post *_post;
   ServerConfig &getServerConf() {return  this->server_config;}
   map<string, string> mapheaders;
-  int sig;
-  int firstPartBody;
+  int _method;
   HttpRequest(int client_fd , ServerConfig &server_config);
   ~HttpRequest();
   int getRequestStatus() { return this->requestStatus; }
@@ -59,7 +68,7 @@ public:
   const std::map<std::string, std::string> &getHeaders() const {
     return mapheaders;
   }
-  const std::map<std::string, std::string> &getQueryParams() const {
+  std::map<std::string, std::string> &getQueryParams() {
     return queryParam;
   }
   const std::vector<std::string> &getDataFirstLine() const {

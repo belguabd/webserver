@@ -1,44 +1,39 @@
 #include "HttpRequest.hpp"
 
-void handleRequest(HttpRequest &request) {
+void HttpRequest::handleRequest() {
   string str_parse;
-  request.joinBuffer();
-  str_parse = request.partRquest();
-  if (request.getFirstTimeFlag() == 0) {
+  joinBuffer();
+  str_parse = partRquest();
+  if (getFirstTimeFlag() == 0) {
     size_t pos = str_parse.find("\r\n");
     if (pos != string::npos) {
-      request.setFirstTimeFlag(1);
-      request.sig = request.defineTypeMethod(str_parse.substr(0, pos + 2));
-      request.requestLine();
+      setFirstTimeFlag(1);
+      _method = defineTypeMethod(str_parse.substr(0, pos + 2));
+      requestLine();
       str_parse = str_parse.substr(pos + 2);
     }
   }
-  request.parsePartRequest(str_parse);
+  parsePartRequest(str_parse);
 
-  if (request.sig == 1 && request.getendHeaders() == 1)
+  if (_method == GET && getendHeaders() == 1)
+    setRequestStatus(1);
+  else if (_method == POST && getendHeaders() == 1)
   {
-    request.setRequestStatus(1);
-  }
-  else if (request.sig == 2 && request.getendHeaders() == 1) {
-    string tmp;
-    if (request.firstPartBody == 0) {
-      tmp = request.getbuffer();
-      request._post.start(request.mapheaders, tmp);
-      request.firstPartBody = 1;
-    } else {
-      tmp = request.getreadbuffer();
-      request._post.proseRequest(tmp);
-    }
-    request.setRequestStatus(request._post.getStatus());
-      
-    request.joinBuffer();
+    if (_post == NULL)
+      _post = new Post(mapheaders, queryParam, _buffer);
+    else
+      _post->proseRequest(readBuffer);
+    setRequestStatus(_post->getStatus());
+
+    joinBuffer();
   }
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), sig(0) , server_config(server_config),firstPartBody(0){
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+  _post = NULL;
 }
 
 int HttpRequest::readData() {
@@ -49,7 +44,7 @@ int HttpRequest::readData() {
   if (bytes_received > 0) {
     readBuffer.assign(buffer, bytes_received);
     // std::cout << readBuffer << "\n";
-    handleRequest(*this);
+    handleRequest();
 
   }
   return bytes_received;

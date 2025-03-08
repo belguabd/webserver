@@ -3,10 +3,10 @@
 
 # define PREFIX_FILENAME "./upload/filePost"
 // # endif // MACROS_HPP
-# define UPLOAD_FOLDER "/Users/ataoufik/goinfre/"
+# define UPLOAD_FOLDER "/Users/emagueri/goinfre/"
 // # define UPLOAD_FOLDER "./upload/"
-# define CURREQ ""
-// # define CURREQ "curentRequest"
+// # define CURREQ ""
+# define CURREQ "currentRequest"
 // # endif // MACROS_HPP
 
 #endif // MACROS_HPP
