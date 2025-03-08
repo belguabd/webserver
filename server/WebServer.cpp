@@ -171,7 +171,7 @@ void WebServer::respond_to_client(int client_fd) {
       break;
     }
   }
-  std::cout << client->getServerConf().getHost() << "\n";
+  // std::cout << client->getServerConf().getHost() << "\n";
   HttpResponse *responseclient = new HttpResponse(client);
   //
   responseclient->writeData();

@@ -175,6 +175,7 @@ void ServerConfig :: locationNormal(string &location) {
     size_t rootPos = location.find("root");
     size_t allowedMethodsPos = location.find("allowed_methods");
     size_t indexPos = location.find("index");
+    size_t autoindexPos = location.find("autoindex");
     if (rootPos != string::npos) {
         size_t valueStart = location.find(" ", rootPos + 4);
         size_t valueEnd = location.find(";", valueStart);
@@ -187,19 +188,29 @@ void ServerConfig :: locationNormal(string &location) {
         tmp =location.substr(valueStart + 1, valueEnd - valueStart - 1);
         config.allowed_methods = trim(tmp);
     }
-    if (indexPos != string::npos) {
-        size_t valueStart = location.find(" ", indexPos + 5);
+    size_t indexSearchPos = 0;
+    while ((indexPos = location.find("index", indexSearchPos)) != string::npos) {
+        indexSearchPos = indexPos + 5;
+        if (location.compare(indexPos - 4, 9, "autoindex") != 0) {
+            size_t valueStart = location.find(" ", indexPos + 5);
+            size_t valueEnd = location.find(";", valueStart);
+            tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
+            config.index = trim(tmp);
+            break;
+        }
+    }
+    if (autoindexPos != string::npos) {
+        size_t valueStart = location.find(" ", autoindexPos + 9);
         size_t valueEnd = location.find(";", valueStart);
         tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
-        config.index = trim(tmp);
+        tmp = trim(tmp);
+        if (tmp =="on") {
+            config.autoindex = 1;
+        } else {
+            config.autoindex = 0;
+        }
     }
 	this->configNormal[key] = config;
-    // cout << this->configNormal.size()<<endl;
-    // cout << "Location: " << key << "\n";
-    // cout << "Root: " << config.root << "\n";
-    // cout << "Allowed Methods: " << config.allowed_methods << "\n";
-    // cout << "index : " << config.index<< "\n";
-    // cout <<"--------++++++++++++++++--------\n";
 }
 void ServerConfig :: locationData(string &strlocat) {
 	size_t i = 0;

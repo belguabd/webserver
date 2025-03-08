@@ -22,17 +22,18 @@ public:
   HttpResponse(HttpRequest *re);
   ~HttpResponse();
   int writeData();
-  // void notFound(int client_socket);
+  void notFound(int client_socket,ServerConfig &config);
+  int checkFileAndSendData(string &data ,ServerConfig &config,string &index);
   void getResponse();
   // void postResponse();
-  void defautlRoot();
+  void defautlRoot(ServerConfig &config);
   void checkDataResev();
   void getLocationNormalResponse(LocationConfig &normal,string &str,ServerConfig &config);
   void fileDataSend(string &data,ServerConfig &config);
-  void dirDataSend(string &data,LocationConfig &normal,ServerConfig &config);
-  // void forbidden(int client_socket);
+  void dirDataSend(string &data,string &root,LocationConfig &normal, ServerConfig &config);
+  void forbidden(int client_socket,ServerConfig &config);
 };
 
 int checkTypePath(string &path);
 bool ExistFile(string &filePath);
-string dirAutoindex(string &dirPath);
+string dirAutoindex(string &dirPath,string &root);
