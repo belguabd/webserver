@@ -1,4 +1,6 @@
 #pragma once
+#include "../conf/ServerConfig.hpp"
+#include "./Post/Post.hpp"
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
@@ -10,8 +12,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-#include "./Post/Post.hpp"
-#include "../conf/ServerConfig.hpp"
 // class HttpRequest;
 
 using namespace std;
@@ -27,16 +27,17 @@ private:
   map<string, string> queryParam;
   std::string readBuffer;
   ServerConfig server_config;
+  std::string buffer_cgi;
 
   // Delete _delete;
   string _buffer;
 
 public:
   Post _post;
-  ServerConfig &getServerConf() {return  this->server_config;}
+  ServerConfig &getServerConf() { return this->server_config; }
   map<string, string> mapheaders;
   int sig;
-  HttpRequest(int client_fd , ServerConfig &server_config);
+  HttpRequest(int client_fd, ServerConfig &server_config);
   ~HttpRequest();
   int getRequestStatus() { return this->requestStatus; }
   int readData();
@@ -66,7 +67,10 @@ public:
   const std::vector<std::string> &getDataFirstLine() const {
     return dataFirstLine;
   }
+
+  void setbufferCgi(char *buffer) { this->buffer_cgi.assign(buffer); }
+  const std::string &getCGIBuffer() { return this->buffer_cgi; }
 };
 vector<string> splitstring(const string &str);
-void    checkHeaders(string& str, map<string, string>& headersMap);
-void    printNonPrintableChars(const std::string &str);
+void checkHeaders(string &str, map<string, string> &headersMap);
+void printNonPrintableChars(const std::string &str);

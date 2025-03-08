@@ -48,7 +48,7 @@ HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
 }
 
 int HttpRequest::readData() {
-  char buffer[5124];
+  char buffer[1024];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
