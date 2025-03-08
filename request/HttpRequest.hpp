@@ -14,15 +14,21 @@
 #include <vector>
 // class HttpRequest;
 
+enum Method
+{
+  NONE = 0,
+  GET = 1,
+  POST = 2,
+  DELETE = 3
+};
+
 using namespace std;
 class HttpRequest {
 private:
   int client_fd;
-  bool signRequest;
   int firsttime;
   int requestStatus;
   int endHeaders;
-  string _path;
   vector<string> dataFirstLine;
   map<string, string> queryParam;
   std::string readBuffer;
@@ -31,13 +37,15 @@ private:
 
   // Delete _delete;
   string _buffer;
+  void handleRequest();
 
 public:
-  Post _post;
-  ServerConfig &getServerConf() { return this->server_config; }
+  // Post _post;
+  Post *_post;
+  ServerConfig &getServerConf() {return  this->server_config;}
   map<string, string> mapheaders;
-  int sig;
-  HttpRequest(int client_fd, ServerConfig &server_config);
+  int _method;
+  HttpRequest(int client_fd , ServerConfig &server_config);
   ~HttpRequest();
   int getRequestStatus() { return this->requestStatus; }
   int readData();
@@ -61,16 +69,18 @@ public:
   const std::map<std::string, std::string> &getHeaders() const {
     return mapheaders;
   }
-  const std::map<std::string, std::string> &getQueryParams() const {
+  std::map<std::string, std::string> &getQueryParams() {
     return queryParam;
   }
   const std::vector<std::string> &getDataFirstLine() const {
     return dataFirstLine;
   }
-
+  ServerConfig &getServerConfig()  {return server_config; }
   void setbufferCgi(char *buffer) { this->buffer_cgi.assign(buffer); }
   const std::string &getCGIBuffer() { return this->buffer_cgi; }
 };
 vector<string> splitstring(const string &str);
-void checkHeaders(string &str, map<string, string> &headersMap);
-void printNonPrintableChars(const std::string &str);
+void    checkHeaders(string& str, map<string, string>& headersMap);
+void    printNonPrintableChars(const std::string &str);
+char characterEncodeing(string &tmp);
+string encodeUrl(string &str);

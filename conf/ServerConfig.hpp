@@ -35,7 +35,7 @@ class ServerConfig
         string data;
         string host;
         string root;
-        vector<string> index;
+        string index;
         bool autoindex;
         string server_name;
         string errorServer;
@@ -53,7 +53,6 @@ class ServerConfig
         // void dataConfigFile();
         // void separateServer();
         void setGlobaleData(string &strConfig,string &str);
-        void validbrackets(string &str);
         void parseServerConfig(string &strdata);
         void checkGlobalConfig(string strConfig);
         void locationData(string &strlocat);
@@ -62,13 +61,17 @@ class ServerConfig
         void locationCgi(string &location);
         void locationRedirection(string &location);
         void nameBlocks(string &strdata);
+        void setVal(string &str,string &val);
         string getdata() const {return this->data;}
         string getHost(){return  host;}
+        string getServerName(){return  server_name;}
       std::vector<int> getPorts(){return ports;}
 };
 
+void validbrackets(string &str);
 string removeComments(string &input);
 bool checkCharacter(string &substr, char c);
 string removeLocationBlocks(string &configData);
 string trim(string &str);
 void checkcontent(string substr);
+void isNumber(string& str);

@@ -161,11 +161,11 @@ void HttpResponse:: checkDataResev()
 }
 void    sendResponse(HttpResponse &response)
 {
-  int sig = response.request->sig;
+  int method = response.request->_method;
   response.checkDataResev();
-  if (sig == 1) {
+  if (method == GET) {
     response.getResponse();
-  } else if (sig == 2) {
+  } else if (method == POST) {
     response.postResponse();
   }
 

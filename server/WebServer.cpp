@@ -195,52 +195,67 @@ void WebServer::respond_to_client(int client_fd) {
   delete responseclient;
 }
 /*----------------------------------------------------*/
-
+int beforStart(string str )
+{
+    if (str.empty())
+      return 0;
+    int i = 0;
+    while(i < str.length()) {
+        if (str[i]!='\t' &&  str[i]!=' '&& str[i]!='\n')
+            return 1;
+        i++;
+    }
+  return 0;
+}
 void WebServer::separateServer() {
-  string strserv;
-  string str;
-  strserv = this->_data;
-  if (strserv.length() == 0) {
-    cout << "error file config empty" << endl;
-    exit(0);
-  }
-  size_t i = 0;
-  bool found = false;
-  int sig = 0;
-  while (i < strserv.length()) {
-    size_t pos = strserv.find("server", i);
-    // cout << "i = > "<<i<<endl;
-    if (sig == 1 && pos == string::npos)
-      break;
-    if (pos == string::npos) {
-      cout << "error server not found" << endl;
-      exit(0);
+    string strserv = this->_data;
+    validbrackets(strserv);
+    if (strserv.empty()) {
+        cout << "error: file config is empty" << endl;
+        exit(0);
     }
-    if (sig == 0) {
-      sig = 1;
-      str = strserv.substr(0, pos);
-    } else {
-      str = strserv.substr(i - 1, pos - i);
-      // cout << str<<endl;
-      // cout <<"------------------------------------------"<<endl;
-      ServerConfig conf(str);
-      conf.validbrackets(str);
-      conf.parseServerConfig(str);
-      config.push_back(conf);
+    size_t pos = 0;
+    bool found = false;
+    bool sig;
+    while (!strserv.empty()&&(pos = strserv.find("server", pos)) != string::npos) {
+      sig = false;
+      if (beforStart(strserv.substr(0,pos))==1) {
+        cout <<"error : data befor server "<<endl;
+        exit(0);
+      }
+        size_t start = strserv.find("{", pos);
+        if (start == string::npos) {
+            cout << "error: server block missing opening '{'" << endl;
+            exit(0);
+        }
+        size_t end = start;
+        int brakets = 1;
+        while (end < strserv.length() && brakets > 0) {
+            end++;
+            if (strserv[end] == '{')
+              brakets++;
+            if (strserv[end] == '}')
+              brakets--;
+        }
+        string server = strserv.substr(pos, end - pos + 1);
+        strserv= strserv.substr(end+1);
+        ServerConfig conf(server);
+        conf.parseServerConfig(server);
+        for (size_t i = 0; i < config.size(); i++) {
+          if ((config[i].getHost()==conf.getHost())&& (config[i].getServerName()==conf.getServerName())) {
+            sig = true;
+          }
+        }
+        if (!sig)
+          this->config.push_back(conf);
+        found = true;
+        pos = 0;
     }
-    found = true;
-    i = pos + 1;
-  }
-  if (found == false)
-    return;
-  size_t pos = strserv.rfind("server");
-  str = strserv.substr(pos);
-  // cout << str<<endl;
-  // cout <<"------------------------------------------"<<endl;
-  ServerConfig conf(str);
-  conf.validbrackets(str);
-  conf.parseServerConfig(str);
-  config.push_back(conf);
+
+    if (!found) {
+        cout << "error: no server blocks found" << endl;
+        exit(0);
+    }
 }
 
 void WebServer ::dataConfigFile() {
