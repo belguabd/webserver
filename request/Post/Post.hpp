@@ -28,10 +28,10 @@ private:
     Chunked *chunk;
     Boundary *bound;
     BoundaryChunked *boundChunk;
-    std::map <std::string, std::string> _headers;
-    std::string _bufferBody;
+    std::map <std::string, std::string> &_headers;
+    std::string _bufferBody; //!!
     std::string _remainingBuffer;
-    std::map<std::string, std::string> _queryParam;
+    std::map<std::string, std::string> &_queryParam;
     std::map<std::string, std::string> _mimeToExtension;
     int _status;
     std::string _fileName;
@@ -41,7 +41,7 @@ private:
     size_t manipulateBuffer(std::string &buffer);
     void setContentLengthSize();
 public:
-    Post();
+    Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer);
     int getStatus() {return _status;}
     int handleKeyVal(std::string &buffer);
     int handleContentLength(std::string &buffer);

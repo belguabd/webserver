@@ -30,10 +30,10 @@ public:
     std::string _boundaryString;
     std::string _boundaryStringEnd;
     BoundaryHead _boundaryHead;
-    std::map<std::string, std::string> _queryParam;
+    std::map<std::string, std::string> &_queryParam;
 
-    Boundary(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status);
-    Boundary(std::map<std::string, std::string> query, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status);
+    // Boundary(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status);
+    Boundary(std::map<std::string, std::string> &query, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status);
     int setBoundaryHeadAndEraseBuffer();
     void setMetaData(std::string &headBoundary, std::string key);
     bool checkHeaderIsCompleted();

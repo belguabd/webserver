@@ -1,10 +1,30 @@
 #include "./Post.hpp"
 
-Post::Post() 
+Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer)
+:_headers(headers), _queryParam(queryParam)
 {
-	setBodyType();
+	// setHeaders(headers);
 	_status = 0;
 	initializeMimeTypes();
+	buffer = "\r\n" + buffer;
+	_status = 0;
+	setBodyType();
+	setContentLengthSize();
+	if (_bodyType == chunked)
+		chunk = new Chunked(_bufferBody, _remainingBuffer, _headers, _status);
+	else if (_bodyType == boundary)
+		bound = new Boundary(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
+	else if (_bodyType == boundaryChunked)
+	{
+		buffer.insert(0, "\r\n2\r\n\r\n");
+		boundChunk = new BoundaryChunked(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
+	}
+	else if (_bodyType == contentLength)
+	{
+		buffer.erase(0, 2); // to remove \r\n
+		setFileName(_mimeToExtension[headers["Content-Type"]]);
+	}
+	proseRequest(buffer);
 }
 
 Post &Post::operator=(const Post &other)
@@ -101,9 +121,9 @@ int Post::handleContentLength(std::string &buffer)
 
 int Post::start(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer)
 {
-	buffer = "\r\n" + buffer;
 	// std::cout <<"buffer "<<buffer<<std::endl;
-	_queryParam = queryParam;
+	// _queryParam = queryParam;
+	buffer = "\r\n" + buffer;
 	_status = 0;
 	setHeaders(headers);
 	setBodyType();
@@ -111,25 +131,17 @@ int Post::start(std::map<std::string, std::string> &headers, std::map<std::strin
 	if (_bodyType == chunked)
 		chunk = new Chunked(_bufferBody, _remainingBuffer, _headers, _status);
 	else if (_bodyType == boundary)
-		bound = new Boundary(queryParam, _bufferBody, _remainingBuffer, _headers, _status);
+		bound = new Boundary(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
 	else if (_bodyType == boundaryChunked)
 	{
 		buffer.insert(0, "\r\n2\r\n\r\n");
-		boundChunk = new BoundaryChunked(_bufferBody, _remainingBuffer, _headers, _status);
+		boundChunk = new BoundaryChunked(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
 	}
 	else if (_bodyType == contentLength)
 	{
-		buffer.erase(0,2); // to remove \r\n
+		buffer.erase(0, 2); // to remove \r\n
 		setFileName(_mimeToExtension[headers["Content-Type"]]);
 	}
-	// else if (_bodyType == keyVal)
-	// {
-
-	// }
-
-	// for (const auto& header : _headers) {
-	// 	std::cout << header.first << ":{" << header.second << "}" << std::endl;
-	// }
 	return proseRequest(buffer);
 }
 
@@ -167,57 +179,62 @@ int Post::proseRequest(std::string &buffer)
 
 Post::~Post()
 {
-
+	if (_bodyType == chunked)
+		delete chunk;
+	else if (_bodyType == boundary)
+		delete bound;
+	else if (_bodyType == boundaryChunked)
+		delete boundChunk;
 }
 
-void Post::initializeMimeTypes() 
+void Post::initializeMimeTypes()
 {
-    // Text types
-    _mimeToExtension["text/plain"] = ".txt";
-    _mimeToExtension["text/html"] = ".html";
-    _mimeToExtension["text/css"] = ".css";
-    _mimeToExtension["text/javascript"] = ".js";
-    _mimeToExtension["text/markdown"] = ".md";
-    _mimeToExtension["text/csv"] = ".csv";
-    _mimeToExtension["text/x-c"] = ".cpp";
-    
-    // Application types
-    _mimeToExtension["application/json"] = ".json";
-    _mimeToExtension["application/xml"] = ".xml";
-    _mimeToExtension["application/pdf"] = ".pdf";
-    _mimeToExtension["application/zip"] = ".zip";
-    _mimeToExtension["application/x-rar-compressed"] = ".rar";
-    _mimeToExtension["application/x-tar"] = ".tar";
-    _mimeToExtension["application/gzip"] = ".gz";
-    _mimeToExtension["application/msword"] = ".doc";
-    _mimeToExtension["application/vnd.ms-excel"] = ".xls";
-    _mimeToExtension["application/vnd.openxmlformats-officedocument.wordprocessingml.document"] = ".docx";
-    _mimeToExtension["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] = ".xlsx";
-    _mimeToExtension["application/octet-stream"] = ".bin";
-    
-    // Image types
-    _mimeToExtension["image/jpeg"] = ".jpg";
-    _mimeToExtension["image/png"] = ".png";
-    _mimeToExtension["image/gif"] = ".gif";
-    _mimeToExtension["image/svg+xml"] = ".svg";
-    _mimeToExtension["image/webp"] = ".webp";
-    _mimeToExtension["image/tiff"] = ".tiff";
-    _mimeToExtension["image/bmp"] = ".bmp";
-    _mimeToExtension["image/x-icon"] = ".ico";
-    
-    // Audio types
-    _mimeToExtension["audio/mpeg"] = ".mp3";
-    _mimeToExtension["audio/wav"] = ".wav";
-    _mimeToExtension["audio/webm"] = ".weba";
-    
-    // Video types
-    _mimeToExtension["video/mp4"] = ".mp4";
-    _mimeToExtension["video/webm"] = ".webm";
-    _mimeToExtension["video/ogg"] = ".ogv";
-    
-    // Font types
-    _mimeToExtension["font/ttf"] = ".ttf";
-    _mimeToExtension["font/woff"] = ".woff";
-    _mimeToExtension["font/woff2"] = ".woff2";
-    _mimeToExtension["font/otf"] = ".otf";
+	// Text types
+	_mimeToExtension["text/plain"] = ".txt";
+	_mimeToExtension["text/html"] = ".html";
+	_mimeToExtension["text/css"] = ".css";
+	_mimeToExtension["text/javascript"] = ".js";
+	_mimeToExtension["text/markdown"] = ".md";
+	_mimeToExtension["text/csv"] = ".csv";
+	_mimeToExtension["text/x-c"] = ".cpp";
+
+	// Application types
+	_mimeToExtension["application/json"] = ".json";
+	_mimeToExtension["application/xml"] = ".xml";
+	_mimeToExtension["application/pdf"] = ".pdf";
+	_mimeToExtension["application/zip"] = ".zip";
+	_mimeToExtension["application/x-rar-compressed"] = ".rar";
+	_mimeToExtension["application/x-tar"] = ".tar";
+	_mimeToExtension["application/gzip"] = ".gz";
+	_mimeToExtension["application/msword"] = ".doc";
+	_mimeToExtension["application/vnd.ms-excel"] = ".xls";
+	_mimeToExtension["application/vnd.openxmlformats-officedocument.wordprocessingml.document"] = ".docx";
+	_mimeToExtension["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] = ".xlsx";
+	_mimeToExtension["application/octet-stream"] = ".bin";
+
+	// Image types
+	_mimeToExtension["image/jpeg"] = ".jpg";
+	_mimeToExtension["image/png"] = ".png";
+	_mimeToExtension["image/gif"] = ".gif";
+	_mimeToExtension["image/svg+xml"] = ".svg";
+	_mimeToExtension["image/webp"] = ".webp";
+	_mimeToExtension["image/tiff"] = ".tiff";
+	_mimeToExtension["image/bmp"] = ".bmp";
+	_mimeToExtension["image/x-icon"] = ".ico";
+
+	// Audio types
+	_mimeToExtension["audio/mpeg"] = ".mp3";
+	_mimeToExtension["audio/wav"] = ".wav";
+	_mimeToExtension["audio/webm"] = ".weba";
+
+	// Video types
+	_mimeToExtension["video/mp4"] = ".mp4";
+	_mimeToExtension["video/webm"] = ".webm";
+	_mimeToExtension["video/ogg"] = ".ogv";
+
+	// Font types
+	_mimeToExtension["font/ttf"] = ".ttf";
+	_mimeToExtension["font/woff"] = ".woff";
+	_mimeToExtension["font/woff2"] = ".woff2";
+	_mimeToExtension["font/otf"] = ".otf";
 }

@@ -37,15 +37,16 @@ void handleRequest(HttpRequest &request) {
     if (i == 0)
     {
       tmp = request.getbuffer();
-      request._post.start(request.mapheaders, request.queryParam, tmp);
+      request._post = new Post(request.mapheaders, request.queryParam, tmp);
+      // request._post->start(request.mapheaders, request.queryParam, tmp);
       i = 1;
     }
     else
     {
       tmp = request.getreadbuffer();
-      request._post.proseRequest(tmp);
+      request._post->proseRequest(tmp);
     }
-    request.setRequestStatus(request._post.getStatus());
+    request.setRequestStatus(request._post->getStatus());
       
     request.joinBuffer();
   }
@@ -58,7 +59,7 @@ HttpRequest::HttpRequest(int client_fd)
 }
 
 int HttpRequest::readData() {
-  char buffer[2];
+  char buffer[5124];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);

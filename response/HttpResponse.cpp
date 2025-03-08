@@ -159,7 +159,7 @@ void HttpResponse::defautlRoot()
 
 void HttpResponse:: checkDataResev()
 {
-  
+
 }
 void    sendResponse(HttpResponse &response)
 {

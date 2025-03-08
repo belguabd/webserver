@@ -29,7 +29,7 @@ private:
 
 public:
   map<string, string> queryParam;
-  Post _post;
+  Post *_post;
   map<string, string> mapheaders;
   int sig;
   HttpRequest(int client_fd);

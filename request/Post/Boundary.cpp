@@ -1,14 +1,14 @@
 #include "Boundary.hpp"
 
 
-Boundary::Boundary(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
-    _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
-{
-    setBoundaryString();
-}
+// Boundary::Boundary(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
+//     _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
+// {
+//     setBoundaryString();
+// }
 
-Boundary::Boundary(std::map<std::string, std::string> queryParam, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
-    _queryParam(queryParam), _bufferBody(bufferBody), 
+Boundary::Boundary(std::map<std::string, std::string> &queryParam, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
+    _queryParam(queryParam), _bufferBody(bufferBody),
     _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
 {
     setBoundaryString();
