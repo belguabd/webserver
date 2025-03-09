@@ -1,72 +1,51 @@
 #include "HttpRequest.hpp"
-int i= 0;
 
-void printRequest(HttpRequest &request)
-{
-  std::string tmp = "currentRequest";
-  std::string tmp2 = request.getreadbuffer();
-  pasteInFile(tmp, tmp2);
-}
-
-void handleRequest(HttpRequest &request) {
+void HttpRequest::handleRequest() {
   string str_parse;
-  printRequest(request);
-  request.joinBuffer();
-  str_parse = request.partRquest();
-  if (request.getFirstTimeFlag() == 0) {
+  joinBuffer();
+  str_parse = partRquest();
+  if (getFirstTimeFlag() == 0) {
     size_t pos = str_parse.find("\r\n");
     if (pos != string::npos) {
-      request.setFirstTimeFlag(1);
-      request.sig = request.defineTypeMethod(str_parse.substr(0, pos + 2));
-      request.requestLine();
+      setFirstTimeFlag(1);
+      _method = defineTypeMethod(str_parse.substr(0, pos + 2));
+      requestLine();
       str_parse = str_parse.substr(pos + 2);
     }
   }
-  request.parsePartRequest(str_parse);
+  parsePartRequest(str_parse);
 
-  if (request.sig == 1 && request.getendHeaders() == 1)
+  if (_method == GET && getendHeaders() == 1)
+    setRequestStatus(1);
+  else if (_method == POST && getendHeaders() == 1)
   {
-    // cout <<"-------___------end headers----- get"<<endl;
-    request.setRequestStatus(1);
-  }
-
-  else if (request.sig == 2 && request.getendHeaders() == 1)
-  {
-    string tmp;
-    // cout <<"-------___------end headers----- post"<<endl;
-    if (i == 0)
-    {
-      tmp = request.getbuffer();
-      request._post = new Post(request.mapheaders, request.queryParam, tmp);
-      // request._post->start(request.mapheaders, request.queryParam, tmp);
-      i = 1;
-    }
+    if (_post == NULL)
+      _post = new Post(mapheaders, queryParam, _buffer);
     else
-    {
-      tmp = request.getreadbuffer();
-      request._post->proseRequest(tmp);
-    }
-    request.setRequestStatus(request._post->getStatus());
-      
-    request.joinBuffer();
+      _post->proseRequest(readBuffer);
+    setRequestStatus(_post->getStatus());
+
+    joinBuffer();
   }
 }
 
-HttpRequest::HttpRequest(int client_fd)
-    : client_fd(client_fd), firsttime(0), endHeaders(0),sig(0) {
+HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+  _post = NULL;
 }
 
 int HttpRequest::readData() {
-  char buffer[5124];
+  char buffer[1024];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
   if (bytes_received > 0) {
     readBuffer.assign(buffer, bytes_received);
     // std::cout << readBuffer << "\n";
-    handleRequest(*this);
+    handleRequest();
+
   }
   return bytes_received;
 }
@@ -100,29 +79,24 @@ int HttpRequest::defineTypeMethod(string firstline) {
     exit(0);
   }
   this->dataFirstLine = words;
-  if (words[0]=="GET")
+  if (words[0] == "GET")
     return (1);
-  else if (words[0]=="POST")
+  else if (words[0] == "POST")
     return (2);
-  else if (words[0]=="DELETE")
+  else if (words[0] == "DELETE")
     return (3);
   return (0);
 }
 
-vector<string> splitstring(const string &str)
-{
+vector<string> splitstring(const string &str) {
   vector<string> words;
   size_t i = 0, j;
-  while (i < str.length())
-  {
-    if ((j = str.find_first_of(" \t", i)) != string::npos)
-    {
+  while (i < str.length()) {
+    if ((j = str.find_first_of(" \t", i)) != string::npos) {
       if (j > i)
         words.push_back(str.substr(i, j - i));
       i = j + 1;
-    }
-    else
-    {
+    } else {
       words.push_back(str.substr(i));
       break;
     }
@@ -130,7 +104,6 @@ vector<string> splitstring(const string &str)
   return (words);
 }
 void HttpRequest::checkHeaders(string &str) {
-
 
   str = trimNewline(str);
   size_t pos = str.find(':');
@@ -142,8 +115,7 @@ void HttpRequest::checkHeaders(string &str) {
   }
   words = splitstring(str.substr(pos + 1, str.length()));
   for (vector<string>::const_iterator it = words.begin(); it != words.end();
-       ++it)
-  {
+       ++it) {
     const string &words = *it;
     result += ' ';
     result += words;
@@ -179,13 +151,13 @@ string HttpRequest ::partRquest() {
 void HttpRequest ::joinBuffer() {
 
   if (this->endHeaders == 1)
-    return ;
+    return;
   this->_buffer += this->readBuffer;
   this->readBuffer.clear();
 }
 
 void HttpRequest ::parsePartRequest(string str_parse) {
-  if (this->endHeaders==1)
+  if (this->endHeaders == 1)
     return;
   while (!str_parse.empty()) {
     size_t pos = str_parse.find("\r\n");
@@ -194,7 +166,7 @@ void HttpRequest ::parsePartRequest(string str_parse) {
     string str = str_parse.substr(0, pos + 2);
     if (str == "\r\n") {
       this->endHeaders = 1;
-      break ;
+      break;
     }
     str_parse = str_parse.substr(pos + 2);
     checkHeaders(str);
@@ -204,6 +176,7 @@ void HttpRequest ::parsePartRequest(string str_parse) {
 void HttpRequest ::requestLine() {
   string path;
   string querydata;
+  this->dataFirstLine[1] = encodeUrl(this->dataFirstLine[1]);
   path = this->dataFirstLine[1];
   if (this->dataFirstLine[2].compare("HTTP/1.1") != 0) {
     cout << "Not Supported" << endl;
@@ -247,3 +220,133 @@ void HttpRequest ::requestLine() {
     }
   }
 }
+
+string encodeUrl(string &str)
+{
+  size_t pos = 0;
+  string tmp;
+  while ((pos=str.find("%",pos))!=string::npos)
+  {
+    tmp = str.substr(pos+1,2);
+    char c = characterEncodeing(tmp);
+    str.replace(pos,3,1,c);
+    pos++;
+  }
+  return (str);
+}
+
+char characterEncodeing(string &tmp)
+{
+  // cout <<"tmp [0] = "<<tmp[0]<<endl; 
+  // cout <<"tmp +[1] = "<<endl; 
+  printNonPrintableChars(tmp);
+  if (tmp[0]<'2' || tmp[0]>'7'||(!isdigit(tmp[1])&& (tmp[1]<'A' || tmp[1]>'F'))) {
+    cout << "character not allowed"<<endl;
+    exit (0);
+  }
+  return (static_cast<char>(stol(tmp, nullptr, 16)));
+}
+/*
+find("%");
+str.substr(pos ,pos+3);
+%1
+www.val.com/path/id?key=val&name=mohamed ayd
+
+space         %20  
+!             %21
+"             %22
+#             %23
+$             %24
+%             %25
+&             %26
+'             %27
+(             %28
+)             %29
+*             %2A
++             %2B
+,             %2C
+-             %2D
+.             %2E
+/             %2F
+0             %30
+1             %31
+2             %32
+3             %33
+4             %34
+5             %35
+6             %36
+7             %37
+8             %38
+9             %39
+:             %3A
+;             %3B
+<             %3C
+=             %3D
+>             %3E
+?             %3F
+@             %40
+A             %41
+B             %42
+C             %43
+D             %44
+E             %45
+F             %46
+G             %47
+H             %48
+I             %49
+J             %4A
+K             %4B
+L             %4C
+M             %4D
+N             %4E
+O             %4F
+P             %50
+Q             %51
+R             %52
+S             %53
+T             %54
+U             %55
+V             %56
+W             %57
+X             %58
+Y             %59
+Z             %5A
+[             %5B
+\             %5C
+]             %5D
+^             %5E
+_             %5F
+`             %60
+a             %61
+b             %62
+c             %63
+d             %64
+e             %65
+f             %66
+g             %67
+h             %68
+i             %69
+j             %6A
+k             %6B
+l             %6C
+m             %6D
+n             %6E
+o             %6F
+p             %70
+q             %71
+r             %72
+s             %73
+t             %74
+u             %75
+v             %76
+w             %77
+x             %78
+y             %79
+z             %7A
+{             %7B
+|             %7C
+}             %7D
+~             %7E
+
+
+*/

@@ -57,7 +57,10 @@ void Boundary::setMetaData(std::string &headBoundary, std::string key)
             _metadata[key] = headBoundary.substr(posName, posNameVal - posName);
     }
     if (key == "filename")
+    {
         setFileName(_metadata[key]);
+
+    }
 }
 
 size_t Boundary::getSizeOfBoundary()
@@ -79,8 +82,8 @@ int Boundary::setBoundaryHeadAndEraseBuffer()
 
     if (_bufferBody.find(_boundaryString) == 0)
     {
-        std::cout << "filename: " << _metadata["filename"] << std::endl;
-        std::cout << "is valid boundary\n";
+        // std::cout << "filename: " << _metadata["filename"] << std::endl;
+        // std::cout << "is valid boundary\n";
     }
 
     size_t sizeHeadBoundary = _bufferBody.find("\r\n\r\n");
@@ -90,8 +93,8 @@ int Boundary::setBoundaryHeadAndEraseBuffer()
     std::string headBoundary = _bufferBody.substr(0, sizeHeadBoundary + 4);
 
     _bufferBody.erase(0, sizeHeadBoundary + 4);
-    setMetaData(headBoundary, "name");
     setMetaData(headBoundary, "filename");
+    setMetaData(headBoundary, "name");
     return 1;
 }
 
@@ -108,23 +111,38 @@ bool Boundary::checkHeaderIsCompleted()
 
 int Boundary::handleBoundary()
 {
-    if (_bufferBody.size() <= 2)
-    {
-        // std::cout << "is not completed\n";
-        _remainingBuffer = _bufferBody + _remainingBuffer;
-        return _status;
-    }
+    
+    // if (_bufferBody.empty())
+    // {
+    //     _status = 1; // 404
+    //     std::cout << "adsdasda\n";
+    //     return _status;
+    // }
+    // if (_bufferBody.size() < 5120)
+    // {
+    //     if (_bufferBody.find(_boundaryStringEnd) == std::string::npos)
+    //     {
+    //         _status = 1; // 404
+    //         return _status;
+    //     }
+    // }
     handleBoundaryRec();
     return _status;
 }
 int Boundary::handleBoundaryRec()
 {
+    if (_bufferBody.size() <= 2)
+    {
+        std::cout << "is not completed\n";
+        _remainingBuffer = _bufferBody + _remainingBuffer;
+        return _status;
+    }
     if (_bufferBody.substr(0, _boundaryStringEnd.size()) == _boundaryStringEnd)
     {
         std::cout << "end boundary" << std::endl;
         _status = 1;
         _bufferBody = "";
-        std::cout << "_queryParam\n";
+        std::cout << "_queryParam\n";// 100 100
         for (auto map : _queryParam)
             std::cout << map.first << "|" << map.second << std::endl;
         return _status;
@@ -132,8 +150,10 @@ int Boundary::handleBoundaryRec()
     
     if (setBoundaryHeadAndEraseBuffer() == -1)
     {
-        std::cout <<  "since we don't has \\r\\n\\r\\n and we have boundaryString I wait until the next read \n";
-        _remainingBuffer = _bufferBody + _remainingBuffer; 
+        // std::cout <<  "since we don't has \\r\\n\\r\\n and we have boundaryString I wait until the next read \n";
+        if (_bufferBody.find(_boundaryStringEnd) != std::string::npos)
+            _status = 1; // 404
+        _remainingBuffer = _bufferBody + _remainingBuffer;
         return -1;
     }
     _indexNextBoundary = getSizeOfBoundary();
@@ -149,6 +169,6 @@ int Boundary::handleBoundaryRec()
         _queryParam[key].append(content);
     }
     _bufferBody.erase(0, _indexNextBoundary);
-    handleBoundary();
+    handleBoundaryRec();
     return _status;
 }

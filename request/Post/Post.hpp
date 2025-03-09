@@ -41,6 +41,7 @@ private:
     size_t manipulateBuffer(std::string &buffer);
     void setContentLengthSize();
 public:
+    // Post();
     Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer);
     int getStatus() {return _status;}
     int handleKeyVal(std::string &buffer);
