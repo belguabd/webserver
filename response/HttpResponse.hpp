@@ -25,6 +25,14 @@ public:
   void notFound(int client_socket,ServerConfig &config);
   int checkFileAndSendData(string &data ,ServerConfig &config,string &index);
   void getResponse();
+  template <typename K, typename V>
+  V getValueFromMap(std::map<K, V>& map, typename std::map<K, V>::iterator it) {
+      V val;
+      if (it != map.end()) {
+          val= it->second;
+      }
+      return val;
+  }
   // void postResponse();
   void defautlRoot(ServerConfig &config);
   void checkDataResev();

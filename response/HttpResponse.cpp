@@ -32,7 +32,6 @@ void HttpResponse::fileDataSend(string &data,ServerConfig &config)
       fileContent << file.rdbuf(); 
       file.close();
   }
-  config.getServerName();
   status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
   headersSending(this->request->getfd(),config.getServerName());
   string body = fileContent.str();
@@ -48,16 +47,38 @@ void HttpResponse::fileDataSend(string &data,ServerConfig &config)
 }
 void HttpResponse:: forbidden(int client_socket,ServerConfig &config)
 {
-  ifstream file("./doc/error/4xx/403.html");
+  string body;
+  string val;
+  string root = config.getRoot();
   stringstream fileContent;
-
+    map<string, string>::const_iterator it;
+    for (it = config.errorpage.begin(); it != config.errorpage.end(); ++it) {
+        if (it->first.find("403")!=string::npos) {
+          val = it->second;
+          break;
+        }
+    }
+    root += val;
+  	ifstream file(root);
   if (file) {
-      fileContent << file.rdbuf(); 
+      fileContent << file.rdbuf();
+      body = fileContent.str();
       file.close();
+  } else {
+      body =  "<!DOCTYPE html>\n"
+              "<html lang=\"en\">\n"
+              "<head>\n"
+              "<meta charset=\"UTF-8\">\n"
+              " <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+              "<title>403 - Forbidden</title>\n"
+              "</head> \n"
+              "<body>\n"
+              "<h1>403 Forbidden</h1>\n"
+              " <p>You do not have permission to access this page.</p>\n"
+              "</body>\n</html>";
   }
   status_line(client_socket,"HTTP/1.1 403 FORBIDDEN\r\n");
   headersSending(client_socket,config.getServerName());
-  string body = fileContent.str();
   stringstream response1;
   response1 << "Content-Type: text/html\r\n"
             << "Content-Length: " << body.size() << "\r\n"
@@ -124,13 +145,13 @@ void  HttpResponse::dirDataSend(string &data, string &root,LocationConfig &norma
     }
 }
 
-LocationConfig getValueFromMap(map<string, LocationConfig> & configNormal,map<string, LocationConfig> ::const_iterator it) {
-  LocationConfig config;
-    if (it != configNormal.end()) {
-        config= it->second;
-    }
-    return config;
-}
+// LocationConfig getValueFromMap(map<string, LocationConfig> & configNormal,map<string, LocationConfig> ::const_iterator it) {
+//   LocationConfig config;
+//     if (it != configNormal.end()) {
+//         config= it->second;
+//     }
+//     return config;
+// }
 void    HttpResponse:: getLocationNormalResponse(LocationConfig &normal,string &str,ServerConfig &config)
 {
   string data;
@@ -145,7 +166,7 @@ void    HttpResponse:: getLocationNormalResponse(LocationConfig &normal,string &
     flag = 2;
   }
   data+=str;
-    if (checkTypePath(data)==0) {
+  if (checkTypePath(data)==0) {
     this->notFound(this->request->getfd(),config);
   } else if (checkTypePath(data)==1) {
     this->fileDataSend(data,config);
@@ -284,23 +305,46 @@ int HttpResponse::writeData() {
 
 
 void HttpResponse::notFound(int client_socket,ServerConfig &config) {
-  	std::ifstream file("./doc/error/4xx/404.html");
-    std::stringstream fileContent;
-        
+    string body;
+    string val;
+    string root = config.getRoot();
+    stringstream fileContent;
+    map<string, string>::const_iterator it;
+    for (it = config.errorpage.begin(); it != config.errorpage.end(); ++it) {
+        if (it->first.find("404")!=string::npos) {
+          val = it->second;
+          break;
+        }
+    }
+    root += val;
+  	ifstream file(root);
+    cout <<"root "<<root<<endl;
     if (file) {
         fileContent << file.rdbuf(); 
+        body = fileContent.str();
         file.close();
+    } else {
+      body =  "<!DOCTYPE html>\n"
+              "<html lang=\"en\">\n"
+              "<head>\n"
+              "<meta charset=\"UTF-8\">\n"
+              " <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+              "<title>404 - Page Not Found</title>\n"
+              "</head> \n"
+              "<body>\n"
+              "<h1>404 Not Found</h1>\n"
+              "<p>The page you are looking for does not exist.</p>\n"
+              "</body>\n</html>";
     }
     status_line(client_socket,"HTTP/1.1 404 NOT FOUND\r\n");
     headersSending(client_socket,config.getServerName());
-    std::string body = fileContent.str();
-    std::stringstream response1;
+    stringstream response1;
     response1 << "Content-Type: text/html\r\n"
               << "Content-Length: " << body.size() << "\r\n"
               << "Connection: close\r\n"
               << "\r\n"
               << body;
-    std::string responseStr = response1.str();
+    string responseStr = response1.str();
     send(client_socket, responseStr.c_str(), responseStr.size(), 0);
 }
 

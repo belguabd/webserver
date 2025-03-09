@@ -38,11 +38,10 @@ class ServerConfig
         string index;
         bool autoindex;
         string server_name;
-        string errorServer;
-        string errorClient;
         string client_max_body_size;
         // map<string, string> globalConfig;
     public:
+        map<string,string> errorpage;
         map<string, LocationConfig> configNormal;
         map<string, LocationUplaods> configUpload;
         map<string, LocationCgi> configcgi;
@@ -75,3 +74,4 @@ string removeLocationBlocks(string &configData);
 string trim(string &str);
 void checkcontent(string substr);
 void isNumber(string& str);
+vector<string> splitstring(const string &str);

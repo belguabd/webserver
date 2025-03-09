@@ -251,9 +251,8 @@ void ServerConfig :: setGlobaleData(string &strConfig, string &str) {
         if (sig ==1 && pos!=string::npos) {
             string tmp = strConfig.substr(pos-4,9);
             string tmp1 = strConfig.substr(pos,6);
-            // cout <<"key   =    "<<tmp<<endl;
             if (strncmp(tmp.c_str(),"autoindex",9)==0||strncmp(tmp1.c_str(),"index.",9)==0) {
-                i = pos +1;
+                i = pos + 1;
                 continue;
             }
         }
@@ -276,19 +275,43 @@ void ServerConfig :: setGlobaleData(string &strConfig, string &str) {
 			    exit(0) ;
 		    }
         }
-        strConfig.replace(pos, lastpos - pos+2, " ");
+        strConfig.replace(pos, lastpos - pos + 2, " ");
         if (str == "listen") {
             isNumber(val);
             int a = atoi(val.c_str());
             this->ports.push_back(a);
         }
+        if (str == "error_page") {
+            vector <string > words;
+            words = splitstring(val);
+            if (words.size()==2)
+            {
+                isNumber(words[0]);
+                this->errorpage[words[0]] = words[1];
+            }
+            else {
+                string key;
+                size_t i = 0;
+                while(i <(words.size() - 1)) {
+                    isNumber(words[i]);
+                    key +=words[i];
+                    key +=" ";
+                    i++;
+                }
+                if (i==0) {
+                    cout<<"error_page not valid"<<endl;
+                    exit(0);
+                }
+                this->errorpage[key] = words[words.size() - 1];
+            }
+            
+        }
         i = pos + 1;
     }
-    if (str!="listen"&& cont!= 1) {
+    if (str!="listen"&&str!="error_page"&& cont!= 1) {
         cout <<"error duplicate var "<<endl;
         exit(0);
     }
-    // cout <<"string = "<<strConfig<<endl;
     this->setVal(str,val);
 }
 
@@ -305,10 +328,8 @@ void ServerConfig :: setVal(string &str,string &val)
         }
         else if (val=="on")
             this->autoindex = true;
-    } else if (str == "error_page 4") {
-        this->errorClient = val;
-    } else if (str == "error_page 5") {
-        this->errorServer = val;
+        else
+            this->autoindex = false;
     } else if (str == "index") {
         this->index = val;
     } else if (str == "root") {
@@ -319,12 +340,12 @@ void ServerConfig :: setVal(string &str,string &val)
 }
 void isNumber(string& str) {
     if (str.empty()) {
-        cout <<"error port "<<str<<endl;
+        cout <<"error port or error_page number not valid "<<str<<endl;
         exit(0);
     }
     for (int i=0;i<str.length();i++) {
         if (!isdigit(str[i])) {
-            cout <<"error port "<<str<<endl;
+            cout <<"error port or error_page number not valid "<<str<<endl;
             exit(0);
         }
     }
@@ -332,7 +353,7 @@ void isNumber(string& str) {
 
 void ServerConfig :: checkGlobalConfig(string strConfig) {
 
-	string list[] = {"listen","host","client_max_body_size","error_page 4","error_page 5","root"}; //autoindex defaut off
+	string list[] = {"listen","host","client_max_body_size","root"};
 	size_t listSize = sizeof(list) / sizeof(list[0]);
 	for (size_t i = 0; i < listSize; i++) {
 		if (strConfig.find(list[i]) == string::npos) {
@@ -343,19 +364,19 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
     size_t index = strConfig.find("index");
     int i = 0;
     while (index!=string::npos) {
-        string tmp = strConfig.substr(index-4,index+5);
+        string tmp = strConfig.substr(index - 4,index + 5);
         if (strncmp(tmp.c_str(),"autoindex",9)!=0) {
             i++;
             break;
         } else {
-            index = strConfig.find("index",index+1);
+            index = strConfig.find("index",index + 1);
         }
     }
-    if (i==0) {
+    if (i == 0) {
 		cout << "Error in global config" << endl;
 		exit(0) ;
 	}
-    string globalvar[] = {"listen","server_name","host","client_max_body_size","error_page 4","error_page 5","autoindex","root","index"};
+    string globalvar[] = {"listen","server_name","host","client_max_body_size","error_page","autoindex","root","index"};
 	size_t Size = sizeof(globalvar) / sizeof(globalvar[0]);
 	for (size_t i = 0; i < Size; i++) {
         this->setGlobaleData(strConfig,globalvar[i]);
