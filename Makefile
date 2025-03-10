@@ -8,7 +8,7 @@ SRC = main.cpp ./server/ServerSocket.cpp  ./server/WebServer.cpp ./request/HttpR
 	./response/HttpResponse.cpp ./conf/ServerConfig.cpp
 
 OBJ = $(SRC:.cpp=.o)
-all:$(NAME) rm
+all:$(NAME)
 $(NAME):$(OBJ)
 	$(CPP) $(CPPFLAGS) -o $(NAME) $(OBJ) 
 
