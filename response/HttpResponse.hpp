@@ -33,12 +33,14 @@ public:
       }
       return val;
   }
-  // void postResponse();
+  void postResponse();
   void defautlRoot(ServerConfig &config);
   void checkDataResev();
-  void getLocationNormalResponse(LocationConfig &normal,string &str,ServerConfig &config);
+  void getLocationResponse(LocationConfig &normal,string &str,ServerConfig &config);
+  void getLocationResponse(LocationUplaods &upload,string &str,ServerConfig &config);
   void fileDataSend(string &data,ServerConfig &config);
   void dirDataSend(string &data,string &root,LocationConfig &normal, ServerConfig &config);
+  void dirDataSend(string &data, string &root,LocationUplaods &upload, ServerConfig &config);
   void forbidden(int client_socket,ServerConfig &config);
 };
 

@@ -112,10 +112,26 @@ int  HttpResponse::checkFileAndSendData(string &data ,ServerConfig &config,strin
   return 0;
 }
 
+void  HttpResponse::dirDataSend(string &data, string &root,LocationUplaods &upload, ServerConfig &config)
+{
+  int checkExist;
+  if (!upload.index.empty()) {
+    checkExist = this->checkFileAndSendData(data, config, upload.index);
+  } else {
+    string index;
+    index = config.getIndex();
+    checkExist = this->checkFileAndSendData(data, config, index);
+  }
+  if (checkExist == 1) {
+    this->notFound(this->request->getfd(),config);
+    return;
+  }
+  this->forbidden(this->request->getfd(),config);
+}
+
 void  HttpResponse::dirDataSend(string &data, string &root,LocationConfig &normal, ServerConfig &config)
 {
   int checkExist;
-  cout << "data "<<data <<endl;
   if (!normal.index.empty()) {
     checkExist = this->checkFileAndSendData(data, config, normal.index);
   } else {
@@ -145,14 +161,7 @@ void  HttpResponse::dirDataSend(string &data, string &root,LocationConfig &norma
     }
 }
 
-// LocationConfig getValueFromMap(map<string, LocationConfig> & configNormal,map<string, LocationConfig> ::const_iterator it) {
-//   LocationConfig config;
-//     if (it != configNormal.end()) {
-//         config= it->second;
-//     }
-//     return config;
-// }
-void    HttpResponse:: getLocationNormalResponse(LocationConfig &normal,string &str,ServerConfig &config)
+void    HttpResponse:: getLocationResponse(LocationConfig &normal,string &str,ServerConfig &config)
 {
   string data;
   string root;
@@ -165,7 +174,7 @@ void    HttpResponse:: getLocationNormalResponse(LocationConfig &normal,string &
     data = normal.root;
     flag = 2;
   }
-  data+=str;
+  data += str;
   if (checkTypePath(data)==0) {
     this->notFound(this->request->getfd(),config);
   } else if (checkTypePath(data)==1) {
@@ -177,7 +186,32 @@ void    HttpResponse:: getLocationNormalResponse(LocationConfig &normal,string &
     else
       this->dirDataSend(data,normal.root,normal,config);
   }
-    // exit(0);
+}
+void    HttpResponse:: getLocationResponse(LocationUplaods &upload,string &str,ServerConfig &config)
+{
+  string data;
+  string root;
+  int flag;
+  if (upload.root.empty()) {
+    root = config.getRoot();
+    data = root;
+    flag = 1;
+  } else {
+    data = upload.root;
+    flag = 2;
+  }
+  data += str;
+  if (checkTypePath(data)==0) {
+    this->notFound(this->request->getfd(),config);
+  } else if (checkTypePath(data)==1) {
+    this->fileDataSend(data,config);
+
+  } else if (checkTypePath(data)==2) {
+    if (flag==1)
+      this->dirDataSend(data,root,upload,config);
+    else
+      this->dirDataSend(data,upload.root,upload,config);
+  }
 }
 int indexValidPath(string str)
 {
@@ -199,17 +233,15 @@ void    HttpResponse::getResponse()
   int i = indexValidPath(words[1]);
   str = words[1].substr(0,i);
   data = words[1].substr(i);
-  // cout<<"data = > " << words[1] <<endl;
-  // cout<<"str = > " << str <<endl;
-  // exit(0);
-    // map<string, LocationConfig>::const_iterator it;
-    // for (it = config.configNormal.begin(); it != config.configNormal.end(); ++it) {
-    //     std::cout << "Key: " << it->first << std::endl;
-    // }
-    // exit(0);
  if (config.configNormal.find(str) != config.configNormal.end()) {
     LocationConfig log = getValueFromMap(config.configNormal,config.configNormal.find(str));
-    getLocationNormalResponse(log,data,config);
+    getLocationResponse(log,data,config);
+ }
+  if (config.configUpload.find(str) != config.configUpload.end()) {
+    LocationUplaods log = getValueFromMap(config.configUpload,config.configUpload.find(str));
+    getLocationResponse(log,data,config);
+
+
  }
 
   // cout<<"data = > " << words[1] <<endl;
@@ -280,9 +312,9 @@ void    sendResponse(HttpResponse &response)
   if (sig == 1) {
     response.getResponse();
   }
-  // else if (sig == 2) {
-  //   response.postResponse();
-  // }
+  else if (sig == 2) {
+    response.postResponse();
+  }
 
 }
 
@@ -318,7 +350,6 @@ void HttpResponse::notFound(int client_socket,ServerConfig &config) {
     }
     root += val;
   	ifstream file(root);
-    cout <<"root "<<root<<endl;
     if (file) {
         fileContent << file.rdbuf(); 
         body = fileContent.str();
@@ -355,7 +386,6 @@ void HttpResponse::notFound(int client_socket,ServerConfig &config) {
 bool ExistFile(string&filePath) {
   struct stat infoFile;
   if (stat(filePath.c_str(),&infoFile) != 0) {
-        std::perror("stat");
         return false;
   }
   if (S_ISREG(infoFile.st_mode)) {
@@ -407,7 +437,6 @@ string dirAutoindex(string &dirPath,string &root) {
 int checkTypePath(string &path) {
   struct stat pathInfo;
     if (stat(path.c_str(), &pathInfo) != 0) {
-        std::perror("stat");
         return 0;
     }
 
@@ -426,44 +455,47 @@ int checkTypePath(string &path) {
 
 /*--------------------------------------Post method------------------------------------------*/
 
-// void HttpResponse::postResponse()
-// {
-//   vector<string>  words = this->request->getDataFirstLine();
-//   cout <<"URL = "<<words[1]<<endl;
-//   //check if location upload is allowed
-//   //check type of resource (cgi , html,.. )
-//   // uploads success or other 
-//   // if ("/tmpbran/upload")// upload_store if path not support upload 
-//   // {
-//   //   this->forbidden(this->request->getfd());
-//   //   cout <<"hi"<<endl;
-//   //   return ;
-
-//   // }
-//   size_t pos = words[1].find(".py"); // depanding config file
-//   if (pos!=string ::npos) {
-//     // cgi handle with Post method
-//     return ;
-//   }
-//   ifstream file("./doc/html/Upload_/succ.html");
-//   stringstream fileContent;
+void HttpResponse::postResponse()
+{
+  ServerConfig config;
+  string body;
+  config = this->request->getServerConf();
+  vector<string>  words = this->request->getDataFirstLine();
+  cout <<"URL = "<<words[1]<<endl;
+  ifstream file("./doc/html/Upload_/succ.html"); ///
+  stringstream fileContent;
         
-//   if (file) {
-//       fileContent << file.rdbuf(); 
-//       file.close();
-//   }
-//   status_line(this->request->getfd(),"HTTP/1.1 201 CREATED\r\n");
-//   headersSending(this->request->getfd());
-//   string body = fileContent.str();
-//   stringstream response1;
-//   response1 << "Content-Type: text/html\r\n"
-//             << "Content-Length: " << body.size() << "\r\n"
-//             << "Connection: close\r\n"
-//             << "\r\n"
-//             << body;
-//   string responseStr = response1.str();
-//   send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
-// }
+  if (file) {
+      fileContent << file.rdbuf();
+      body = fileContent.str();
+      file.close();
+  } else {
+      body =  "<!DOCTYPE html>\n"
+              "<html lang=\"en\">\n"
+              "<head>\n"
+              "<meta charset=\"UTF-8\">\n"
+              "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+              "<title>Upload Successful</title>\n"
+              "</head>\n"
+              "<body>\n"
+              "<h1>Upload Successful</h1>\n"
+              "<p>Your file has been uploaded successfully.</p>\n"
+              "<p><a href=\"/\">Return to Home</a></p>\n"
+              "</body>\n"
+              "</html>\n";
+
+  }
+  status_line(this->request->getfd(),"HTTP/1.1 201 CREATED\r\n");
+  headersSending(this->request->getfd(),config.getServerName());
+  stringstream response1;
+  response1 << "Content-Type: text/html\r\n"
+            << "Content-Length: " << body.size() << "\r\n"
+            << "Connection: close\r\n"
+            << "\r\n"
+            << body;
+  string responseStr = response1.str();
+  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+}
 
 
 

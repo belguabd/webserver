@@ -36,7 +36,7 @@ void handleRequest(HttpRequest &request) {
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), sig(0) , server_config(server_config),firstPartBody(0){
+    : client_fd(client_fd), firsttime(0), endHeaders(0), sig(0) , server_config(server_config),firstPartBody(0),checkCgi(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
 }
@@ -61,8 +61,66 @@ std::string trimNewline(std::string str) {
   }
   return str;
 }
-
+LocationCgi getValueMapcgi(map<string, LocationCgi> & configNormal,map<string, LocationCgi> ::const_iterator it) {
+  LocationCgi config;
+    if (it != configNormal.end()) {
+        config= it->second;
+    }
+    return config;
+}
 HttpRequest::~HttpRequest() {}
+void HttpRequest::checkPathIscgi(string &path)
+{
+  // cout <<"path  = > "<<path<<endl;
+  ServerConfig config;
+  string s;
+  string method;
+  vector <string >allowedMethod;
+  vector <string >extension;
+  LocationCgi log;
+  config = this->getServerConfig();
+  int i = 0 ;
+  i = indexValidPath(path);
+  string str = path.substr(0,i);
+  string data = path.substr(i);
+   if (config.configcgi.find(str) != config.configcgi.end()) {
+    log = getValueMapcgi(config.configcgi,config.configcgi.find(str));
+    allowedMethod = splitstring(log.allowed_methods);
+    extension = splitstring(log.cgi_extension);
+    this->checkCgi = 1;
+  }
+  else
+    return ;
+    this->rootcgi = log.root + data;
+  for(size_t i = 0;i < extension.size();i++)
+  {
+      if (this->rootcgi.find(extension[i])!=string::npos) {
+        s = extension[i];
+        break;
+      }
+  }
+  for(size_t i = 0;i < allowedMethod.size();i++)
+  {
+      if (this->dataFirstLine[0]==allowedMethod[i]) {
+        method = allowedMethod[i];
+        break;
+      }
+  }
+    cout << "rootcgi  = "<<this->rootcgi<<endl;
+    bool f = fileExists(this->rootcgi);
+    cout << "fileExiists  = "<<f<<endl;
+    cout << "extension  = "<<s<<endl;
+    cout << "method  = "<<method<<endl;
+    if (method.empty()) {
+      cout <<"method not allowed"<<endl;
+      exit(0);
+    }
+      if (s.empty()) {
+      cout <<"CGI not supported type file"<<endl;
+      exit(0);
+    }
+
+}
 int HttpRequest::defineTypeMethod(string firstline) {
   firstline = trimNewline(firstline);
   vector<string> words;
@@ -84,6 +142,7 @@ int HttpRequest::defineTypeMethod(string firstline) {
     exit(0);
   }
   this->dataFirstLine = words;
+  checkPathIscgi(words[1]);
   if (words[0] == "GET")
     return (1);
   else if (words[0] == "POST")

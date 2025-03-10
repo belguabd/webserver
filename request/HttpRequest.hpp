@@ -21,6 +21,8 @@ private:
   int firsttime;
   int requestStatus;
   int endHeaders;
+  int checkCgi;
+  string rootcgi;
   vector<string> dataFirstLine;
   map<string, string> queryParam;
   std::string readBuffer;
@@ -51,6 +53,7 @@ public:
   const string &getbuffer() const { return this->_buffer; }
   string getreadbuffer() const { return this->readBuffer; }
   void checkHeaders(string &str);
+  void checkPathIscgi(string &path);
   void requestLine();
   void display() {
     std::cout << "Client fd: " << this->client_fd << std::endl;
@@ -68,7 +71,10 @@ public:
   ServerConfig &getServerConfig()  {return server_config; }
 };
 vector<string> splitstring(const string &str);
+LocationCgi getValueMapcgi(map<string, LocationCgi> & configNormal,map<string, LocationCgi> ::const_iterator it);
 // void    checkHeaders(string& str, map<string, string>& headersMap);
 void    printNonPrintableChars(const std::string &str);
 char characterEncodeing(string &tmp);
 string encodeUrl(string &str);
+int indexValidPath(string str);
+bool fileExists(std::string &filePath);

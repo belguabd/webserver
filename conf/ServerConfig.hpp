@@ -20,8 +20,7 @@ struct LocationUplaods {
   string index;
   string upload_store;
   string client_max_body_size;
-  string allowed_methods;
-  bool autoindex;
+  string allowed_methods; 
 };
 struct LocationCgi {
   string root;

@@ -72,7 +72,6 @@ void ServerConfig :: locationRedirection(string &location) {
 }
 
 void ServerConfig ::locationCgi(string &location) {
-    map<string, LocationCgi> cgiconf;
     string tmp;
     size_t pos = location.find("{");
     tmp = location.substr(8, pos - 8);
@@ -106,9 +105,9 @@ void ServerConfig ::locationCgi(string &location) {
         tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
         cgi.cgi_handler = trim(tmp);
     }
-    cgiconf[key] = cgi;
-	this->configcgi = cgiconf;
+	this->configcgi[key] = cgi;
     // cout << "Location: " << key << "\n";
+    // cout << "size: " << this->configcgi.size() << "\n";
     // cout << "Root: " << cgi.root << "\n";
     // cout << "Allowed Methods: " << cgi.allowed_methods << "\n";
     // cout << "Upload Store: " << cgi.cgi_extension << "\n";
@@ -117,7 +116,6 @@ void ServerConfig ::locationCgi(string &location) {
 }
 
 void ServerConfig :: locationUpload(string &location) {
-    map<string, LocationUplaods> upload;
     string tmp;
     size_t pos = location.find("{");
     tmp =location.substr(8, pos - 8);
@@ -125,6 +123,7 @@ void ServerConfig :: locationUpload(string &location) {
     LocationUplaods config;
     size_t rootPos = location.find("root");
     size_t allowedMethodsPos = location.find("allowed_methods");
+    size_t indexPos = location.find("index");
     size_t uploadStorePos = location.find("upload_store");
     size_t clientMaxBodySizePos = location.find("client_max_body_size");
 
@@ -141,7 +140,17 @@ void ServerConfig :: locationUpload(string &location) {
         tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
         config.allowed_methods = trim(tmp);
     }
-
+    size_t indexSearchPos = 0;
+    while ((indexPos = location.find("index", indexSearchPos)) != string::npos) {
+        indexSearchPos = indexPos + 5;
+        if (location.compare(indexPos - 4, 9, "autoindex") != 0) {
+            size_t valueStart = location.find(" ", indexPos + 5);
+            size_t valueEnd = location.find(";", valueStart);
+            tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
+            config.index = trim(tmp);
+            break;
+        }
+    }
     if (uploadStorePos != string::npos) {
         size_t valueStart = location.find(" ", uploadStorePos + 12);
         size_t valueEnd = location.find(";", valueStart);
@@ -155,15 +164,7 @@ void ServerConfig :: locationUpload(string &location) {
         tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
         config.client_max_body_size = trim(tmp);
     }
-
-    upload[key] = config;
-	this->configUpload = upload;
-    // cout << "Location: " << key << "\n";
-    // cout << "Root: " << config.root << "\n";
-    // cout << "Allowed Methods: " << config.allowed_methods << "\n";
-    // cout << "Upload Store: " << config.upload_store << "\n";
-    // cout << "Client Max Body Size: " << config.client_max_body_size << "\n";
-    // cout <<"--------+++++++++++++++-------------\n";
+	this->configUpload[key] = config;
 }
 
 void ServerConfig :: locationNormal(string &location) {
@@ -447,8 +448,7 @@ void ServerConfig :: parseServerConfig(string &strdata) {
 	string strConfig = removeLocationBlocks(data);
 	this->checkGlobalConfig(strConfig);
 	pos1 = strdata.find("location",i);
-	if (pos1 != string::npos)
-	{
+	if (pos1 != string::npos) {
 		string loca  = strdata.substr(pos1);
 		locationData(loca);   
 	}
@@ -467,8 +467,7 @@ void findLocation(string &str)
         }
         i++;
     }
-    if (sig == true && pos ==string::npos)
-    {
+    if (sig == true && pos ==string::npos) {
         cout <<"error name of blocks not correct"<<endl;
         exit(0);
     }
@@ -487,7 +486,7 @@ void ServerConfig :: nameBlocks(string &strdata) {
                 break;
             }
         }
-        if (i!=0)
+        if (i != 0)
         {
            string str = strdata.substr(i + 1, pos - i - 1);
             findLocation(str);
