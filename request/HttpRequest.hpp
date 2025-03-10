@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <filesystem>
 #include <vector>
 // class HttpRequest;
 
@@ -38,6 +39,7 @@ private:
   // Delete _delete;
   string _buffer;
   void handleRequest();
+  int handleDeleteRequest(std::string filePath);
 
 public:
   // Post _post;
