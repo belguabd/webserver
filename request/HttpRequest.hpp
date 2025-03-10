@@ -1,4 +1,6 @@
 #pragma once
+#include "../conf/ServerConfig.hpp"
+#include "./Post/Post.hpp"
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
@@ -9,10 +11,17 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <filesystem>
 #include <vector>
-#include "./Post/Post.hpp"
-#include "../conf/ServerConfig.hpp"
 // class HttpRequest;
+
+enum Method
+{
+  NONE = 0,
+  GET = 1,
+  POST = 2,
+  DELETE = 3
+};
 
 using namespace std;
 class HttpRequest {
@@ -27,16 +36,19 @@ private:
   map<string, string> queryParam;
   std::string readBuffer;
   ServerConfig server_config;
+  std::string buffer_cgi;
 
   // Delete _delete;
   string _buffer;
+  void handleRequest();
+  int handleDeleteRequest(std::string filePath);
 
 public:
-  Post _post;
+  // Post _post;
+  Post *_post;
   ServerConfig &getServerConf() {return  this->server_config;}
   map<string, string> mapheaders;
-  int sig;
-  int firstPartBody;
+  int _method;
   HttpRequest(int client_fd , ServerConfig &server_config);
   ~HttpRequest();
   int getRequestStatus() { return this->requestStatus; }
@@ -62,13 +74,15 @@ public:
   const std::map<std::string, std::string> &getHeaders() const {
     return mapheaders;
   }
-  const std::map<std::string, std::string> &getQueryParams() const {
+  std::map<std::string, std::string> &getQueryParams() {
     return queryParam;
   }
   const std::vector<std::string> &getDataFirstLine() const {
     return dataFirstLine;
   }
   ServerConfig &getServerConfig()  {return server_config; }
+  void setbufferCgi(char *buffer) { this->buffer_cgi.assign(buffer); }
+  const std::string &getCGIBuffer() { return this->buffer_cgi; }
 };
 vector<string> splitstring(const string &str);
 LocationCgi getValueMapcgi(map<string, LocationCgi> & configNormal,map<string, LocationCgi> ::const_iterator it);

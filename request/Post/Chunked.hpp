@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 #include <sys/stat.h> 
 
 class Chunked
@@ -25,4 +26,4 @@ public:
     int handleChunked();
     void initializeMimeTypes();
 };
-int pasteInFile(std::string name, std::string &data);
+size_t pasteInFile(std::string name, std::string &data);
