@@ -24,7 +24,10 @@ void WebServer::addServerSocket(ServerConfig &conf) {
   // for(size_t i =0 ; i < conf.getPorts().size() ; i++){
   //   cout << conf.getPorts()[i] << "\n";;
   // }
-  // std::cout << conf.getPorts()[0] << "\n";
+  puts("OK");
+  std::cout << conf.getPorts()[0] << "\n";
+  exit(0);
+  
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
     ServerSocket *newSocket = new ServerSocket(conf.getPorts()[i]);
     newSocket->bind_socket();
@@ -184,17 +187,16 @@ void WebServer::respond_to_client(int client_fd) {
   delete responseclient;
 }
 /*----------------------------------------------------*/
-int beforStart(string str )
+void dataBeforServer(string str)
 {
-    if (str.empty())
-      return 0;
-    int i = 0;
-    while(i < str.length()) {
-        if (str[i]!='\t' &&  str[i]!=' '&& str[i]!='\n')
-            return 1;
-        i++;
+  int i =0 ;
+  while(i < str.length()) {
+    if (str[i]!='\t' &&  str[i]!=' '&& str[i]!='\n') {
+      cout <<"error data befor server "<<endl;
+      exit(0);
     }
-  return 0;
+      i++;
+  }
 }
 void WebServer::separateServer() {
     string strserv = this->_data;
@@ -246,6 +248,69 @@ void WebServer::separateServer() {
         exit(0);
     }
 }
+// void WebServer::separateServer() {
+//   string strserv;
+//   string str;
+//   strserv = this->_data;
+//   if (strserv.length() == 0) {
+//     cout << "error file config empty" << endl;
+//     exit(0);
+//   }
+//   size_t i = 0;
+//   bool found = false;
+//   int sig = 0;
+//   while (i < strserv.length()) {
+//     size_t pos = strserv.find("server", i);
+//     // cout << "i = > "<<i<<endl;
+//     if (sig == 1 && pos == string::npos)
+//       break;
+//     if (pos == string::npos) {
+//       cout << "error server not found" << endl;
+//       exit(0);
+//     }
+//     size_t i = 0;
+//     bool found = false;
+//     int sig = 0;
+//     while(i < strserv.length())
+//     {
+//         size_t pos = strserv.find("server",i);
+//         // cout << "i = > "<<i<<endl;
+//         if (sig==1 &&pos == string::npos)
+//             break;
+//         if (pos == string::npos ) {
+//             cout <<"error server not found"<<endl;
+//             exit(0);
+//         }
+//         if (sig == 0) {
+//             sig = 1;
+//             str = strserv.substr(0,pos);
+//             dataBeforServer(str);
+//         } else {
+//             str = strserv.substr(i-1,pos- i);
+//             // cout << str<<endl;
+//             // cout <<"------------------------------------------"<<endl;
+//             ServerConfig conf(str);
+//             conf.validbrackets(str);
+//             conf.parseServerConfig(str);
+//             config.push_back(conf);
+//         }
+//         found = true;
+//         i = pos+1;
+//     }
+//     found = true;
+//     i = pos + 1;
+//   }
+//   if (found == false)
+//     return;
+//   size_t pos = strserv.rfind("server");
+//   str = strserv.substr(pos);
+//   // cout << str<<endl;
+//   // cout <<"------------------------------------------"<<endl;
+//   ServerConfig conf(str);
+//   conf.validbrackets(str);
+//   conf.parseServerConfig(str);
+//   config.push_back(conf);
+// }
 
 void WebServer ::dataConfigFile() {
   this->_data = removeComments(this->_data);

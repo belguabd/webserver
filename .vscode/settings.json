@@ -4,6 +4,11 @@
         "iosfwd": "cpp",
         "utility": "cpp",
         "string": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "__split_buffer": "cpp",
+        "array": "cpp",
+        "deque": "cpp",
+        "string_view": "cpp",
+        "vector": "cpp"
     }
 }

@@ -441,6 +441,10 @@ void ServerConfig :: parseServerConfig(string &strdata) {
 		}
 		i++;
 	}
+    if (i==strdata.size()) {
+        cout <<"error server without brakets"<<endl;
+        exit(0);
+    }
 	i++;
 	
 	size_t  pos1 = strdata.rfind('}',i);

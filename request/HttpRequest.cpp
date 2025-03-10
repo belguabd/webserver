@@ -15,16 +15,19 @@ void handleRequest(HttpRequest &request) {
   }
   request.parsePartRequest(str_parse);
 
+  if (request.sig == 1 && request.getendHeaders() == 1) {
   if (request.sig == 1 && request.getendHeaders() == 1)
   {
     request.setRequestStatus(1);
+  } else if (request.sig == 2 && request.getendHeaders() == 1) {
   }
   else if (request.sig == 2 && request.getendHeaders() == 1) {
     string tmp;
+    if (i == 0) {
     if (request.firstPartBody == 0) {
       tmp = request.getbuffer();
       request._post.start(request.mapheaders, tmp);
-      request.firstPartBody = 1;
+      i = 1;
     } else {
       tmp = request.getreadbuffer();
       request._post.proseRequest(tmp);
@@ -48,7 +51,6 @@ int HttpRequest::readData() {
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
   if (bytes_received > 0) {
     readBuffer.assign(buffer, bytes_received);
-    // std::cout << readBuffer << "\n";
     handleRequest(*this);
 
   }
@@ -237,6 +239,7 @@ void HttpRequest ::parsePartRequest(string str_parse) {
     str.clear();
   }
 }
+
 void HttpRequest ::requestLine() {
   string path;
   string querydata;
