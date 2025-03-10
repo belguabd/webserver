@@ -31,6 +31,7 @@ private:
   int requestStatus;
   int endHeaders;
   int checkCgi;
+  int cgiExtension;
   string rootcgi;
   vector<string> dataFirstLine;
   map<string, string> queryParam;

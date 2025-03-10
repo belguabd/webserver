@@ -44,9 +44,11 @@ void HttpRequest::handleRequest()
     }
   }
   parsePartRequest(str_parse);
-
-  if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
-    setRequestStatus(1);
+  if (getendHeaders() == 1 && this->requestStatus!=0) {
+    return ;
+  }
+  else if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
+    setRequestStatus(200);
   else if (_method == POST && getendHeaders() == 1)
   {
     if (_post == NULL)
@@ -136,10 +138,6 @@ void HttpRequest::checkPathIscgi(string &path)
       }
   }
     cout << "rootcgi  = "<<this->rootcgi<<endl;
-    bool f = fileExists(this->rootcgi);
-    cout << "fileExiists  = "<<f<<endl;
-    cout << "extension  = "<<s<<endl;
-    cout << "method  = "<<method<<endl;
     if (method.empty()) {
       cout <<"method not allowed"<<endl;
       exit(0);
@@ -148,6 +146,13 @@ void HttpRequest::checkPathIscgi(string &path)
       cout <<"CGI not supported type file"<<endl;
       exit(0);
     }
+    bool f = fileExists(this->rootcgi);
+    if (f==false)
+      this->rootcgi = "";
+    if (s==".php")
+      this->cgiExtension = 1;
+    else
+      this->cgiExtension = 2;
 
 }
 int HttpRequest::defineTypeMethod(string firstline) {
@@ -169,8 +174,10 @@ int HttpRequest::defineTypeMethod(string firstline) {
   }
   if (words.size() != 3 || words[1][0] != '/')
   {
-    cout << "method error" << endl;
-    exit(0);
+    cout << "bad request" << endl;
+    this->requestStatus = 400;
+    this->endHeaders = 1;
+    return 0;
   }
   this->dataFirstLine = words;
   checkPathIscgi(words[1]);
@@ -205,15 +212,15 @@ vector<string> splitstring(const string &str)
 }
 void HttpRequest::checkHeaders(string &str)
 {
-
-  str = trimNewline(str);
+  // str = trimNewline(str);
   size_t pos = str.find(':');
   string result;
   vector<string> words;
   if (pos == string::npos || (pos > 0 && str[pos - 1] == ' '))
   {
-    cout << "bad request space : " << endl;
-    exit(0);
+    this->requestStatus = 400;
+    this->endHeaders = 1;
+    return ;
   }
   words = splitstring(str.substr(pos + 1, str.length()));
   for (vector<string>::const_iterator it = words.begin(); it != words.end();
@@ -289,14 +296,23 @@ void HttpRequest ::parsePartRequest(string str_parse)
 }
 
 void HttpRequest ::requestLine() {
+  if (this->endHeaders == 1) {
+    return ;
+  }
   string path;
   string querydata;
   this->dataFirstLine[1] = encodeUrl(this->dataFirstLine[1]);
+  if (this->dataFirstLine[1].empty()) {
+    this->requestStatus = 400;
+    this->endHeaders = 1;
+    return;
+  }
   path = this->dataFirstLine[1];
   if (this->dataFirstLine[2].compare("HTTP/1.1") != 0)
   {
-    cout << "Not Supported" << endl;
-    return;
+    this->requestStatus = 505;
+    this->endHeaders = 1;
+    return ;
   }
   size_t pos = path.find("?");
   if (pos == string::npos)
@@ -315,7 +331,6 @@ void HttpRequest ::requestLine() {
   }
   if (this->dataFirstLine[1][pos + 1] == '\0')
   {
-    cout << "erro ??" << endl;
     this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
     return;
   }
@@ -334,7 +349,6 @@ void HttpRequest ::requestLine() {
         value = querydata.substr(endkey + 1, endval - endkey - 1);
       else
         value = querydata.substr(endkey + 1);
-      cout << "Key: " << key << ", Value: " << value << endl;
       if (endval != string::npos)
         i = endval + 1;
       else
@@ -352,6 +366,8 @@ string encodeUrl(string &str)
   {
     tmp = str.substr(pos + 1, 2);
     char c = characterEncodeing(tmp);
+    if (c == 0)
+      return "";
     str.replace(pos, 3, 1, c);
     pos++;
   }
@@ -361,10 +377,8 @@ string encodeUrl(string &str)
 char characterEncodeing(string &tmp)
 {
   printNonPrintableChars(tmp);
-  if (tmp[0] < '2' || tmp[0] > '7' || (!isdigit(tmp[1]) && (tmp[1] < 'A' || tmp[1] > 'F')))
-  {
-    cout << "character not allowed" << endl;
-    exit(0);
+  if (tmp[0] < '2' || tmp[0] > '7' || (!isdigit(tmp[1]) && (tmp[1] < 'A' || tmp[1] > 'F'))) {
+    return 0;
   }
   return (static_cast<char>(stol(tmp, nullptr, 16)));
 }

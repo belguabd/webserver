@@ -301,14 +301,26 @@ void HttpResponse::defautlRoot(ServerConfig &config)
   send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
 }
 
-void HttpResponse:: checkDataResev()
+int HttpResponse:: checkDataResev()
 {
-  
+  ServerConfig config = this->request->getServerConfig();
+  int statuscode = this->request->getRequestStatus();
+  cout << "statuscode = "<<statuscode<<endl;
+  if (statuscode == 400) {
+    this->badRequest(this->request->getfd(),config);
+    return 1;
+  } else if (statuscode ==505) {
+    this->HttpVersionNotSupported(this->request->getfd(),config);
+    return 1;
+  }
+  return 0;
 }
 void    sendResponse(HttpResponse &response)
 {
   int method = response.request->_method;
-  response.checkDataResev();
+  if (response.checkDataResev()!=0) {
+    return ;
+  }
   if (method == GET) {
     response.getResponse();
   }
@@ -334,7 +346,89 @@ int HttpResponse::writeData() {
 //     std::cerr << "Error sending message to client" << std::endl;
   return bytes_send;
 }
-
+void HttpResponse::HttpVersionNotSupported(int client_socket,ServerConfig &config) {
+    string body;
+    string val;
+    string root = config.getRoot();
+    stringstream fileContent;
+    map<string, string>::const_iterator it;
+    for (it = config.errorpage.begin(); it != config.errorpage.end(); ++it) {
+        if (it->first.find("505")!=string::npos) {
+          val = it->second;
+          break;
+        }
+    }
+    root += val;
+  	ifstream file(root);
+    if (file) {
+        fileContent << file.rdbuf(); 
+        body = fileContent.str();
+        file.close();
+    } else {
+      body =  "<!DOCTYPE html>\n"
+              "<html lang=\"en\">\n"
+              "<head>\n"
+              "<meta charset=\"UTF-8\">\n"
+              " <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+              "<title>505 - HTTP Version not supported</title>\n"
+              "</head> \n"
+              "<body>\n"
+              "<h1>505 HTTP Version Not Supported</h1>\n"
+              "<p>The page you are looking for does not exist.</p>\n"
+              "</body>\n</html>";
+    }
+    status_line(client_socket,"HTTP/1.1 505 HTTP Version Not Supported\r\n");
+    headersSending(client_socket,config.getServerName());
+    stringstream response1;
+    response1 << "Content-Type: text/html\r\n"
+              << "Content-Length: " << body.size() << "\r\n"
+              << "Connection: close\r\n"
+              << "\r\n"
+              << body;
+    string responseStr = response1.str();
+    send(client_socket, responseStr.c_str(), responseStr.size(), 0);
+}
+void HttpResponse::badRequest(int client_socket,ServerConfig &config) {
+    string body;
+    string val;
+    string root = config.getRoot();
+    stringstream fileContent;
+    map<string, string>::const_iterator it;
+    for (it = config.errorpage.begin(); it != config.errorpage.end(); ++it) {
+        if (it->first.find("400")!=string::npos) {
+          val = it->second;
+          break;
+        }
+    }
+    root += val;
+  	ifstream file(root);
+    if (file) {
+        fileContent << file.rdbuf(); 
+        body = fileContent.str();
+        file.close();
+    } else {
+      body =  "<!DOCTYPE html>\n"
+              "<html lang=\"en\">\n"
+              "<head>\n"
+              "<meta charset=\"UTF-8\">\n"
+              " <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+              "<title>400 - Bad Request</title>\n"
+              "</head> \n"
+              "<body>\n"
+              "<h1>404 Bad Request</h1>\n"
+              "</body>\n</html>";
+    }
+    status_line(client_socket,"HTTP/1.1 400 Bad Request\r\n");
+    headersSending(client_socket,config.getServerName());
+    stringstream response1;
+    response1 << "Content-Type: text/html\r\n"
+              << "Content-Length: " << body.size() << "\r\n"
+              << "Connection: close\r\n"
+              << "\r\n"
+              << body;
+    string responseStr = response1.str();
+    send(client_socket, responseStr.c_str(), responseStr.size(), 0);
+}
 
 void HttpResponse::notFound(int client_socket,ServerConfig &config) {
     string body;
@@ -367,7 +461,7 @@ void HttpResponse::notFound(int client_socket,ServerConfig &config) {
               "<p>The page you are looking for does not exist.</p>\n"
               "</body>\n</html>";
     }
-    status_line(client_socket,"HTTP/1.1 404 NOT FOUND\r\n");
+    status_line(client_socket,"HTTP/1.1 404 Not Found\r\n");
     headersSending(client_socket,config.getServerName());
     stringstream response1;
     response1 << "Content-Type: text/html\r\n"
@@ -500,3 +594,28 @@ void HttpResponse::postResponse()
 
 
 /*--------------------------------------------------------------------------------------------*/
+
+
+
+
+
+
+// string generateErrorPage(int statusCode, const string& message) {
+//     return "<!DOCTYPE html>\n"
+//            "<html lang=\"en\">\n"
+//            "<head>\n"
+//            "<meta charset=\"UTF-8\">\n"
+//            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+//            "<title>" + to_string(statusCode) + " - " + message + "</title>\n"
+//            "<style>\n"
+//            "body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }\n"
+//            "h1 { font-size: 50px; color: red; }\n"
+//            "p { font-size: 20px; color: #666; }\n"
+//            "</style>\n"
+//            "</head>\n"
+//            "<body>\n"
+//            "<h1>" + to_string(statusCode) + " " + message + "</h1>\n"
+//            "<p>The request could not be processed.</p>\n"
+//            "</body>\n"
+//            "</html>";
+// }

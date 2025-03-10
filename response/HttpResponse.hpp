@@ -23,6 +23,8 @@ public:
   ~HttpResponse();
   int writeData();
   void notFound(int client_socket,ServerConfig &config);
+  void badRequest(int client_socket,ServerConfig &config);
+  void HttpVersionNotSupported(int client_socket,ServerConfig &config);
   int checkFileAndSendData(string &data ,ServerConfig &config,string &index);
   void getResponse();
   template <typename K, typename V>
@@ -35,7 +37,7 @@ public:
   }
   void postResponse();
   void defautlRoot(ServerConfig &config);
-  void checkDataResev();
+  int checkDataResev();
   void getLocationResponse(LocationConfig &normal,string &str,ServerConfig &config);
   void getLocationResponse(LocationUplaods &upload,string &str,ServerConfig &config);
   void fileDataSend(string &data,ServerConfig &config);
