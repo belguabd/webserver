@@ -162,6 +162,43 @@ void ServerConfig ::locationCgi(string &location) {
     // cout << "Client Max Body Size: " << cgi.cgi_handler << "\n";
     // cout <<"-------++++++++++++++++++-----------\n";
 }
+size_t checkValidBadySise(string str)
+{
+    // size_t maxBadysize;
+    size_t maxBadysize;
+    string number;
+    string typeStorage;
+    // cout <<"str ===>"<< str <<endl;
+    int i = 0;
+    while (i < str.length()) {
+        if(isdigit(str[i]))
+            number += str[i];
+        else
+            break;
+        i++;
+    }
+    if (i== str.length()) {
+        cout<<"error client_max_body_size not valid"<<endl;
+        exit(0);
+    }
+    maxBadysize = static_cast<size_t>(stoll(number));
+
+    typeStorage = str.substr(i);
+    if (typeStorage !="GB"&&typeStorage !="G"&&typeStorage !="MB"&&typeStorage !="M"&&typeStorage !="KB"&&typeStorage !="K"&&typeStorage !="B") {
+        cout<<"error client_max_body_size not valid"<<endl;
+        exit(0);
+    }
+    if (typeStorage =="GB"||typeStorage =="G") {
+         maxBadysize =maxBadysize * 1024 * 1024 * 1024;   
+    }
+    else if (typeStorage =="MB"||typeStorage =="M") {
+         maxBadysize = maxBadysize * 1024 * 1024;   
+    }
+    else if (typeStorage =="KB"||typeStorage =="K") {
+         maxBadysize *= 1024;  
+    }
+    return maxBadysize;
+}
 
 void ServerConfig :: locationUpload(string &location) {
     string tmp;
@@ -211,7 +248,7 @@ void ServerConfig :: locationUpload(string &location) {
         size_t valueStart = location.find(" ", clientMaxBodySizePos + 18);
         size_t valueEnd = location.find(";", valueStart);
         tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
-        config.client_max_body_size = trim(tmp);
+        config.client_max_body_size = checkValidBadySise(trim(tmp));
     }
 	this->configUpload[key] = config;
 }
@@ -371,7 +408,7 @@ void ServerConfig :: setVal(string &str,string &val)
     if (str == "host") {
         this->host = val;
     } else if (str == "client_max_body_size") {
-        this->client_max_body_size = val;
+        this->client_max_body_size = checkValidBadySise(val);
     } else if (str == "autoindex") {
         if (val!="on"&&val!="off") {
             cout <<"error autoindex"<<endl;

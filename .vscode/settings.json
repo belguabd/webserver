@@ -12,6 +12,7 @@
         "algorithm": "cpp",
         "map": "cpp",
         "string_view": "cpp",
-        "unordered_map": "cpp"
+        "unordered_map": "cpp",
+        "__locale": "cpp"
     }
 }

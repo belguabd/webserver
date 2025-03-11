@@ -19,7 +19,7 @@ struct LocationUplaods {
   string root;
   string index;
   string upload_store;
-  string client_max_body_size;
+  size_t client_max_body_size;
   string allowed_methods; 
 };
 struct LocationCgi {
@@ -37,7 +37,7 @@ class ServerConfig
         string index;
         bool autoindex;
         string server_name;
-        string client_max_body_size;
+        size_t client_max_body_size;
         // map<string, string> globalConfig;
     public:
         map<string,string> errorpage;
@@ -77,3 +77,4 @@ void checkcontent(string substr);
 void isNumber(string& str);
 vector<string> splitstring(const string &str);
 void chechAllowedMethodValid(string &str);
+size_t checkValidBadySise(string str);
