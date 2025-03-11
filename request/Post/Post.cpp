@@ -1,39 +1,65 @@
 #include "./Post.hpp"
 
-// Post::Post()
-// {
-// 	// setHeaders(headers);
-// 	_status = 0;
-// 	initializeMimeTypes();
-	
-// }
-// Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer, LocationUplaods &configUpload)
-Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer)
-:_headers(headers), _queryParam(queryParam)
-{
-// , _configUpload(configUpload)
-	// setHeaders(headers);
-	_status = 0;
-	initializeMimeTypes();
-	buffer = "\r\n" + buffer;
-	_status = 0;
-	setBodyType();
-	setContentLengthSize();
+void Post::createBodyTypeObject(std::string& buffer) {
 	if (_bodyType == chunked)
-		chunk = new Chunked(_bufferBody, _remainingBuffer, _headers, _status);
+		chunk = new Chunked(_bufferBody, _remainingBuffer, _headers, _status, _uploadStore);
 	else if (_bodyType == boundary)
 		bound = new Boundary(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
-	else if (_bodyType == boundaryChunked)
-	{
+	else if (_bodyType == boundaryChunked) {
 		buffer.insert(0, "\r\n2\r\n\r\n");
+		_bodySize -= 7;
 		boundChunk = new BoundaryChunked(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
 	}
-	else if (_bodyType == contentLength)
-	{
+	else if (_bodyType == contentLength) {
 		buffer.erase(0, 2); // to remove \r\n
-		setFileName(_mimeToExtension[headers["Content-Type"]]);
+		setFileName(_mimeToExtension[_headers["Content-Type"]]);
 	}
+}
+Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer, LocationUplaods &configUpload)
+:_headers(headers), _queryParam(queryParam)
+, _configUpload(configUpload)
+{
+	// setHeaders(headers);
+	_status = 0;
+	_bodySize = 0;
+	// if (configUpload.allowed_methods.find("POST") == std::string::npos)
+	// {
+	// 	_status = 1; // 405
+	// 	return;	
+	// }
+	// std::cout << "_bodySize: " << _bodySize << std::endl;
+	initializeMimeTypes();
+	_uploadStore = _configUpload.upload_store;
+	buffer = "\r\n" + buffer;
+	setBodyType();
+	createBodyTypeObject(buffer);
+	setContentLengthSize();
 	proseRequest(buffer);
+}
+
+int Post::proseRequest(std::string &buffer)
+{
+	// if (buffer.empty())
+	// {
+	// 	_status = 1; // 404
+	// 	return _status;
+	// }
+	_bodySize += buffer.size(); // attention of pre added \r\n in buffer;
+	std::cout << "_bodySize: " << _bodySize << std::endl;
+	if (this->_bodyType == contentLength)
+		return handleContentLength(buffer);
+	if (this->_bodyType == keyVal)
+		std::cout << "keyVal\n";
+	// std::cout << "=========buffer befor: =========";  printNonPrintableChars(buffer);
+	if (manipulateBuffer(buffer) == std::string::npos)
+		return _status;
+	if (this->_bodyType == chunked)
+		chunk->handleChunked();
+	if (this->_bodyType == boundary)
+		bound->handleBoundary();
+	if (this->_bodyType == boundaryChunked)
+		boundChunk->handleChunkedBoundary();
+	return _status;
 }
 
 Post &Post::operator=(const Post &other)
@@ -128,31 +154,31 @@ int Post::handleContentLength(std::string &buffer)
 // 	buffer
 // }
 
-int Post::start(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer)
-{
-	// std::cout <<"buffer "<<buffer<<std::endl;
-	// _queryParam = queryParam;
-	buffer = "\r\n" + buffer;
-	_status = 0;
-	setHeaders(headers);
-	setBodyType();
-	setContentLengthSize();
-	if (_bodyType == chunked)
-		chunk = new Chunked(_bufferBody, _remainingBuffer, _headers, _status);
-	else if (_bodyType == boundary)
-		bound = new Boundary(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
-	else if (_bodyType == boundaryChunked)
-	{
-		buffer.insert(0, "\r\n2\r\n\r\n");
-		boundChunk = new BoundaryChunked(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
-	}
-	else if (_bodyType == contentLength)
-	{
-		buffer.erase(0, 2); // to remove \r\n
-		setFileName(_mimeToExtension[headers["Content-Type"]]);
-	}
-	return proseRequest(buffer);
-}
+// int Post::start(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer)
+// {
+// 	// std::cout <<"buffer "<<buffer<<std::endl;
+// 	// _queryParam = queryParam;
+// 	buffer = "\r\n" + buffer;
+// 	_status = 0;
+// 	setHeaders(headers);
+// 	setBodyType();
+// 	setContentLengthSize();
+// 	if (_bodyType == chunked)
+// 		chunk = new Chunked(_bufferBody, _remainingBuffer, _headers, _status);
+// 	else if (_bodyType == boundary)
+// 		bound = new Boundary(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
+// 	else if (_bodyType == boundaryChunked)
+// 	{
+// 		buffer.insert(0, "\r\n2\r\n\r\n");
+// 		boundChunk = new BoundaryChunked(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
+// 	}
+// 	else if (_bodyType == contentLength)
+// 	{
+// 		buffer.erase(0, 2); // to remove \r\n
+// 		setFileName(_mimeToExtension[headers["Content-Type"]]);
+// 	}
+// 	return proseRequest(buffer);
+// }
 
 size_t Post::manipulateBuffer(std::string &buffer)
 {
@@ -166,29 +192,6 @@ size_t Post::manipulateBuffer(std::string &buffer)
 	_remainingBuffer = buffer.substr(pos + 1);
 	_bufferBody += buffer.substr(0, pos + 1);
 	return pos;
-}
-
-int Post::proseRequest(std::string &buffer)
-{
-	// if (buffer.empty())
-	// {
-	// 	_status = 1; // 404
-	// 	return _status;
-	// }
-	if (this->_bodyType == contentLength)
-		return handleContentLength(buffer);
-	if (this->_bodyType == keyVal)
-		std::cout << "keyVal\n";
-	// std::cout << "=========buffer befor: =========";  printNonPrintableChars(buffer);
-	if (manipulateBuffer(buffer) == std::string::npos)
-		return _status;
-	if (this->_bodyType == chunked)
-		chunk->handleChunked();
-	if (this->_bodyType == boundary)
-		bound->handleBoundary();
-	if (this->_bodyType == boundaryChunked)
-		boundChunk->handleChunkedBoundary();
-	return _status;
 }
 
 Post::~Post()

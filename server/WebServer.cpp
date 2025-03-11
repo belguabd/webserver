@@ -119,6 +119,7 @@ void WebServer::receive_from_client(int client_fd) {
     connected_clients.erase(it);
   }
   if (client->getRequestStatus() == 1) {
+    std::cout << "ppppppppppppppppp\n";
     struct kevent changes[1];
     EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
            client);

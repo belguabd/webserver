@@ -15,8 +15,8 @@ Chunked &Chunked::operator=(const Chunked &other)
 	return *this;
 }
 
-Chunked::Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
-    _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
+Chunked::Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status, std::string &uploadStore):
+    _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status), _uploadStore(uploadStore)
 {
 	_chunkSize = 0;
 	initializeMimeTypes();
@@ -36,6 +36,7 @@ void Chunked::setFileName(std::string extention)
 int Chunked::handleChunked()
 {
 	std::string fileData;
+	std::cout << "in chunked\n";
 	if (_chunkSize <= 0) // check is remending data
 	{
 		// std::cout << "buffer head : "; printNonPrintableChars(_bufferBody.substr(0, 12));
