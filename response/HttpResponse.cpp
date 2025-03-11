@@ -213,6 +213,27 @@ void    HttpResponse:: getLocationResponse(LocationUplaods &upload,string &str,S
       this->dirDataSend(data,upload.root,upload,config);
   }
 }
+void HttpResponse::redirectionResponse(string &str)
+{
+  ServerConfig config;
+  string data;
+  config = this->request->getServerConfig();
+  if (config.typeUrl == 1) {
+    if(this->request->mapheaders.find("Host") != this->request->mapheaders.end()) {
+      string host = getValueFromMap(config.configRedirection,config.configRedirection.find("Host"));
+      data = host;
+      data += str;
+  }
+  } else {
+    data = str;
+  }
+  status_line(this->request->getfd(),"HTTP/1.1 301 Moved Permanently\r\n");
+  headersSending(this->request->getfd(),config.getServerName());
+  stringstream response1;
+  response1 << "Location:"<<data<< "\r\n\r\n";
+  string responseStr = response1.str();
+  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+}
 int indexValidPath(string str)
 {
   int i = 0;
@@ -231,18 +252,24 @@ void    HttpResponse::getResponse()
   config = this->request->getServerConf();
   vector<string>  words = this->request->getDataFirstLine();
   int i = indexValidPath(words[1]);
+  if (i != 0 && words[1][i]==0) {
+    words[1]+="/";
+  }
   str = words[1].substr(0,i);
   data = words[1].substr(i);
- if (config.configNormal.find(str) != config.configNormal.end()) {
+  if(config.configRedirection.find(str) != config.configRedirection.end()) {
+    string urlRedirection = getValueFromMap(config.configRedirection,config.configRedirection.find(str));
+    redirectionResponse(urlRedirection);
+    // cout <<"str --> "<<str1<<endl;
+  }
+  if (config.configNormal.find(str) != config.configNormal.end()) {
     LocationConfig log = getValueFromMap(config.configNormal,config.configNormal.find(str));
     getLocationResponse(log,data,config);
- }
+  }
   if (config.configUpload.find(str) != config.configUpload.end()) {
     LocationUplaods log = getValueFromMap(config.configUpload,config.configUpload.find(str));
     getLocationResponse(log,data,config);
-
-
- }
+  }
 
   // cout<<"data = > " << words[1] <<endl;
   if (words[1]=="/")
@@ -305,7 +332,6 @@ int HttpResponse:: checkDataResev()
 {
   ServerConfig config = this->request->getServerConfig();
   int statuscode = this->request->getRequestStatus();
-  cout << "statuscode = "<<statuscode<<endl;
   if (statuscode == 400) {
     this->badRequest(this->request->getfd(),config);
     return 1;
@@ -517,7 +543,6 @@ string dirAutoindex(string &dirPath,string &root) {
     while ((entry = readdir(dir)) != nullptr) {
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             html += "<li><a href=\"" + str + "/" + entry->d_name + "\">";
-            cout <<"str ==>" << str<<endl;
             html += entry->d_name;
             html += "</a></li>\n";
         }

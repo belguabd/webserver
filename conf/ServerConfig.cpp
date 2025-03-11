@@ -78,7 +78,44 @@ ServerConfig :: ServerConfig(string &str) {
 ServerConfig :: ~ServerConfig() { }
 
 void ServerConfig :: locationRedirection(string &location) {
-    // cout <<"redirection     ??" <<endl;
+    string tmp;
+    size_t returnPos;
+    vector<string> words;
+    string val;
+    size_t pos = location.find("{");
+    tmp =location.substr(8, pos - 8);
+    string key = trim(tmp);
+    int cont = 0;
+    returnPos = location.find("return");
+    while((location.find("return",returnPos))!=string::npos) {
+        if (location[returnPos + 6 ]== ' '||location[returnPos + 6] == '\t')
+            cont++;
+        returnPos+=1;
+    }
+    if (cont>1) {
+        cout<<"error redirection > 1"<<endl;
+        exit(0);
+    }
+    size_t valueStart = location.find(" ", returnPos + 1);
+    size_t valueEnd = location.find(";", valueStart);
+    tmp =location.substr(valueStart + 1, valueEnd - valueStart - 1);
+    words = splitstring(tmp);
+    if (words.size()!=2) {
+        cout<<"error redirection size?? "<<endl;
+        exit(0);
+    }
+    val = words[1];
+    if (val.length()>8)
+        tmp = val.substr(0,8);
+    if (val[0]=='/') {
+        this->typeUrl = 1;
+    } else if (tmp=="http://"||tmp=="https://") { //
+        this->typeUrl = 2;
+    } else {
+        cout<<"error url not valid"<<endl;
+        exit(0);
+    }
+    this->configRedirection[key] = val;
 }
 
 void ServerConfig ::locationCgi(string &location) {
@@ -237,7 +274,7 @@ void ServerConfig :: locationData(string &strlocat) {
         string location = strlocat.substr(firstpos,lastpos - firstpos);
         if(location.find("upload_store")!=string::npos) {
             locationUpload(location);
-        } else if (location.find("returne")!=string::npos) {
+        } else if (location.find("return")!=string::npos) {
             locationRedirection(location);
         } else if (location.find("cgi_handler")!=string::npos) {
             locationCgi(location);

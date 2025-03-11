@@ -37,6 +37,7 @@ public:
   }
   void postResponse();
   void defautlRoot(ServerConfig &config);
+  void redirectionResponse(string &str);
   int checkDataResev();
   void getLocationResponse(LocationConfig &normal,string &str,ServerConfig &config);
   void getLocationResponse(LocationUplaods &upload,string &str,ServerConfig &config);

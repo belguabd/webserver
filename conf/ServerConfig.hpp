@@ -44,6 +44,8 @@ class ServerConfig
         map<string, LocationConfig> configNormal;
         map<string, LocationUplaods> configUpload;
         map<string, LocationCgi> configcgi;
+        map<string, string> configRedirection;
+        int typeUrl;
         vector<int> ports;
         ServerConfig(){};
         ServerConfig(string &str);
