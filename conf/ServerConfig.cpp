@@ -117,7 +117,6 @@ void ServerConfig ::locationCgi(string &location) {
 }
 
 void ServerConfig :: locationUpload(string &location) {
-    map<string, LocationUplaods> upload;
     string tmp;
     size_t pos = location.find("{");
     tmp =location.substr(8, pos - 8);
@@ -156,8 +155,7 @@ void ServerConfig :: locationUpload(string &location) {
         config.client_max_body_size = trim(tmp);
     }
 
-    upload[key] = config;
-	this->configUpload = upload;
+	this->configUpload[key] = config;
     // cout << "Location: " << key << "\n";
     // cout << "Root: " << config.root << "\n";
     // cout << "Allowed Methods: " << config.allowed_methods << "\n";

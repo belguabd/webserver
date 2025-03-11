@@ -7,9 +7,11 @@
 // 	initializeMimeTypes();
 	
 // }
+// Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer, LocationUplaods &configUpload)
 Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer)
 :_headers(headers), _queryParam(queryParam)
 {
+// , _configUpload(configUpload)
 	// setHeaders(headers);
 	_status = 0;
 	initializeMimeTypes();
@@ -168,9 +170,6 @@ size_t Post::manipulateBuffer(std::string &buffer)
 
 int Post::proseRequest(std::string &buffer)
 {
-	std::cout << "buffer: \n";
-    printNonPrintableChars(buffer);
-    std::cout << "================ \n";
 	// if (buffer.empty())
 	// {
 	// 	_status = 1; // 404

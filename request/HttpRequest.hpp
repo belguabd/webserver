@@ -37,7 +37,7 @@ private:
   // Delete _delete;
   string _buffer;
   void handleRequest();
-
+  void handlePost();
 public:
   // Post _post;
   Post *_post;

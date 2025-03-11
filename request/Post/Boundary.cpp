@@ -142,9 +142,6 @@ int Boundary::handleBoundaryRec()
         std::cout << "end boundary" << std::endl;
         _status = 1;
         _bufferBody = "";
-        std::cout << "_queryParam\n";// 100 100
-        for (auto map : _queryParam)
-            std::cout << map.first << "|" << map.second << std::endl;
         return _status;
     }
     

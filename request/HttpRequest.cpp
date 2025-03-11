@@ -1,5 +1,33 @@
 #include "HttpRequest.hpp"
 
+LocationUplaods &getMatchedLocationUpload(const std::string &path, map<string, LocationUplaods> &configUploads)
+{
+	size_t pos = path.find("/", 1);
+	string keyLocationUpload;
+
+    if (pos == std::string::npos)
+      pos = path.size() + 1;
+	keyLocationUpload = path.substr(0, pos);
+	if (configUploads.find(keyLocationUpload) == configUploads.end())
+		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = "/docs/uploads/default/"}; // 
+	return (configUploads.find(keyLocationUpload))->second;
+}
+
+void HttpRequest::handlePost()
+{
+  if (_post == NULL)
+  {
+    LocationUplaods &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.getConfigUpload());
+    
+	std::cout << "lc: " << lc.upload_store << std::endl;
+    _post = new Post(mapheaders, queryParam, _buffer);
+  }
+    else
+      _post->proseRequest(readBuffer);
+    setRequestStatus(_post->getStatus());
+	this->readBuffer.clear();
+}
+
 void HttpRequest::handleRequest() {
   string str_parse;
   joinBuffer();
@@ -18,21 +46,14 @@ void HttpRequest::handleRequest() {
   if (_method == GET && getendHeaders() == 1)
     setRequestStatus(1);
   else if (_method == POST && getendHeaders() == 1)
-  {
-    if (_post == NULL)
-      _post = new Post(mapheaders, queryParam, _buffer);
-    else
-      _post->proseRequest(readBuffer);
-    setRequestStatus(_post->getStatus());
-
-    joinBuffer();
-  }
+  handlePost();
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config){
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(NONE) , server_config(server_config){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+  // server_config.
   _post = NULL;
 }
 
@@ -76,7 +97,8 @@ int HttpRequest::defineTypeMethod(string firstline) {
   }
   if (words.size() != 3 || words[1][0] != '/') {
     cout << "method error" << endl;
-    exit(0);
+    this->requestStatus= 400;
+    // exit(0);
   }
   this->dataFirstLine = words;
   if (words[0] == "GET")
@@ -189,7 +211,7 @@ void HttpRequest ::requestLine() {
       return;
     } else {
       this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
-      cout << "-- > " << this->dataFirstLine[1] << endl;
+    //   cout << "-- > " << this->dataFirstLine[1] << endl;
       return;
     }
   }
@@ -211,7 +233,7 @@ void HttpRequest ::requestLine() {
         value = querydata.substr(endkey + 1, endval - endkey - 1);
       else
         value = querydata.substr(endkey + 1);
-      cout << "Key: " << key << ", Value: " << value << endl;
+    //   cout << "Key: " << key << ", Value: " << value << endl;
       if (endval != string::npos)
         i = endval + 1;
       else
