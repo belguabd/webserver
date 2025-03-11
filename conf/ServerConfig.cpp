@@ -12,6 +12,16 @@ void    checkcontent(string substr)
         }
     }
 }
+void chechAllowedMethodValid(string &str) {
+    vector <string> words;
+    words = splitstring(str);
+    for (size_t i = 0; i < words.size(); i++) {
+        if (words[i]!="GET" && words[i]!="POST" && words[i]!="DELETE") {
+            cout<<"error method not valid"<<endl;
+            exit(0);
+        }
+    }  
+}
 
 bool checkCharacter(string& substr,char c) {
 	int i =0 ;
@@ -91,6 +101,7 @@ void ServerConfig ::locationCgi(string &location) {
         size_t valueStart = location.find(" ", allowedMethodsPos + 15);
         size_t valueEnd = location.find(";", valueStart);
         tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
+        chechAllowedMethodValid(tmp);
         cgi.allowed_methods = trim(tmp);
     }
     if (extensionPos != string::npos) {
@@ -138,6 +149,7 @@ void ServerConfig :: locationUpload(string &location) {
         size_t valueStart = location.find(" ", allowedMethodsPos + 15);
         size_t valueEnd = location.find(";", valueStart);
         tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
+        chechAllowedMethodValid(tmp);
         config.allowed_methods = trim(tmp);
     }
     size_t indexSearchPos = 0;
@@ -187,6 +199,7 @@ void ServerConfig :: locationNormal(string &location) {
         size_t valueStart = location.find(" ", allowedMethodsPos + 15);
         size_t valueEnd = location.find(";", valueStart);
         tmp =location.substr(valueStart + 1, valueEnd - valueStart - 1);
+        chechAllowedMethodValid(tmp);
         config.allowed_methods = trim(tmp);
     }
     size_t indexSearchPos = 0;

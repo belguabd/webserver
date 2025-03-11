@@ -74,3 +74,4 @@ string trim(string &str);
 void checkcontent(string substr);
 void isNumber(string& str);
 vector<string> splitstring(const string &str);
+void chechAllowedMethodValid(string &str);
