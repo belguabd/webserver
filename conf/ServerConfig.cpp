@@ -85,6 +85,10 @@ void ServerConfig :: locationRedirection(string &location) {
     size_t pos = location.find("{");
     tmp =location.substr(8, pos - 8);
     string key = trim(tmp);
+        if (key.empty()|| key[0]!='/') {
+        cout <<"error location path not valid "<<endl;
+        exit(0);
+    }
     int cont = 0;
     returnPos = location.find("return");
     while((location.find("return",returnPos))!=string::npos) {
@@ -123,6 +127,10 @@ void ServerConfig ::locationCgi(string &location) {
     size_t pos = location.find("{");
     tmp = location.substr(8, pos - 8);
     string key = trim(tmp);
+    if (key.empty()|| key[0]!='/') {
+        cout <<"error location path not valid "<<endl;
+        exit(0);
+    }
     LocationCgi cgi;
     size_t rootPos = location.find("root");
     size_t allowedMethodsPos = location.find("allowed_methods");
@@ -164,7 +172,6 @@ void ServerConfig ::locationCgi(string &location) {
 }
 size_t checkValidBadySise(string str)
 {
-    // size_t maxBadysize;
     size_t maxBadysize;
     string number;
     string typeStorage;
@@ -189,13 +196,29 @@ size_t checkValidBadySise(string str)
         exit(0);
     }
     if (typeStorage =="GB"||typeStorage =="G") {
-         maxBadysize =maxBadysize * 1024 * 1024 * 1024;   
+         maxBadysize = maxBadysize * 1024 * 1024 * 1024;
+        if(maxBadysize > 10737418240) {
+            cout<<"error client_max_body_size > valid size"<<endl;
+            exit(0);
+        }
     }
     else if (typeStorage =="MB"||typeStorage =="M") {
-         maxBadysize = maxBadysize * 1024 * 1024;   
+        maxBadysize = maxBadysize * 1024 * 1024;
+        if(maxBadysize > 10737418240) {
+            cout<<"error client_max_body_size > valid size"<<endl;
+            exit(0);
+        }
     }
     else if (typeStorage =="KB"||typeStorage =="K") {
-         maxBadysize *= 1024;  
+         maxBadysize *= 1024;
+        if(maxBadysize > 10737418240) {
+            cout<<"error client_max_body_size > valid size"<<endl;
+            exit(0);
+        }
+    }
+    if(maxBadysize > 10737418240) {
+        cout<<"error client_max_body_size > valid size"<<endl;
+       exit(0);
     }
     return maxBadysize;
 }
@@ -205,6 +228,10 @@ void ServerConfig :: locationUpload(string &location) {
     size_t pos = location.find("{");
     tmp =location.substr(8, pos - 8);
     string key = trim(tmp);
+    if (key.empty() || key[0]!='/') {
+        cout <<"error location path not valid "<<endl;
+        exit(0);
+    }
     LocationUplaods config;
     size_t rootPos = location.find("root");
     size_t allowedMethodsPos = location.find("allowed_methods");
@@ -258,6 +285,10 @@ void ServerConfig :: locationNormal(string &location) {
     size_t pos = location.find("{");
     tmp = location.substr(8, pos - 8);
     string key = trim(tmp);
+    if (key.empty()|| key[0]!='/') {
+        cout <<"error location path not valid "<<endl;
+        exit(0);
+    }
     LocationConfig config;
     size_t rootPos = location.find("root");
     size_t allowedMethodsPos = location.find("allowed_methods");
