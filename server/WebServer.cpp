@@ -198,10 +198,11 @@ void WebServer::respond_to_client(int client_fd) {
   struct kevent changes[1];
   EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
   kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
-  close(client_fd);
-  connected_clients.erase(it);
-  delete client;
-  delete responseclient;
+  // puts("OK");
+  // close(client_fd);
+  // connected_clients.erase(it);
+  // delete client;
+  // delete responseclient;
 }
 /*----------------------------------------------------*/
 int beforStart(string str) {
@@ -313,7 +314,7 @@ bool WebServer::isCGIRequest(int client_fd) {
     if ((*it)->getfd() == client_fd)
       client = *it;
   }
-  cout << client->cgi_for_test << "\n";
+  // cout << client->cgi_for_test << "\n";
   if (client->cgi_for_test) {
     client->cgi_for_test = 0;
     return true;
@@ -391,18 +392,17 @@ void WebServer::run() {
       if (serverSockets[i]->getServer_fd() == event_fd)
         is_server_socket = true;
     }
-
-    // if (events[i].filter == EVFILT_TIMER) {
-    //   kill(events[i].ident, SIGKILL);
-    // }
-    // if (events[i].fflags & NOTE_EXIT) {
-    //   pid_t pid = events[i].ident;
-    //   int status;
-    //   pid_t reaped_pid = waitpid(pid, &status, 0);
-    //   if (reaped_pid == -1) {
-    //     perror("waitpid");
-    //   }
-    // }
+    if (events[i].filter == EVFILT_TIMER) {
+      kill(events[i].ident, SIGKILL);
+    }
+    if (events[i].fflags & NOTE_EXIT) {
+      pid_t pid = events[i].ident;
+      int status;
+      pid_t reaped_pid = waitpid(pid, &status, 0);
+      if (reaped_pid == -1) {
+        perror("waitpid");
+      }
+    }
     if (is_server_socket)
       handle_new_connection(event_fd);
     else {

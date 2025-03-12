@@ -347,6 +347,7 @@ void    sendResponse(HttpResponse &response)
   if (response.checkDataResev()!=0) {
     return ;
   }
+  // cout << response.request->filename << "\n";
   if (method == GET) {
     response.getResponse();
   }
