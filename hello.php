@@ -12,11 +12,11 @@ echo "<h1>Hello, $name!</h1>";
 echo "<p>You are $age years old.</p>";
 
 // Infinite loop
-while (true) {
-    echo "<p>This is an infinite loop!</p>";
-    // Add a sleep to prevent excessive CPU usage
-    sleep(1); // Sleep for 1 second
-}
+// while (true) {
+//     echo "<p>This is an infinite loop!</p>";
+//     // Add a sleep to prevent excessive CPU usage
+//     sleep(1); // Sleep for 1 second
+// }
 
 echo "</body></html>";
 echo "Done\n";

@@ -2,3 +2,4 @@ ranges
 string in location not valid ?? 
 paht =  ./doc/html/
 
+duplicat paramter in location config file

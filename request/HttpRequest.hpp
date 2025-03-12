@@ -3,6 +3,7 @@
 #include "./Post/Post.hpp"
 #include <cstring>
 #include <fcntl.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -11,33 +12,26 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <filesystem>
 #include <vector>
 // class HttpRequest;
 
-enum Method
-{
-  NONE = 0,
-  GET = 1,
-  POST = 2,
-  DELETE = 3
-};
+enum Method { NONE = 0, GET = 1, POST = 2, DELETE = 3 };
 
 using namespace std;
 class HttpRequest {
 private:
   int client_fd;
+  int cgi_fd;
   int firsttime;
   int requestStatus;
   int endHeaders;
-  int checkCgi;
-  int cgiExtension;
-  string rootcgi;
   vector<string> dataFirstLine;
   map<string, string> queryParam;
   std::string readBuffer;
   ServerConfig server_config;
+  string file;
   std::string buffer_cgi;
+  bool isCGi;
 
   // Delete _delete;
   string _buffer;
@@ -45,12 +39,26 @@ private:
   int handleDeleteRequest(std::string filePath);
 
 public:
+
+
+  int checkCgi;
+  int cgiExtension;
+  string rootcgi;
+
+
+
+  string filename;
+  int getCgi() { return cgi_fd; }
+  void setCgi(int fd) { this->cgi_fd = fd; }
+  int cgi_for_test;
+  const bool getCGI() { return isCGi; }
+  void setCGI(bool cgi) { this->isCGi = cgi; }
   // Post _post;
   Post *_post;
-  ServerConfig &getServerConf() {return  this->server_config;}
+  ServerConfig &getServerConf() { return this->server_config; }
   map<string, string> mapheaders;
   int _method;
-  HttpRequest(int client_fd , ServerConfig &server_config);
+  HttpRequest(int client_fd, ServerConfig &server_config);
   ~HttpRequest();
   int getRequestStatus() { return this->requestStatus; }
   int readData();
@@ -75,17 +83,17 @@ public:
   const std::map<std::string, std::string> &getHeaders() const {
     return mapheaders;
   }
-  std::map<std::string, std::string> &getQueryParams() {
-    return queryParam;
-  }
+  std::map<std::string, std::string> &getQueryParams() { return queryParam; }
   const std::vector<std::string> &getDataFirstLine() const {
     return dataFirstLine;
   }
-  ServerConfig &getServerConfig()  {return server_config; }
+  ServerConfig &getServerConfig() { return server_config; }
   void setbufferCgi(char *buffer) { this->buffer_cgi.assign(buffer); }
   const std::string &getCGIBuffer() { return this->buffer_cgi; }
 };
 vector<string> splitstring(const string &str);
+void checkHeaders(string &str, map<string, string> &headersMap);
+void printNonPrintableChars(const std::string &str);
 LocationCgi getValueMapcgi(map<string, LocationCgi> & configNormal,map<string, LocationCgi> ::const_iterator it);
 // void    checkHeaders(string& str, map<string, string>& headersMap);
 void    printNonPrintableChars(const std::string &str);

@@ -62,7 +62,7 @@ void HttpRequest::handleRequest()
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config),checkCgi(0){
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) , isCGi(false) , checkCgi(0), cgi_for_test(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   _post = NULL;
@@ -70,7 +70,7 @@ HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
 
 int HttpRequest::readData()
 {
-  char buffer[1024];
+  char buffer[80];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
@@ -137,7 +137,7 @@ void HttpRequest::checkPathIscgi(string &path)
         break;
       }
   }
-    cout << "rootcgi  = "<<this->rootcgi<<endl;
+    // cout << "rootcgi  = "<<this->rootcgi<<endl;
     if (method.empty()) {
       cout <<"method not allowed"<<endl;
       exit(0);

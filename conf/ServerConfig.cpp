@@ -286,7 +286,7 @@ void    checkContentLocation(string &str)
     string line;
     std::istringstream stream(str);
     while (getline(stream, line)) {
-            cout <<"---->"<< line << endl;
+            // cout <<"---->"<< line << endl;
         if (line.find("root")==string::npos && line.find("allowed_methods")==string::npos && line.find("index")==string::npos && line.find("autoindex")==string::npos) {
             checkcontent(line);
         } else {
