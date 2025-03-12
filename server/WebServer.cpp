@@ -36,7 +36,7 @@ void WebServer::addServerSocket(ServerConfig &conf) {
   // for(size_t i =0 ; i < conf.getPorts().size() ; i++){
   //   cout << conf.getPorts()[i] << "\n";;
   // }
-  std::cout << conf.getPorts()[0] << "\n";
+
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
     ServerSocket *newSocket = new ServerSocket(conf.getPorts()[i]);
     newSocket->bind_socket();
@@ -121,8 +121,8 @@ void WebServer::receive_from_client(int client_fd) {
     // close(client_fd);
     // connected_clients.erase(it);
   }
-  if (client->getRequestStatus() == 1) {
-    client->cgi_for_test = 1;
+  if (client->getRequestStatus()) {
+    client->cgi_for_test = client->checkCgi;
     struct kevent changes[1];
     EV_SET(&changes[0], client_fd, EVFILT_READ, EV_DELETE, 0, 0, client);
     if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
@@ -192,7 +192,7 @@ void WebServer::respond_to_client(int client_fd) {
       break;
     }
   }
-  
+
   HttpResponse *responseclient = new HttpResponse(client);
   responseclient->writeData();
   struct kevent changes[1];
@@ -307,19 +307,17 @@ bool WebServer::isRequest(int fd) {
   return !client ? false : true;
 }
 bool WebServer::isCGIRequest(int client_fd) {
-
   HttpRequest *client = NULL;
   std::vector<HttpRequest *>::iterator it = connected_clients.begin();
   for (; it != connected_clients.end(); it++) {
     if ((*it)->getfd() == client_fd)
       client = *it;
   }
-
-  if (client && client->cgi_for_test) {
+  cout << client->cgi_for_test << "\n";
+  if (client->cgi_for_test) {
     client->cgi_for_test = 0;
     return true;
   }
-  client->cgi_for_test = 0;
   return false;
 };
 void WebServer::handleCGIRequest(int client_fd) {
@@ -329,25 +327,14 @@ void WebServer::handleCGIRequest(int client_fd) {
     if ((*it)->getfd() == client_fd)
       client = *it;
   }
-
-  // cout << "size of map is :" << client->getQueryParams().size() << "\n";
   map<string, string> env;
-  env["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
-  env["PHP_PATH"] = "/usr/bin/php"; // Path to the PHP executable
-  env["SCRIPT_FILENAME"] = "/path/to/your/script.php"; // Path to the PHP script
-  env["REQUEST_METHOD"] = "GET";        // HTTP request method (e.g., GET, POST)
-  env["QUERY_STRING"] = "";             // Query string (if any)
-  env["CONTENT_TYPE"] = "text/html";    // Content type for the response
-  env["SERVER_PROTOCOL"] = "HTTP/1.1";  // Server protocol
-  env["GATEWAY_INTERFACE"] = "CGI/1.1"; // Gateway interface
-  env["REMOTE_ADDR"] = "127.0.0.1";     // Remote client IP address
-  env["SERVER_NAME"] = "localhost";     // Server name
-  env["SERVER_PORT"] = "80";            // Server port
-  env["SCRIPT_NAME"] =
-      "/Users/belguabd/Desktop/webserver/hello.php"; // Script name
-
+  if (client->cgiExtension == 1) {
+    env["PATH"] = "/usr/bin/php";
+  } else {
+    env["PATH"] = "/usr/bin/python";
+  }
+  env["SCRIPT_NAME"] = client->rootcgi;
   std::map<string, string>::iterator iter = env.begin();
-
   std::vector<std::string> envp_map;
   std::vector<char *> envp;
   for (; iter != env.end(); iter++)
@@ -358,7 +345,7 @@ void WebServer::handleCGIRequest(int client_fd) {
   envp.push_back(NULL);
 
   std::vector<char *> args;
-  args.push_back((char *)env["PHP_PATH"].c_str());
+  args.push_back((char *)env["PATH"].c_str());
   args.push_back((char *)env["SCRIPT_NAME"].c_str());
   args.push_back(NULL);
   run_script(client, args, envp);

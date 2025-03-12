@@ -1,0 +1,12 @@
+ranges
+size_client_body ==>size_t > 1000GB
+string in location not valid ?? 
+paht =  ./doc/html/
+
+
+"1000GB" *1024*1024*1024 = 1073741824000B
+"1024000MB" *1024*1024 = 1073741824000B
+"1048576000KB" *1024  = 1073741824000B
+
+
+location /not found

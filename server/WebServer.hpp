@@ -54,3 +54,4 @@ public:
   void dataConfigFile();
   void separateServer();
 };
+void dataBeforServer(string str);
