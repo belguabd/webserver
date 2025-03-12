@@ -1,5 +1,7 @@
 #include "ServerConfig.hpp"
-
+#include <iostream>
+#include <sstream>
+#include <string>
 void    checkcontent(string substr)
 {
     int i =0 ;
@@ -175,7 +177,6 @@ size_t checkValidBadySise(string str)
     size_t maxBadysize;
     string number;
     string typeStorage;
-    // cout <<"str ===>"<< str <<endl;
     int i = 0;
     while (i < str.length()) {
         if(isdigit(str[i]))
@@ -280,10 +281,35 @@ void ServerConfig :: locationUpload(string &location) {
 	this->configUpload[key] = config;
 }
 
+void    checkContentLocation(string &str)
+{
+    string line;
+    std::istringstream stream(str);
+    while (getline(stream, line)) {
+            cout <<"---->"<< line << endl;
+        if (line.find("root")==string::npos && line.find("allowed_methods")==string::npos && line.find("index")==string::npos && line.find("autoindex")==string::npos) {
+            checkcontent(line);
+        } else {
+            size_t pos = line.find(";");
+            if (pos == string::npos) {
+                cout <<";not found"<<endl;
+                exit(0);
+            }
+            string tmp = line.substr(pos + 1);
+            checkcontent(tmp);
+        }
+    }
+}
+
 void ServerConfig :: locationNormal(string &location) {
     string tmp;
+    // 4 
+    
     size_t pos = location.find("{");
     tmp = location.substr(8, pos - 8);
+    string str = location.substr(pos + 1);
+    checkContentLocation(str);
+
     string key = trim(tmp);
     if (key.empty()|| key[0]!='/') {
         cout <<"error location path not valid "<<endl;
@@ -297,12 +323,25 @@ void ServerConfig :: locationNormal(string &location) {
     if (rootPos != string::npos) {
         size_t valueStart = location.find(" ", rootPos + 4);
         size_t valueEnd = location.find(";", valueStart);
+        if (valueEnd==string::npos)
+        {
+            cout <<";not found"<<endl;
+            exit(0);
+        }
         tmp =location.substr(valueStart + 1, valueEnd - valueStart - 1);
+        // checkstring(tmp);
+        // cout <<"tmp -->"<<tmp<<endl;
         config.root = trim(tmp);
+        
     }
     if (allowedMethodsPos != string::npos) {
         size_t valueStart = location.find(" ", allowedMethodsPos + 15);
         size_t valueEnd = location.find(";", valueStart);
+        if (valueEnd==string::npos)
+        {
+            cout <<";not found"<<endl;
+            exit(0);
+        }
         tmp =location.substr(valueStart + 1, valueEnd - valueStart - 1);
         chechAllowedMethodValid(tmp);
         config.allowed_methods = trim(tmp);
@@ -313,6 +352,11 @@ void ServerConfig :: locationNormal(string &location) {
         if (location.compare(indexPos - 4, 9, "autoindex") != 0) {
             size_t valueStart = location.find(" ", indexPos + 5);
             size_t valueEnd = location.find(";", valueStart);
+            if (valueEnd==string::npos)
+            {
+                cout <<";not found"<<endl;
+                exit(0);
+            }
             tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
             config.index = trim(tmp);
             break;
@@ -321,6 +365,11 @@ void ServerConfig :: locationNormal(string &location) {
     if (autoindexPos != string::npos) {
         size_t valueStart = location.find(" ", autoindexPos + 9);
         size_t valueEnd = location.find(";", valueStart);
+        if (valueEnd==string::npos)
+        {
+            cout <<";not found"<<endl;
+            exit(0);
+        }
         tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
         tmp = trim(tmp);
         if (tmp =="on") {

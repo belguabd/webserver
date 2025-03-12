@@ -353,6 +353,11 @@ void    sendResponse(HttpResponse &response)
   else if (method == POST) {
     response.postResponse();
   }
+  else if (method == DELETE)
+  {
+    // response.deleteResponse();
+    
+  }
 
 }
 
