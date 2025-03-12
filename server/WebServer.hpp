@@ -41,6 +41,7 @@ public:
   void handleCGIRequest(int client_fd);
   void set_non_blocking(int fd);
   bool isRequest(int fd);
+ bool  isCGIRequest(int client_fd);
   void pipe_read(int fd);
   void run_script(HttpRequest *request, std::vector<char *> args,
                   std::vector<char *> envp);

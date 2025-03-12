@@ -3,6 +3,7 @@
 #include "./Post/Post.hpp"
 #include <cstring>
 #include <fcntl.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -20,6 +21,7 @@ using namespace std;
 class HttpRequest {
 private:
   int client_fd;
+  int cgi_fd;
   int firsttime;
   int requestStatus;
   int endHeaders;
@@ -27,14 +29,20 @@ private:
   map<string, string> queryParam;
   std::string readBuffer;
   ServerConfig server_config;
+  string file;
   std::string buffer_cgi;
   bool isCGi;
 
   // Delete _delete;
   string _buffer;
   void handleRequest();
+  int handleDeleteRequest(std::string filePath);
 
 public:
+  string filename;
+  int getCgi() { return cgi_fd; }
+  void setCgi(int fd) { this->cgi_fd = fd; }
+  int cgi_for_test;
   const bool getCGI() { return isCGi; }
   void setCGI(bool cgi) { this->isCGi = cgi; }
   // Post _post;

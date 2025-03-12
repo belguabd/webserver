@@ -169,7 +169,7 @@ size_t Post::manipulateBuffer(std::string &buffer)
 int Post::proseRequest(std::string &buffer)
 {
 	std::cout << "buffer: \n";
-    printNonPrintableChars(buffer);
+    // printNonPrintableChars(buffer);
     std::cout << "================ \n";
 	// if (buffer.empty())
 	// {
