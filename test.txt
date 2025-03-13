@@ -3,3 +3,6 @@ string in location not valid ??
 paht =  ./doc/html/
 
 duplicat paramter in location config file
+
+
+// Use set instead of vector
