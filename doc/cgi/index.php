@@ -19,5 +19,5 @@ echo "<p>You are $age years old.</p>";
 // }
 
 echo "</body></html>";
-echo "Done\n";
+// echo "Done\n";
 ?>
