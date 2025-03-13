@@ -102,7 +102,6 @@ LocationCgi getValueMapcgi(map<string, LocationCgi> & configNormal,map<string, L
 HttpRequest::~HttpRequest() {}
 void HttpRequest::checkPathIscgi(string &path)
 {
-  // cout <<"path  = > "<<path<<endl;
   ServerConfig config;
   string s;
   string method;
@@ -137,7 +136,6 @@ void HttpRequest::checkPathIscgi(string &path)
         break;
       }
   }
-    // cout << "rootcgi  = "<<this->rootcgi<<endl;
     if (method.empty()) {
       cout <<"method not allowed"<<endl;
       exit(0);
@@ -146,13 +144,24 @@ void HttpRequest::checkPathIscgi(string &path)
       cout <<"CGI not supported type file"<<endl;
       exit(0);
     }
+    size_t startPathInfo;
+    size_t endPathInfo;
+    startPathInfo =  this->rootcgi.find(s);
+    endPathInfo = this->rootcgi.find("?");
+    if (endPathInfo!=string::npos) {
+      this->pathInfo = this->rootcgi.substr(startPathInfo + s.length(),endPathInfo - startPathInfo - s.length());
+    }
+    else
+      this->pathInfo = this->rootcgi.substr(startPathInfo + s.length());
+    this->rootcgi = this->rootcgi.substr(0,startPathInfo + s.length());
     bool f = fileExists(this->rootcgi);
     if (f==false)
       this->rootcgi = "";
-    if (s==".php")
+    if (s == ".php")
       this->cgiExtension = 1;
     else
       this->cgiExtension = 2;
+
 
 }
 int HttpRequest::defineTypeMethod(string firstline) {
@@ -212,7 +221,7 @@ vector<string> splitstring(const string &str)
 }
 void HttpRequest::checkHeaders(string &str)
 {
-  // str = trimNewline(str);
+  str = trimNewline(str);
   size_t pos = str.find(':');
   string result;
   vector<string> words;
@@ -353,6 +362,7 @@ void HttpRequest ::requestLine() {
         i = endval + 1;
       else
         i = querydata.length();
+        cout <<"key  = "<<key<<", value  = "<<value<<endl;
       this->queryParam[key] = value;
     }
   }

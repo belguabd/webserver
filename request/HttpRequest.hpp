@@ -44,6 +44,7 @@ public:
   int checkCgi;
   int cgiExtension;
   string rootcgi;
+  string pathInfo;
 
 
 
