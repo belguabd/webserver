@@ -16,6 +16,7 @@ void makeFileEmpty(const std::string filename) {
 
 int main(int arc, char **arv)
 {
+    makeFileEmpty("currentRequest");
     if (!arv[1])
         return 0;
     string str = arv[1];

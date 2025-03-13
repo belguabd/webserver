@@ -24,7 +24,9 @@ void HttpResponse::fileDataSend(string &data)
 {
   size_t pos = data.find(".py"); // depanding config file
   if (pos!=string ::npos) {
+    
     // cgi handle with GET method
+    
     return ;
   }
   ifstream file(data);
@@ -157,7 +159,7 @@ void HttpResponse::defautlRoot()
 
 void HttpResponse:: checkDataResev()
 {
-  
+
 }
 void    sendResponse(HttpResponse &response)
 {

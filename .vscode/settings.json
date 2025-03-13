@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "test": "txt",
         "__bit_reference": "cpp",
         "__config": "cpp",
         "__debug": "cpp",
@@ -66,8 +67,8 @@
         "unordered_map": "cpp",
         "utility": "cpp",
         "vector": "cpp",
-        "filesystem": "cpp",
         "regex": "cpp",
-        "test": "cpp"
+        "csignal": "cpp",
+        "filesystem": "cpp"
     }
 }

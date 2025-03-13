@@ -31,7 +31,6 @@ private:
   int requestStatus;
   int endHeaders;
   vector<string> dataFirstLine;
-  map<string, string> queryParam;
   std::string readBuffer;
   ServerConfig server_config;
   std::string buffer_cgi;
@@ -39,12 +38,14 @@ private:
   // Delete _delete;
   string _buffer;
   void handleRequest();
+  void handlePost();
   int handleDeleteRequest(std::string filePath);
 
 public:
   // Post _post;
   Post *_post;
   ServerConfig &getServerConf() {return  this->server_config;}
+  map<string, string> queryParam;
   map<string, string> mapheaders;
   int _method;
   HttpRequest(int client_fd , ServerConfig &server_config);

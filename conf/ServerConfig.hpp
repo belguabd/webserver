@@ -65,6 +65,7 @@ class ServerConfig
         string getdata() const {return this->data;}
         string getHost(){return  host;}
         string getServerName(){return  server_name;}
+        map<string, LocationUplaods> &getConfigUpload(){return  configUpload;}
       std::vector<int> getPorts(){return ports;}
 };
 
