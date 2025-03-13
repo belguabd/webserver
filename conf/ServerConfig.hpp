@@ -19,9 +19,8 @@ struct LocationUplaods {
   string root;
   string index;
   string upload_store;
-  string client_max_body_size;
-  string allowed_methods;
-  bool autoindex;
+  size_t client_max_body_size;
+  string allowed_methods; 
 };
 struct LocationCgi {
   string root;
@@ -38,20 +37,19 @@ class ServerConfig
         string index;
         bool autoindex;
         string server_name;
-        string errorServer;
-        string errorClient;
-        string client_max_body_size;
+        size_t client_max_body_size;
         // map<string, string> globalConfig;
+    public:
+        map<string,string> errorpage;
         map<string, LocationConfig> configNormal;
         map<string, LocationUplaods> configUpload;
         map<string, LocationCgi> configcgi;
-    public:
+        map<string, string> configRedirection;
+        int typeUrl;
         vector<int> ports;
         ServerConfig(){};
         ServerConfig(string &str);
         ~ServerConfig();
-        // void dataConfigFile();
-        // void separateServer();
         void setGlobaleData(string &strConfig,string &str);
         void parseServerConfig(string &strdata);
         void checkGlobalConfig(string strConfig);
@@ -64,6 +62,8 @@ class ServerConfig
         void setVal(string &str,string &val);
         string getdata() const {return this->data;}
         string getHost(){return  host;}
+        string getRoot() const {return this->root;}
+        string getIndex() const {return this->index;}
         string getServerName(){return  server_name;}
         map<string, LocationUplaods> &getConfigUpload(){return  configUpload;}
       std::vector<int> getPorts(){return ports;}
@@ -76,3 +76,6 @@ string removeLocationBlocks(string &configData);
 string trim(string &str);
 void checkcontent(string substr);
 void isNumber(string& str);
+vector<string> splitstring(const string &str);
+void chechAllowedMethodValid(string &str);
+size_t checkValidBadySise(string str);

@@ -12,9 +12,11 @@
 #include <ostream>
 #include <ratio>
 #include <stdexcept>
+#include <string>
 #include <sys/_types/_pid_t.h>
 #include <sys/_types/_ssize_t.h>
 #include <sys/event.h>
+#include <sys/fcntl.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
 #include <type_traits>
@@ -34,7 +36,7 @@ void WebServer::addServerSocket(ServerConfig &conf) {
   // for(size_t i =0 ; i < conf.getPorts().size() ; i++){
   //   cout << conf.getPorts()[i] << "\n";;
   // }
-  std::cout << conf.getPorts()[0] << "\n";
+
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
     ServerSocket *newSocket = new ServerSocket(conf.getPorts()[i]);
     newSocket->bind_socket();
@@ -104,6 +106,7 @@ void WebServer::receive_from_client(int client_fd) {
       break;
     }
   }
+
   client->setRequestStatus(0);
   ssize_t bytes_read = client->readData();
   if (bytes_read == -1) {
@@ -115,12 +118,20 @@ void WebServer::receive_from_client(int client_fd) {
   }
   if (bytes_read == 0) {
     std::cout << "Client disconnected" << std::endl;
-    close(client_fd);
-    connected_clients.erase(it);
+    // close(client_fd);
+    // connected_clients.erase(it);
   }
-  if (client->getRequestStatus() == 1) {
-    std::cout << "ppppppppppppppppp\n";
+  if (client->getRequestStatus()) {
+    client->cgi_for_test = client->checkCgi;
     struct kevent changes[1];
+    EV_SET(&changes[0], client_fd, EVFILT_READ, EV_DELETE, 0, 0, client);
+    if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+      std::cerr << "Error deleting read event: " << strerror(errno)
+                << std::endl;
+      close(client_fd);
+      connected_clients.erase(it);
+      return;
+    }
     EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
            client);
     if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
@@ -173,19 +184,16 @@ void WebServer::receive_from_client(int client_fd) {
 }
 
 void WebServer::respond_to_client(int client_fd) {
-
-  HttpRequest *client;
+  HttpRequest *client = NULL;
   std::vector<HttpRequest *>::iterator it;
   for (it = connected_clients.begin(); it != connected_clients.end(); ++it) {
     if ((*it)->getfd() == client_fd) {
       client = *it;
-      // connected_clients.erase(it);
       break;
     }
   }
-  // std::cout << client->getServerConf().getHost() << "\n";
+
   HttpResponse *responseclient = new HttpResponse(client);
-  //
   responseclient->writeData();
   struct kevent changes[1];
   EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
@@ -196,67 +204,68 @@ void WebServer::respond_to_client(int client_fd) {
   delete responseclient;
 }
 /*----------------------------------------------------*/
-int beforStart(string str )
-{
-    if (str.empty())
-      return 0;
-    int i = 0;
-    while(i < str.length()) {
-        if (str[i]!='\t' &&  str[i]!=' '&& str[i]!='\n')
-            return 1;
-        i++;
-    }
+int beforStart(string str) {
+  if (str.empty())
+    return 0;
+  int i = 0;
+  while (i < str.length()) {
+    if (str[i] != '\t' && str[i] != ' ' && str[i] != '\n')
+      return 1;
+    i++;
+  }
   return 0;
 }
 void WebServer::separateServer() {
-    string strserv = this->_data;
-    validbrackets(strserv);
-    if (strserv.empty()) {
-        cout << "error: file config is empty" << endl;
-        exit(0);
+  string strserv = this->_data;
+  validbrackets(strserv);
+  if (strserv.empty()) {
+    cout << "error: file config is empty" << endl;
+    exit(0);
+  }
+  size_t pos = 0;
+  bool found = false;
+  bool sig;
+  while (!strserv.empty() &&
+         (pos = strserv.find("server", pos)) != string::npos) {
+    sig = false;
+    if (beforStart(strserv.substr(0, pos)) == 1) {
+      cout << "error : data befor server " << endl;
+      exit(0);
     }
-    size_t pos = 0;
-    bool found = false;
-    bool sig;
-    while (!strserv.empty()&&(pos = strserv.find("server", pos)) != string::npos) {
-      sig = false;
-      if (beforStart(strserv.substr(0,pos))==1) {
-        cout <<"error : data befor server "<<endl;
-        exit(0);
+    size_t start = strserv.find("{", pos);
+    if (start == string::npos) {
+      cout << "error: server block missing opening '{'" << endl;
+      exit(0);
+    }
+    size_t end = start;
+    int brakets = 1;
+    while (end < strserv.length() && brakets > 0) {
+      end++;
+      if (strserv[end] == '{')
+        brakets++;
+      if (strserv[end] == '}')
+        brakets--;
+    }
+    string server = strserv.substr(pos, end - pos + 1);
+    strserv = strserv.substr(end + 1);
+    ServerConfig conf(server);
+    conf.parseServerConfig(server);
+    for (size_t i = 0; i < config.size(); i++) {
+      if ((config[i].getHost() == conf.getHost()) &&
+          (config[i].getServerName() == conf.getServerName())) {
+        sig = true;
       }
-        size_t start = strserv.find("{", pos);
-        if (start == string::npos) {
-            cout << "error: server block missing opening '{'" << endl;
-            exit(0);
-        }
-        size_t end = start;
-        int brakets = 1;
-        while (end < strserv.length() && brakets > 0) {
-            end++;
-            if (strserv[end] == '{')
-              brakets++;
-            if (strserv[end] == '}')
-              brakets--;
-        }
-        string server = strserv.substr(pos, end - pos + 1);
-        strserv= strserv.substr(end+1);
-        ServerConfig conf(server);
-        conf.parseServerConfig(server);
-        for (size_t i = 0; i < config.size(); i++) {
-          if ((config[i].getHost()==conf.getHost())&& (config[i].getServerName()==conf.getServerName())) {
-            sig = true;
-          }
-        }
-        if (!sig)
-          this->config.push_back(conf);
-        found = true;
-        pos = 0;
     }
+    if (!sig)
+      this->config.push_back(conf);
+    found = true;
+    pos = 0;
+  }
 
-    if (!found) {
-        cout << "error: no server blocks found" << endl;
-        exit(0);
-    }
+  if (!found) {
+    cout << "error: no server blocks found" << endl;
+    exit(0);
+  }
 }
 
 void WebServer ::dataConfigFile() {
@@ -270,41 +279,21 @@ void WebServer ::dataConfigFile() {
 
 void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
                            std::vector<char *> envp) {
-  int fd[2];
-  pipe(fd);
-  set_non_blocking(fd[0]);
   pid_t pid = fork();
-  if (pid < 0)
-    throw std::runtime_error("Fork failed");
-  if (pid == 0) {
-    close(fd[0]);
-    dup2(fd[1], STDOUT_FILENO);
-    close(fd[1]);
-    execve(args[0], args.data(), envp.data());
-  } else {
-    close(fd[1]);
-    struct kevent ev;
-    EV_SET(&ev, fd[0], EVFILT_READ, EV_ADD, 0, 0, NULL);
-    kevent(kqueue_fd, &ev, 1, NULL, 0, NULL);
-    std::cout << "Pipe FD: " << fd[0] << ", Client FD: " << request->getfd()
-              << "\n";
-    pipe_fds[fd[0]] = request;
-    struct kevent kev;
-    EV_SET(&kev, pid, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
-    if (kevent(kqueue_fd, &kev, 1, NULL, 0, NULL) == -1) {
-      perror("kevent");
-    }
-    int timeout_seconds = 5;
-    struct kevent timer_event;
-    EV_SET(&timer_event, pid, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS,
-           timeout_seconds, NULL);
-    kevent(kqueue_fd, &timer_event, 1, NULL, 0, NULL);
+  if (pid < 0) {
+    std::cerr << "Failed to create pipe for stdout: " << strerror(errno)
+              << std::endl;
+    return;
   }
-}
-
-void WebServer::set_non_blocking(int fd) {
-  int flags = fcntl(fd, F_GETFL, 0);
-  fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+  std::stringstream ss;
+  ss << "cgi" << request->getfd();
+  request->filename = ss.str();
+  request->setCgi(open(request->filename.c_str(), O_RDWR | O_CREAT, 0644));
+  if (pid == 0) {
+    dup2(request->getCgi(), STDOUT_FILENO);
+    close(request->getCgi());
+    execve(args[0], &args[0], &envp[0]);
+  }
 }
 
 bool WebServer::isRequest(int fd) {
@@ -317,7 +306,20 @@ bool WebServer::isRequest(int fd) {
   }
   return !client ? false : true;
 }
-bool isCGIRequest(int client_fd) { return true; };
+bool WebServer::isCGIRequest(int client_fd) {
+  HttpRequest *client = NULL;
+  std::vector<HttpRequest *>::iterator it = connected_clients.begin();
+  for (; it != connected_clients.end(); it++) {
+    if ((*it)->getfd() == client_fd)
+      client = *it;
+  }
+  // cout << client->cgi_for_test << "\n";
+  if (client->cgi_for_test) {
+    client->cgi_for_test = 0;
+    return true;
+  }
+  return false;
+};
 void WebServer::handleCGIRequest(int client_fd) {
   HttpRequest *client = NULL;
   std::vector<HttpRequest *>::iterator it = connected_clients.begin();
@@ -325,25 +327,14 @@ void WebServer::handleCGIRequest(int client_fd) {
     if ((*it)->getfd() == client_fd)
       client = *it;
   }
-
-  // cout << "size of map is :" << client->getQueryParams().size() << "\n";
   map<string, string> env;
-  env["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
-  env["PHP_PATH"] = "/usr/bin/php"; // Path to the PHP executable
-  env["SCRIPT_FILENAME"] = "/path/to/your/script.php"; // Path to the PHP script
-  env["REQUEST_METHOD"] = "GET";        // HTTP request method (e.g., GET, POST)
-  env["QUERY_STRING"] = "";             // Query string (if any)
-  env["CONTENT_TYPE"] = "text/html";    // Content type for the response
-  env["SERVER_PROTOCOL"] = "HTTP/1.1";  // Server protocol
-  env["GATEWAY_INTERFACE"] = "CGI/1.1"; // Gateway interface
-  env["REMOTE_ADDR"] = "127.0.0.1";     // Remote client IP address
-  env["SERVER_NAME"] = "localhost";     // Server name
-  env["SERVER_PORT"] = "80";            // Server port
-  env["SCRIPT_NAME"] =
-      "/Users/belguabd/Desktop/webserver/hello.php"; // Script name
-
+  if (client->cgiExtension == 1) {
+    env["PATH"] = "/usr/bin/php";
+  } else {
+    env["PATH"] = "/usr/bin/python";
+  }
+  env["SCRIPT_NAME"] = client->rootcgi;
   std::map<string, string>::iterator iter = env.begin();
-
   std::vector<std::string> envp_map;
   std::vector<char *> envp;
   for (; iter != env.end(); iter++)
@@ -354,19 +345,16 @@ void WebServer::handleCGIRequest(int client_fd) {
   envp.push_back(NULL);
 
   std::vector<char *> args;
-  args.push_back((char *)env["PHP_PATH"].c_str());
+  args.push_back((char *)env["PATH"].c_str());
   args.push_back((char *)env["SCRIPT_NAME"].c_str());
   args.push_back(NULL);
-
-  run_script(new HttpRequest(*client), args, envp);
-  // execve(args[0], args.data(), envp.data());
+  run_script(client, args, envp);
 }
 
 void WebServer::pipe_read(int fd) {
-  char buffer[50];
+  char buffer[1024];
   ssize_t n = read(fd, buffer, sizeof(buffer) - 1);
   if (n > 0) {
-
     cout << "\nn--------------" << n << "\n";
     buffer[n] = '\0';
     HttpRequest *request = pipe_fds[fd];
@@ -374,7 +362,8 @@ void WebServer::pipe_read(int fd) {
     cout << "This =>" << request->getCGIBuffer() << "\n";
   }
   if (n == 0) {
-    // pipe_fds.erase(fd);
+    HttpRequest *request = pipe_fds[fd];
+    request->cgi_for_test = 0;
     struct kevent ev;
     EV_SET(&ev, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
     if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1) {
@@ -403,50 +392,27 @@ void WebServer::run() {
         is_server_socket = true;
     }
 
-    if (events[i].filter == EVFILT_TIMER) {
-      kill(events[i].ident, SIGKILL);
-    }
-    if (events[i].fflags & NOTE_EXIT) {
-      pid_t pid = events[i].ident;
-      int status;
-      pid_t reaped_pid = waitpid(pid, &status, 0);
-      if (reaped_pid == -1) {
-        perror("waitpid");
-      }
-    }
+    // if (events[i].filter == EVFILT_TIMER) {
+    //   kill(events[i].ident, SIGKILL);
+    // }
+    // if (events[i].fflags & NOTE_EXIT) {
+    //   pid_t pid = events[i].ident;
+    //   int status;
+    //   pid_t reaped_pid = waitpid(pid, &status, 0);
+    //   if (reaped_pid == -1) {
+    //     perror("waitpid");
+    //   }
+    // }
     if (is_server_socket)
       handle_new_connection(event_fd);
     else {
       if (filter == EVFILT_READ) {
-        if (pipe_fds.find(event_fd) != pipe_fds.end()) {
-          pipe_read(event_fd);
-        } else {
-          receive_from_client(event_fd);
-          // if (isCGIRequest(event_fd)) {
-          //   handleCGIRequest(event_fd);
-          // }
+        receive_from_client(event_fd);
+        if (isCGIRequest(event_fd)) {
+          handleCGIRequest(event_fd);
         }
       } else if (filter == EVFILT_WRITE) {
-        if (pipe_fds.find(event_fd) != pipe_fds.end()) {
-          HttpRequest *request = pipe_fds[event_fd];
-          cout << "request =>" << request->getCGIBuffer() << "\n";
-
-          // pid_t pid = pid_processes[request->getfd()];
-          cout << "\npid==================:" << "\n";
-          // if (kill(pid, SIGKILL) == -1) {
-          //   std::cerr << "Failed to kill process with PID: " << pid << " -
-          //   "
-          //             << strerror(errno) << "\n";
-          // }
-          struct kevent evt;
-          EV_SET(&evt, event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-          if (kevent(kqueue_fd, &evt, 1, NULL, 0, NULL) == -1) {
-            std::cerr << "Error deleting EVFILT_WRITE event: "
-                      << strerror(errno) << "\n";
-          }
-        } else {
-          respond_to_client(event_fd);
-        }
+        respond_to_client(event_fd);
       }
     }
   }

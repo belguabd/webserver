@@ -9,7 +9,7 @@ LocationUplaods &getMatchedLocationUpload(const std::string &path, map<string, L
       pos = path.size() + 1;
 	keyLocationUpload = path.substr(0, pos);
 	if (configUploads.find(keyLocationUpload) == configUploads.end())
-		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = "/docs/uploads/default/"}; // 
+		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = "./doc/default", .client_max_body_size = 1073741824}; // 
 	return (configUploads.find(keyLocationUpload))->second;
 }
 
@@ -25,7 +25,6 @@ void HttpRequest::handlePost()
   else
   {
     _post->proseRequest(readBuffer);
-    std::cout << "abcd\n";
   }
   setRequestStatus(_post->getStatus());
 	this->readBuffer.clear();
@@ -78,23 +77,22 @@ void HttpRequest::handleRequest()
   }
   parsePartRequest(str_parse);
 
-  if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
+  if (_method == GET && getendHeaders() == 1)
     setRequestStatus(1);
   else if (_method == POST && getendHeaders() == 1)
     handlePost();
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(NONE) , server_config(server_config){
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   // server_config.
   _post = NULL;
 }
 
-int HttpRequest::readData()
-{
-  char buffer[5024];
+int HttpRequest::readData() {
+  char buffer[1024];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
@@ -116,12 +114,8 @@ std::string trimNewline(std::string str)
   return str;
 }
 
-HttpRequest::~HttpRequest() 
-{
-  delete _post;
-}
-int HttpRequest::defineTypeMethod(string firstline)
-{
+HttpRequest::~HttpRequest() {}
+int HttpRequest::defineTypeMethod(string firstline) {
   firstline = trimNewline(firstline);
   vector<string> words;
   size_t i = 0;
@@ -138,16 +132,11 @@ int HttpRequest::defineTypeMethod(string firstline)
     words.push_back(firstline.substr(i, pos - i));
     i = pos + 1;
   }
-  if (words.size() != 3 || words[1][0] != '/')
-  {
+  if (words.size() != 3 || words[1][0] != '/') {
     cout << "method error" << endl;
-    this->requestStatus= 400;
-    // exit(0);
+    exit(0);
   }
   this->dataFirstLine = words;
-  puts("================================");
-  cout << words[1] <<"\n";
-  puts("================================");
   if (words[0] == "GET")
     return (1);
   else if (words[0] == "POST")
@@ -177,15 +166,13 @@ vector<string> splitstring(const string &str)
   }
   return (words);
 }
-void HttpRequest::checkHeaders(string &str)
-{
+void HttpRequest::checkHeaders(string &str) {
 
   str = trimNewline(str);
   size_t pos = str.find(':');
   string result;
   vector<string> words;
-  if (pos == string::npos || (pos > 0 && str[pos - 1] == ' '))
-  {
+  if (pos == string::npos || (pos > 0 && str[pos - 1] == ' ')) {
     cout << "bad request space : " << endl;
     exit(0);
   }
@@ -261,16 +248,19 @@ void HttpRequest ::parsePartRequest(string str_parse)
     str.clear();
   }
 }
-void HttpRequest ::requestLine()
-{
+void HttpRequest ::requestLine() {
   string path;
   string querydata;
   this->dataFirstLine[1] = encodeUrl(this->dataFirstLine[1]);
-  path = this->dataFirstLine[1];
-  if (this->dataFirstLine[2].compare("HTTP/1.1") != 0)
-  {
-    cout << "Not Supported" << endl;
+  if (this->dataFirstLine[1].empty()) {
+    this->requestStatus = 400;
+    this->endHeaders = 1;
     return;
+  }
+  path = this->dataFirstLine[1];
+  if (this->dataFirstLine[2].compare("HTTP/1.1") != 0) {
+    cout << "Not Supported" << endl;
+    return ;
   }
   size_t pos = path.find("?");
   if (pos == string::npos)
@@ -287,8 +277,7 @@ void HttpRequest ::requestLine()
       return;
     }
   }
-  if (this->dataFirstLine[1][pos + 1] == '\0')
-  {
+  if (this->dataFirstLine[1][pos + 1] == '\0') {
     cout << "erro ??" << endl;
     this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
     return;
@@ -308,7 +297,7 @@ void HttpRequest ::requestLine()
         value = querydata.substr(endkey + 1, endval - endkey - 1);
       else
         value = querydata.substr(endkey + 1);
-    //   cout << "Key: " << key << ", Value: " << value << endl;
+      cout << "Key: " << key << ", Value: " << value << endl;
       if (endval != string::npos)
         i = endval + 1;
       else
@@ -326,7 +315,7 @@ string encodeUrl(string &str)
   {
     tmp = str.substr(pos + 1, 2);
     char c = characterEncodeing(tmp);
-    str.replace(pos, 3, 1, c);
+    str.replace(pos,3,1,c);
     pos++;
   }
   return (str);
@@ -334,13 +323,12 @@ string encodeUrl(string &str)
 
 char characterEncodeing(string &tmp)
 {
-  // cout <<"tmp [0] = "<<tmp[0]<<endl;
-  // cout <<"tmp +[1] = "<<endl;
+  // cout <<"tmp [0] = "<<tmp[0]<<endl; 
+  // cout <<"tmp +[1] = "<<endl; 
   printNonPrintableChars(tmp);
-  if (tmp[0] < '2' || tmp[0] > '7' || (!isdigit(tmp[1]) && (tmp[1] < 'A' || tmp[1] > 'F')))
-  {
-    cout << "character not allowed" << endl;
-    exit(0);
+  if (tmp[0]<'2' || tmp[0]>'7'||(!isdigit(tmp[1])&& (tmp[1]<'A' || tmp[1]>'F'))) {
+    cout << "character not allowed"<<endl;
+    exit (0);
   }
   return (static_cast<char>(stol(tmp, nullptr, 16)));
 }

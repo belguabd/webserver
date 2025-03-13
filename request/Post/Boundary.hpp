@@ -31,8 +31,9 @@ public:
     std::string _boundaryStringEnd;
     BoundaryHead _boundaryHead;
     std::map<std::string, std::string> &_queryParam;
+    std::string _uploadStore;
 
-    // Boundary(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status);
+    Boundary(std::map<std::string, std::string> &query, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status, std::string &uploadStore);
     Boundary(std::map<std::string, std::string> &query, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status);
     int setBoundaryHeadAndEraseBuffer();
     void setMetaData(std::string &headBoundary, std::string key);

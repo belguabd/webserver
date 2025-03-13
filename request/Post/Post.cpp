@@ -1,14 +1,22 @@
 #include "./Post.hpp"
 
+/*
+TODO:
+	max body size
+	delete response 
+	set request status
+	parsing headers 
+*/
+
 void Post::createBodyTypeObject(std::string& buffer) {
 	if (_bodyType == chunked)
 		chunk = new Chunked(_bufferBody, _remainingBuffer, _headers, _status, _uploadStore);
 	else if (_bodyType == boundary)
-		bound = new Boundary(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
+		bound = new Boundary(_queryParam, _bufferBody, _remainingBuffer, _headers, _status, _uploadStore);
 	else if (_bodyType == boundaryChunked) {
 		buffer.insert(0, "\r\n2\r\n\r\n");
 		_bodySize -= 7;
-		boundChunk = new BoundaryChunked(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
+		boundChunk = new BoundaryChunked(_queryParam, _bufferBody, _remainingBuffer, _headers, _status, _uploadStore);
 	}
 	else if (_bodyType == contentLength) {
 		buffer.erase(0, 2); // to remove \r\n
@@ -45,7 +53,7 @@ int Post::proseRequest(std::string &buffer)
 	// 	return _status;
 	// }
 	_bodySize += buffer.size(); // attention of pre added \r\n in buffer;
-	std::cout << "_bodySize: " << _bodySize << std::endl;
+	// std::cout << "_bodySize: " << _bodySize << std::endl;
 	if (this->_bodyType == contentLength)
 		return handleContentLength(buffer);
 	if (this->_bodyType == keyVal)
@@ -193,6 +201,7 @@ size_t Post::manipulateBuffer(std::string &buffer)
 	_bufferBody += buffer.substr(0, pos + 1);
 	return pos;
 }
+
 
 Post::~Post()
 {

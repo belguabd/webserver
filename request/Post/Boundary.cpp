@@ -7,11 +7,22 @@
 //     setBoundaryString();
 // }
 
-Boundary::Boundary(std::map<std::string, std::string> &queryParam, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
-    _queryParam(queryParam), _bufferBody(bufferBody),
+Boundary::Boundary(std::map<std::string, std::string> &queryParam, std::string &bufferBody, std::string &remainingBuffer,\
+    std::map<std::string, std::string> &headers, int &status):
+    _queryParam(queryParam), _bufferBody(bufferBody),_uploadStore("./upload/"),
+    _remainingBuffer(remainingBuffer), _headers(headers), _status(status)
+{
+    setBoundaryString();
+    _uploadStore += "/";
+}
+
+Boundary::Boundary(std::map<std::string, std::string> &queryParam, std::string &bufferBody, std::string &remainingBuffer, \
+    std::map<std::string, std::string> &headers, int &_status, std::string &uploadStore):
+    _queryParam(queryParam), _bufferBody(bufferBody), _uploadStore(uploadStore), 
     _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
 {
     setBoundaryString();
+    _uploadStore += "/";
 }
 
 void Boundary::setBoundaryString()
@@ -27,14 +38,13 @@ void Boundary::setFileName(std::string &fileName)
 {
     if (fileName == "") return ;
 	struct stat b;
-    fileName = fileName;
     size_t pos =  fileName.find(".");
 	std::string name = fileName.substr(0, pos);
     std::string extention ;
     if (pos < fileName.size())
         extention = fileName.substr(pos);
 	int n = 0;
-	while (stat((std::string(UPLOAD_FOLDER + name + extention)).c_str(), &b) != -1)
+	while (stat((std::string(_uploadStore + name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	fileName = name + extention;
 }
@@ -142,6 +152,7 @@ int Boundary::handleBoundaryRec()
         std::cout << "end boundary" << std::endl;
         _status = 1;
         _bufferBody = "";
+        std::cout << "check: " << std::string(_uploadStore) +  _metadata["filename"] << std::endl;
         return _status;
     }
     
@@ -157,7 +168,7 @@ int Boundary::handleBoundaryRec()
     std::string content = _bufferBody.substr(0, _indexNextBoundary);
     if (!(_metadata["filename"] == "")) // filename
     {
-        pasteInFile(std::string(UPLOAD_FOLDER) + _metadata["filename"], content);
+        pasteInFile(std::string(_uploadStore) + _metadata["filename"], content);
         // this is can be something
     }
     else
