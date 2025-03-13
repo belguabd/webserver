@@ -79,3 +79,6 @@ void isNumber(string& str);
 vector<string> splitstring(const string &str);
 void chechAllowedMethodValid(string &str);
 size_t checkValidBadySise(string str);
+void    checkContentLocationUpload(string &str);
+void    checkContentLocationNormal(string &str);
+void    checkContentLocationCgi(string &str);

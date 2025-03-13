@@ -1,5 +1,6 @@
 #include "ServerConfig.hpp"
 #include <iostream>
+#include <set> // Use set instead of vector
 #include <sstream>
 #include <string>
 void    checkcontent(string substr)
@@ -67,7 +68,6 @@ string removeLocationBlocks(string& configData) {
 	// Regex pattern to match "location { ... }" blocks
 	string locationRegexPattern = "\\s*location\\s+[^}]*\\{[^}]*\\}\\s*";
 	regex locationRegex(locationRegexPattern);
-	// Replace all location blocks with an empty string
 	result = regex_replace(result, locationRegex, "");  
 	return result;
 }
@@ -128,6 +128,8 @@ void ServerConfig ::locationCgi(string &location) {
     string tmp;
     size_t pos = location.find("{");
     tmp = location.substr(8, pos - 8);
+    string str = location.substr(pos + 1);
+    checkContentLocationCgi(str);
     string key = trim(tmp);
     if (key.empty()|| key[0]!='/') {
         cout <<"error location path not valid "<<endl;
@@ -228,6 +230,8 @@ void ServerConfig :: locationUpload(string &location) {
     string tmp;
     size_t pos = location.find("{");
     tmp =location.substr(8, pos - 8);
+    string str = location.substr(pos + 1);
+    checkContentLocationUpload(str);
     string key = trim(tmp);
     if (key.empty() || key[0]!='/') {
         cout <<"error location path not valid "<<endl;
@@ -281,34 +285,106 @@ void ServerConfig :: locationUpload(string &location) {
 	this->configUpload[key] = config;
 }
 
-void    checkContentLocation(string &str)
+void    checkContentLocationNormal(string &str)
 {
     string line;
-    std::istringstream stream(str);
+    set <string> words;
+    istringstream stream(str);
     while (getline(stream, line)) {
-            // cout <<"---->"<< line << endl;
-        if (line.find("root")==string::npos && line.find("allowed_methods")==string::npos && line.find("index")==string::npos && line.find("autoindex")==string::npos) {
-            checkcontent(line);
-        } else {
+        istringstream linestream(line);
+        string firstWord;
+        linestream >> firstWord;
+
+        if (!firstWord.empty()) {
+            if (words.find(firstWord) != words.end()) {
+                cout << "Error: Duplicate parameter found - " << firstWord << endl;
+                exit(1);
+            }
+            words.insert(firstWord);
+        }
+        if (firstWord == "root" || firstWord == "allowed_methods" || firstWord == "index"||firstWord == "autoindex") {
             size_t pos = line.find(";");
             if (pos == string::npos) {
-                cout <<";not found"<<endl;
+                cout << "; not found" << endl;
                 exit(0);
             }
             string tmp = line.substr(pos + 1);
             checkcontent(tmp);
+        } 
+        else {
+            checkcontent(line);
+        }
+    }
+}
+void    checkContentLocationUpload(string &str)
+{
+    string line;
+    set <string> words;
+    istringstream stream(str);
+    while (getline(stream, line)) {
+        istringstream linestream(line);
+        string firstWord;
+        linestream >> firstWord;
+
+        if (!firstWord.empty()) {
+            if (words.find(firstWord) != words.end()) {
+                cout << "Error: Duplicate parameter found - " << firstWord << endl;
+                exit(1);
+            }
+            words.insert(firstWord);
+        }
+        if (firstWord == "root" || firstWord == "allowed_methods" || firstWord == "upload_store"||firstWord == "index"||firstWord == "client_max_body_size") {
+            size_t pos = line.find(";");
+            if (pos == string::npos) {
+                cout << "; not found" << endl;
+                exit(0);
+            }
+            string tmp = line.substr(pos + 1);
+            checkcontent(tmp);
+        } 
+        else {
+            checkcontent(line);
+        }
+    }
+}
+void    checkContentLocationCgi(string &str)
+{
+    string line;
+    set <string> words;
+    istringstream stream(str);
+    while (getline(stream, line)) {
+        istringstream linestream(line);
+        string firstWord;
+        linestream >> firstWord;
+
+        if (!firstWord.empty()) {
+            if (words.find(firstWord) != words.end()) {
+                cout << "Error: Duplicate parameter found - " << firstWord << endl;
+                exit(1);
+            }
+            words.insert(firstWord);
+        }
+        if (firstWord == "root" || firstWord == "allowed_methods" || firstWord == "cgi_extension") {
+            size_t pos = line.find(";");
+            if (pos == string::npos) {
+                cout << "; not found" << endl;
+                exit(0);
+            }
+            string tmp = line.substr(pos + 1);
+            checkcontent(tmp);
+        } 
+        else {
+            checkcontent(line);
         }
     }
 }
 
 void ServerConfig :: locationNormal(string &location) {
     string tmp;
-    // 4 
-    
     size_t pos = location.find("{");
     tmp = location.substr(8, pos - 8);
     string str = location.substr(pos + 1);
-    checkContentLocation(str);
+    checkContentLocationNormal(str);
 
     string key = trim(tmp);
     if (key.empty()|| key[0]!='/') {
@@ -323,25 +399,13 @@ void ServerConfig :: locationNormal(string &location) {
     if (rootPos != string::npos) {
         size_t valueStart = location.find(" ", rootPos + 4);
         size_t valueEnd = location.find(";", valueStart);
-        if (valueEnd==string::npos)
-        {
-            cout <<";not found"<<endl;
-            exit(0);
-        }
         tmp =location.substr(valueStart + 1, valueEnd - valueStart - 1);
-        // checkstring(tmp);
-        // cout <<"tmp -->"<<tmp<<endl;
         config.root = trim(tmp);
         
     }
     if (allowedMethodsPos != string::npos) {
         size_t valueStart = location.find(" ", allowedMethodsPos + 15);
         size_t valueEnd = location.find(";", valueStart);
-        if (valueEnd==string::npos)
-        {
-            cout <<";not found"<<endl;
-            exit(0);
-        }
         tmp =location.substr(valueStart + 1, valueEnd - valueStart - 1);
         chechAllowedMethodValid(tmp);
         config.allowed_methods = trim(tmp);
@@ -352,11 +416,6 @@ void ServerConfig :: locationNormal(string &location) {
         if (location.compare(indexPos - 4, 9, "autoindex") != 0) {
             size_t valueStart = location.find(" ", indexPos + 5);
             size_t valueEnd = location.find(";", valueStart);
-            if (valueEnd==string::npos)
-            {
-                cout <<";not found"<<endl;
-                exit(0);
-            }
             tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
             config.index = trim(tmp);
             break;
@@ -365,15 +424,13 @@ void ServerConfig :: locationNormal(string &location) {
     if (autoindexPos != string::npos) {
         size_t valueStart = location.find(" ", autoindexPos + 9);
         size_t valueEnd = location.find(";", valueStart);
-        if (valueEnd==string::npos)
-        {
-            cout <<";not found"<<endl;
-            exit(0);
-        }
         tmp = location.substr(valueStart + 1, valueEnd - valueStart - 1);
         tmp = trim(tmp);
-        if (tmp =="on") {
-            config.autoindex = 1;
+        if (tmp!="on"&&tmp!="off") {
+            cout <<"error autoindex"<<endl;
+            exit(0);
+        } else if (tmp =="on") {
+            config.autoindex = true;
         } else {
             config.autoindex = 0;
         }
@@ -393,7 +450,7 @@ void ServerConfig :: locationData(string &strlocat) {
             locationUpload(location);
         } else if (location.find("return")!=string::npos) {
             locationRedirection(location);
-        } else if (location.find("cgi_handler")!=string::npos) {
+        } else if (location.find("cgi_extension")!=string::npos) {
             locationCgi(location);
         } else {
             locationNormal(location);
