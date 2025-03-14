@@ -25,7 +25,7 @@ void HttpRequest::handlePost()
   else
   {
     _post->proseRequest(readBuffer);
-    std::cout << "abcd\n";
+    // std::cout << "abcd\n";
   }
   setRequestStatus(_post->getStatus());
 	this->readBuffer.clear();
@@ -238,7 +238,7 @@ vector<string> splitstring(const string &str)
 }
 void HttpRequest::checkHeaders(string &str)
 {
-  // str = trimNewline(str);
+  str = trimNewline(str);
   size_t pos = str.find(':');
   string result;
   vector<string> words;

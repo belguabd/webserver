@@ -69,6 +69,7 @@
         "vector": "cpp",
         "regex": "cpp",
         "csignal": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "set": "cpp"
     }
 }

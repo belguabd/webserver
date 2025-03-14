@@ -8,7 +8,7 @@ void Post::createBodyTypeObject(std::string& buffer) {
 	else if (_bodyType == boundaryChunked) {
 		buffer.insert(0, "\r\n2\r\n\r\n");
 		_bodySize -= 7;
-		boundChunk = new BoundaryChunked(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
+		boundChunk = new BoundaryChunked(_queryParam, _bufferBody, _remainingBuffer, _headers, _status, _uploadStore);
 	}
 	else if (_bodyType == contentLength) {
 		buffer.erase(0, 2); // to remove \r\n
@@ -32,7 +32,14 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 	_uploadStore = _configUpload.upload_store;
 	buffer = "\r\n" + buffer;
 	setBodyType();
+	// for (auto key : _headers)
+	// {
+	// 	std::cout << key.first << ":" << key.second << std::endl;
+	// }
+	std::cout << "_headers[\"Transfer-Encoding\"]: " << _headers["Transfer-Encoding"] << std::endl;
+	std::cout << "bodyType : " << _bodyType << std::endl;
 	createBodyTypeObject(buffer);
+
 	setContentLengthSize();
 	proseRequest(buffer);
 }
@@ -89,6 +96,7 @@ void Post::setContentLengthSize()
 
 void Post::setBodyType()
 {
+	std::cout << "_headers[\"Content-Type\"] :";printNonPrintableChars(_headers["Content-Type"]);
 	if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("; boundary=") != std::string::npos)
 	{
 		if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
@@ -101,8 +109,11 @@ void Post::setBodyType()
 	}
 	else if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("x-www-form-urlencoded") != std::string::npos)
 		_bodyType = keyVal;
-	else if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
+	else if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"].find("chunked") != std::string::npos)
+	{
+		std::cout << "This is chunked\n";
 		_bodyType = chunked;
+	}
 	else
 		_bodyType = contentLength;
 }
