@@ -1,6 +1,38 @@
 #include "HttpRequest.hpp"
 
-int HttpRequest::handleDeleteRequest(std::string filePath) {
+LocationUplaods &getMatchedLocationUpload(const std::string &path, map<string, LocationUplaods> &configUploads)
+{
+	size_t pos = path.find("/", 1);
+	string keyLocationUpload;
+
+    if (pos == std::string::npos)
+      pos = path.size() + 1;
+	keyLocationUpload = path.substr(0, pos);
+	if (configUploads.find(keyLocationUpload) == configUploads.end())
+		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = UPLOAD_FOLDER}; // 
+	return (configUploads.find(keyLocationUpload))->second;
+}
+
+void HttpRequest::handlePost()
+{
+  if (_post == NULL)
+  {
+    LocationUplaods &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.getConfigUpload());
+    
+	  std::cout << "lc: " << lc.upload_store << std::endl;
+    _post = new Post(mapheaders, queryParam, _buffer, lc);
+  }
+  else
+  {
+    _post->proseRequest(readBuffer);
+    // std::cout << "abcd\n";
+  }
+  setRequestStatus(_post->getStatus());
+	this->readBuffer.clear();
+}
+
+int HttpRequest::handleDeleteRequest(std::string filePath)
+{
   struct stat meteData;
   filePath.insert(0, ".");
   // std::cout << "filePath: " << filePath << std::endl;
@@ -50,21 +82,15 @@ void HttpRequest::handleRequest()
   else if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
     setRequestStatus(200);
   else if (_method == POST && getendHeaders() == 1)
-  {
-    if (_post == NULL)
-      _post = new Post(mapheaders, queryParam, _buffer);
-    else
-      _post->proseRequest(readBuffer);
-    setRequestStatus(_post->getStatus());
-
-    joinBuffer();
-  }
+    handlePost();
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) , isCGi(false) , checkCgi(0), cgi_for_test(0){
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0), server_config(server_config)
+{
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+  // server_config.
   _post = NULL;
 }
 
@@ -102,7 +128,6 @@ LocationCgi getValueMapcgi(map<string, LocationCgi> & configNormal,map<string, L
 HttpRequest::~HttpRequest() {}
 void HttpRequest::checkPathIscgi(string &path)
 {
-  // cout <<"path  = > "<<path<<endl;
   ServerConfig config;
   string s;
   string method;
@@ -137,7 +162,6 @@ void HttpRequest::checkPathIscgi(string &path)
         break;
       }
   }
-    // cout << "rootcgi  = "<<this->rootcgi<<endl;
     if (method.empty()) {
       cout <<"method not allowed"<<endl;
       exit(0);
@@ -146,6 +170,16 @@ void HttpRequest::checkPathIscgi(string &path)
       cout <<"CGI not supported type file"<<endl;
       exit(0);
     }
+    size_t startPathInfo;
+    size_t endPathInfo;
+    startPathInfo =  this->rootcgi.find(s);
+    endPathInfo = this->rootcgi.find("?");
+    if (endPathInfo!=string::npos) {
+      this->pathInfo = this->rootcgi.substr(startPathInfo + s.length(),endPathInfo - startPathInfo - s.length());
+    }
+    else
+      this->pathInfo = this->rootcgi.substr(startPathInfo + s.length());
+    this->rootcgi = this->rootcgi.substr(0,startPathInfo + s.length());
     bool f = fileExists(this->rootcgi);
     if (f==false)
       this->rootcgi = "";
@@ -153,6 +187,7 @@ void HttpRequest::checkPathIscgi(string &path)
       this->cgiExtension = PHP;
     else
       this->cgiExtension = PYTHON;
+
 
 }
 int HttpRequest::defineTypeMethod(string firstline) {
@@ -212,7 +247,7 @@ vector<string> splitstring(const string &str)
 }
 void HttpRequest::checkHeaders(string &str)
 {
-  // str = trimNewline(str);
+  str = trimNewline(str);
   size_t pos = str.find(':');
   string result;
   vector<string> words;
@@ -325,7 +360,7 @@ void HttpRequest ::requestLine() {
     else
     {
       this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
-      cout << "-- > " << this->dataFirstLine[1] << endl;
+    //   cout << "-- > " << this->dataFirstLine[1] << endl;
       return;
     }
   }
@@ -349,10 +384,12 @@ void HttpRequest ::requestLine() {
         value = querydata.substr(endkey + 1, endval - endkey - 1);
       else
         value = querydata.substr(endkey + 1);
+    //   cout << "Key: " << key << ", Value: " << value << endl;
       if (endval != string::npos)
         i = endval + 1;
       else
         i = querydata.length();
+        cout <<"key  = "<<key<<", value  = "<<value<<endl;
       this->queryParam[key] = value;
     }
   }

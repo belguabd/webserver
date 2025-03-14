@@ -9,6 +9,7 @@
 #include "Chunked.hpp"
 #include "Boundary.hpp"
 #include "BoundaryChunked.hpp"
+#include "../../conf/ServerConfig.hpp"
 
 
 class Post
@@ -35,14 +36,21 @@ private:
     std::map<std::string, std::string> _mimeToExtension;
     int _status;
     std::string _fileName;
+    std::string _uploadStore;
     size_t _contentLengthSize;
+    size_t _bodySize;
     void setFileName(std::string extention);
     void initializeMimeTypes();
     size_t manipulateBuffer(std::string &buffer);
     void setContentLengthSize();
+    LocationUplaods &_configUpload;
+    void createBodyTypeObject(std::string& buffer);
 public:
     // Post();
-    Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer);
+    // Post(std::map<std::string, std::string> &headers, std::map<std::string, \
+    //     std::string> &queryParam, std::string &buffer);
+    Post(std::map<std::string, std::string> &headers, std::map<std::string, \
+        std::string> &queryParam, std::string &buffer, LocationUplaods &configUpload);
     int getStatus() {return _status;}
     int handleKeyVal(std::string &buffer);
     int handleContentLength(std::string &buffer);

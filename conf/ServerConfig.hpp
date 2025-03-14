@@ -65,6 +65,7 @@ class ServerConfig
         string getRoot() const {return this->root;}
         string getIndex() const {return this->index;}
         string getServerName(){return  server_name;}
+        map<string, LocationUplaods> &getConfigUpload(){return  configUpload;}
       std::vector<int> getPorts(){return ports;}
 };
 
@@ -78,3 +79,6 @@ void isNumber(string& str);
 vector<string> splitstring(const string &str);
 void chechAllowedMethodValid(string &str);
 size_t checkValidBadySise(string str);
+void    checkContentLocationUpload(string &str);
+void    checkContentLocationNormal(string &str);
+void    checkContentLocationCgi(string &str);

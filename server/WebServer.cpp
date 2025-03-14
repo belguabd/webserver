@@ -201,10 +201,10 @@ void WebServer::respond_to_client(int client_fd) {
   // unlink(client->filename.c_str());
 
   // puts("OK");
-  // close(client_fd);
-  // connected_clients.erase(it);
-  // delete client;
-  // delete responseclient;
+  close(client_fd);
+  connected_clients.erase(it);
+  delete client;
+  delete responseclient;
 }
 /*----------------------------------------------------*/
 int beforStart(string str) {
@@ -299,10 +299,10 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
     return;
   }
   if (pid == 0) {
-
-    // alarm(10);
+    alarm(10);
     dup2(fd, STDOUT_FILENO);
     close(fd);
+
     if (execve(args[0], &args[0], &envp[0]) == -1) {
       std::cerr << "Failed to execute script: " << strerror(errno) << std::endl;
       exit(1);
@@ -310,8 +310,11 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
   } else {
     close(fd);
     int status;
+    // waitpid(pid, &status, 0);
     waitpid(pid, &status, WNOHANG);
-    // if (WIFSIGNALED(status) && WTERMSIG(status) == SIGALRM)
+    if (WIFSIGNALED(status) && WTERMSIG(status) == SIGALRM) {
+      puts("OK");
+    }
 
     // if (WIFEXITED(status)) {
     //   std::cout << "Child process exited with status: " <<
@@ -356,41 +359,42 @@ void WebServer::handleCGIRequest(int client_fd) {
       client = *it;
   }
 
-  map<string, string>::iterator iter = client->mapheaders.begin();
+  map<string, string>::iterator iter_headers = client->mapheaders.begin();
 
   map<string, string> env;
-  for (; iter != client->mapheaders.end(); iter++) {
-    string key = (*iter).first;
+  for (; iter_headers != client->mapheaders.end(); iter_headers++) {
+    string key = (*iter_headers).first;
     transform(key.begin(), key.end(), key.begin(), ::toupper);
     std::replace(key.begin(), key.end(), '-', '_');
-    env[key] = (*iter).second;
+    env[key] = (*iter_headers).second;
   }
-  // cout << client->_method << "\n";
-  // exit(0);
-  // if () {
-  // }
-  // env["REQUEST_METHOD"] =
-  // if (client->cgiExtension == 1) {
-  //   env["CGI_INTERPRETER"] = "/usr/bin/php";
+
+  // _method ?
+  // client->_method == 1 ? env["REQUEST_METHOD"] = "GET"
+  //                      : env["REQUEST_METHOD"] = "POST";
+  // if (client->cgiExtension == PHP) {
+  env["INTERPRETER"] = "/usr/bin/php";
   // } else {
-  //   env["CGI_INTERPRETER"] = "/usr/bin/python";
+  // env["INTERPRETER"] = "/usr/bin/python";
   // }
-  // env["SCRIPT_NAME"] = client->rootcgi;
-  // std::map<string, string>::iterator iter = env.begin();
-  // std::vector<std::string> envp_map;
-  // std::vector<char *> envp;
-  // for (; iter != env.end(); iter++)
-  //   envp_map.push_back(iter->first + "=" + iter->second);
+  // cout << client->rootcgi << "\n";
+  // client->rootcgi = "/Users/belguabd/Desktop/webserver/hello.php";
+  env["SCRIPT_NAME"] = "/Users/belguabd/Desktop/webserver/hello.php";
+  std::map<string, string>::iterator iter = env.begin();
+  std::vector<std::string> envp_map;
+  std::vector<char *> envp;
+  for (; iter != env.end(); iter++)
+    envp_map.push_back(iter->first + "=" + iter->second);
 
-  // for (size_t i = 0; i < envp_map.size(); i++)
-  //   envp.push_back(&envp_map[i][0]);
-  // envp.push_back(NULL);
+  for (size_t i = 0; i < envp_map.size(); i++)
+    envp.push_back(&envp_map[i][0]);
+  envp.push_back(NULL);
 
-  // std::vector<char *> args;
-  // args.push_back((char *)env["CGI_INTERPRETER"].c_str());
-  // args.push_back((char *)env["SCRIPT_NAME"].c_str());
-  // args.push_back(NULL);
-  // run_script(client, args, envp);
+  std::vector<char *> args;
+  args.push_back((char *)env["INTERPRETER"].c_str());
+  args.push_back((char *)env["SCRIPT_NAME"].c_str());
+  args.push_back(NULL);
+  run_script(client, args, envp);
 }
 
 // void WebServer::pipe_read(int fd) {
@@ -448,15 +452,12 @@ void WebServer::run() {
       handle_new_connection(event_fd);
     else {
       if (filter == EVFILT_READ) {
-        // puts("OK");
-        // puts("request");
         receive_from_client(event_fd);
-
-        if (isCGIRequest(event_fd)) {
-          handleCGIRequest(event_fd);
-        }
+        // if (isCGIRequest(event_fd)) {
+          
+        //   handleCGIRequest(event_fd);
+        // }
       } else if (filter == EVFILT_WRITE) {
-        // puts("response");
         respond_to_client(event_fd);
       }
     }

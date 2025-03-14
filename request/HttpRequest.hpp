@@ -28,22 +28,24 @@ private:
   int requestStatus;
   int endHeaders;
   vector<string> dataFirstLine;
-  map<string, string> queryParam;
   std::string readBuffer;
   ServerConfig server_config;
   string file;
   std::string buffer_cgi;
   bool isCGi;
+   map<string, string> queryParam;
 
   // Delete _delete;
   string _buffer;
   void handleRequest();
+  void handlePost();
   int handleDeleteRequest(std::string filePath);
 
 public:
   int checkCgi;
   int cgiExtension;
   string rootcgi;
+  string pathInfo;
 
   string filename;
   int getCgi() { return cgi_fd; }

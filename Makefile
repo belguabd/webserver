@@ -17,12 +17,9 @@ $(NAME):$(OBJ)
 	./response/HttpResponse.hpp ./conf/ServerConfig.hpp ./request/Post/Macros.hpp
 	$(CPP) $(CPPFLAGS) -c $< -o $@ 
 
-rm:
-	$(RM) -f ./upload/*
 
 clean:
 	$(RM) $(OBJ)
-	$(RM) ./upload/*
 	$(RM) ./currentRequest
 	$(RM) ./out.yaml
 
