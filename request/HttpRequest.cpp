@@ -9,7 +9,7 @@ LocationUplaods &getMatchedLocationUpload(const std::string &path, map<string, L
       pos = path.size() + 1;
 	keyLocationUpload = path.substr(0, pos);
 	if (configUploads.find(keyLocationUpload) == configUploads.end())
-		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = UPLOAD_FOLDER}; // 
+		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = UPLOAD_FOLDER, .client_max_body_size= 1000000000}; // 
 	return (configUploads.find(keyLocationUpload))->second;
 }
 
@@ -61,6 +61,7 @@ int HttpRequest::handleDeleteRequest(std::string filePath)
 void HttpRequest::handleRequest()
 {
   string str_parse;
+  pasteInFile("currentRequest", readBuffer);
   joinBuffer();
   str_parse = partRquest();
   if (getFirstTimeFlag() == 0)
@@ -128,7 +129,6 @@ LocationCgi getValueMapcgi(map<string, LocationCgi> & configNormal,map<string, L
 HttpRequest::~HttpRequest() {}
 void HttpRequest::checkPathIscgi(string &path)
 {
-  // cout <<"path  = > "<<path<<endl;
   ServerConfig config;
   string s;
   string method;
@@ -163,7 +163,6 @@ void HttpRequest::checkPathIscgi(string &path)
         break;
       }
   }
-    // cout << "rootcgi  = "<<this->rootcgi<<endl;
     if (method.empty()) {
       cout <<"method not allowed"<<endl;
       exit(0);
@@ -172,13 +171,24 @@ void HttpRequest::checkPathIscgi(string &path)
       cout <<"CGI not supported type file"<<endl;
       exit(0);
     }
+    size_t startPathInfo;
+    size_t endPathInfo;
+    startPathInfo =  this->rootcgi.find(s);
+    endPathInfo = this->rootcgi.find("?");
+    if (endPathInfo!=string::npos) {
+      this->pathInfo = this->rootcgi.substr(startPathInfo + s.length(),endPathInfo - startPathInfo - s.length());
+    }
+    else
+      this->pathInfo = this->rootcgi.substr(startPathInfo + s.length());
+    this->rootcgi = this->rootcgi.substr(0,startPathInfo + s.length());
     bool f = fileExists(this->rootcgi);
     if (f==false)
       this->rootcgi = "";
-    if (s==".php")
+    if (s == ".php")
       this->cgiExtension = 1;
     else
       this->cgiExtension = 2;
+
 
 }
 int HttpRequest::defineTypeMethod(string firstline) {
@@ -380,6 +390,7 @@ void HttpRequest ::requestLine() {
         i = endval + 1;
       else
         i = querydata.length();
+        cout <<"key  = "<<key<<", value  = "<<value<<endl;
       this->queryParam[key] = value;
     }
   }

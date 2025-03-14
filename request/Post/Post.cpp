@@ -32,10 +32,6 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 	_uploadStore = _configUpload.upload_store;
 	buffer = "\r\n" + buffer;
 	setBodyType();
-	// for (auto key : _headers)
-	// {
-	// 	std::cout << key.first << ":" << key.second << std::endl;
-	// }
 	std::cout << "_headers[\"Transfer-Encoding\"]: " << _headers["Transfer-Encoding"] << std::endl;
 	std::cout << "bodyType : " << _bodyType << std::endl;
 	createBodyTypeObject(buffer);
@@ -52,7 +48,14 @@ int Post::proseRequest(std::string &buffer)
 	// 	return _status;
 	// }
 	_bodySize += buffer.size(); // attention of pre added \r\n in buffer;
+	if (_bodySize > _configUpload.client_max_body_size)
+	{
+		std::cout << "body limits\n";
+		_status = 404;
+		return _status;
+	}
 	std::cout << "_bodySize: " << _bodySize << std::endl;
+	std::cout << " client_max_body_size: " <<  _configUpload.client_max_body_size << std::endl;
 	if (this->_bodyType == contentLength)
 		return handleContentLength(buffer);
 	if (this->_bodyType == keyVal)
@@ -145,7 +148,7 @@ bool fileExists(std::string &filePath)
 void Post::setFileName(std::string extention)
 {
 	struct stat b;
-	std::string name = UPLOAD_FOLDER + std::string("filePost");
+	std::string name = _configUpload.upload_store + "/" + std::string("filePost");
 	int n = 0;
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");

@@ -133,7 +133,6 @@ int Boundary::handleBoundary()
     //         return _status;
     //     }
     // }
-    pasteInFile("currentRequest", _bufferBody);
     handleBoundaryRec();
     return _status;
 }
