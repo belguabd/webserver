@@ -1,4 +1,5 @@
 #include "HttpResponse.hpp"
+#include <iterator>
 
 void	status_line(int client_socket,string status) {
   // cout <<status;
@@ -37,6 +38,7 @@ void HttpResponse::fileDataSend(string &data,ServerConfig &config)
   string body = fileContent.str();
   stringstream response1;
   response1 << "Content-Type: text/html\r\n"
+  // response1 << "Content-Type: image/jpeg\r\n"
             << "Content-Length: " << body.size() << "\r\n"
             << "Connection: close\r\n"
             << "\r\n"
@@ -81,6 +83,7 @@ void HttpResponse:: forbidden(int client_socket,ServerConfig &config)
   headersSending(client_socket,config.getServerName());
   stringstream response1;
   response1 << "Content-Type: text/html\r\n"
+  // response1 << "Content-Type: image/jpeg\r\n"
             << "Content-Length: " << body.size() << "\r\n"
             << "Connection: close\r\n"
             << "\r\n"
@@ -347,12 +350,20 @@ void    sendResponse(HttpResponse &response)
   if (response.checkDataResev()!=0) {
     return ;
   }
-  // cout << response.request->filename << "\n";
+  if (response.request->checkCgi){
+     cout << response.request->filename << "\n";
+     response.cgiResponse();
+    return ;
+  }
   if (method == GET) {
     response.getResponse();
   }
   else if (method == POST) {
     response.postResponse();
+  }
+  else if (method == DELETE)
+  {
+    // response.deleteResponse();
   }
 
 }
@@ -571,7 +582,35 @@ int checkTypePath(string &path) {
 }
 
 /*-------------------------------------------------------------------------------------------*/
-
+/*-------------------------------------- CGI ------------------------------------------*/
+void HttpResponse::cgiResponse()
+{
+  static int i =0;
+  // cout << "--->"<<this->request->filename << "\n";
+  ServerConfig config;
+  ifstream file(this->request->filename);
+  stringstream fileContent;
+  fileContent << file.rdbuf() ;
+  cout << std::endl;
+  // std::cout << fileContent.str() << std::endl;
+  
+  if (file) {
+      fileContent << file.rdbuf(); 
+      file.close();
+  }
+  status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
+  headersSending(this->request->getfd(),config.getServerName());
+  string body = fileContent.str();
+  stringstream response1;
+  response1 << "Content-Type: text/html\r\n"
+  // response1 << "Content-Type: image/jpeg\r\n"
+            << "Content-Length: " << body.size() << "\r\n"
+            << "Connection: close\r\n"
+            << "\r\n"
+             << body;
+  string responseStr = response1.str();
+  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+}
 
 /*--------------------------------------Post method------------------------------------------*/
 

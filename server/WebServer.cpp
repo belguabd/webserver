@@ -2,6 +2,7 @@
 #include "WebServer.hpp"
 #include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <csignal>
 #include <cstddef>
 #include <cstdio>
@@ -19,11 +20,11 @@
 #include <sys/fcntl.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
+#include <system_error>
 #include <type_traits>
 #include <unistd.h>
 #include <utility>
 #include <vector>
-
 void WebServer::initialize_kqueue() {
   kqueue_fd = kqueue();
   if (kqueue_fd < 0) {
@@ -118,8 +119,8 @@ void WebServer::receive_from_client(int client_fd) {
   }
   if (bytes_read == 0) {
     std::cout << "Client disconnected" << std::endl;
-    // close(client_fd);
-    // connected_clients.erase(it);
+    close(client_fd);
+    connected_clients.erase(it);
   }
   if (client->getRequestStatus()) {
     client->cgi_for_test = client->checkCgi;
@@ -192,12 +193,13 @@ void WebServer::respond_to_client(int client_fd) {
       break;
     }
   }
-
   HttpResponse *responseclient = new HttpResponse(client);
   responseclient->writeData();
   struct kevent changes[1];
   EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
   kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+  // unlink(client->filename.c_str());
+
   // puts("OK");
   // close(client_fd);
   // connected_clients.erase(it);
@@ -280,20 +282,44 @@ void WebServer ::dataConfigFile() {
 
 void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
                            std::vector<char *> envp) {
-  pid_t pid = fork();
-  if (pid < 0) {
-    std::cerr << "Failed to create pipe for stdout: " << strerror(errno)
-              << std::endl;
-    return;
-  }
   std::stringstream ss;
   ss << "cgi" << request->getfd();
   request->filename = ss.str();
-  request->setCgi(open(request->filename.c_str(), O_RDWR | O_CREAT, 0644));
+
+  int fd = open(request->filename.c_str(), O_RDWR | O_CREAT, 0644);
+  if (fd < 0) {
+    std::cerr << "Failed to open file: " << strerror(errno) << std::endl;
+    return;
+  }
+  request->setCgi(fd);
+  pid_t pid = fork();
+  if (pid < 0) {
+    std::cerr << "Failed to fork process: " << strerror(errno) << std::endl;
+    close(fd);
+    return;
+  }
   if (pid == 0) {
-    dup2(request->getCgi(), STDOUT_FILENO);
-    close(request->getCgi());
-    execve(args[0], &args[0], &envp[0]);
+
+    // alarm(10);
+    dup2(fd, STDOUT_FILENO);
+    close(fd);
+    if (execve(args[0], &args[0], &envp[0]) == -1) {
+      std::cerr << "Failed to execute script: " << strerror(errno) << std::endl;
+      exit(1);
+    }
+  } else {
+    close(fd);
+    int status;
+    waitpid(pid, &status, WNOHANG);
+    // if (WIFSIGNALED(status) && WTERMSIG(status) == SIGALRM)
+
+    // if (WIFEXITED(status)) {
+    //   std::cout << "Child process exited with status: " <<
+    //   WEXITSTATUS(status)
+    //             << std::endl;
+    // } else {
+    //   std::cerr << "Child process did not exit normally" << std::endl;
+    // }
   }
 }
 
@@ -322,63 +348,78 @@ bool WebServer::isCGIRequest(int client_fd) {
   return false;
 };
 void WebServer::handleCGIRequest(int client_fd) {
+
   HttpRequest *client = NULL;
   std::vector<HttpRequest *>::iterator it = connected_clients.begin();
   for (; it != connected_clients.end(); it++) {
     if ((*it)->getfd() == client_fd)
       client = *it;
   }
+
+  map<string, string>::iterator iter = client->mapheaders.begin();
+
   map<string, string> env;
-  if (client->cgiExtension == 1) {
-    env["PATH"] = "/usr/bin/php";
-  } else {
-    env["PATH"] = "/usr/bin/python";
+  for (; iter != client->mapheaders.end(); iter++) {
+    string key = (*iter).first;
+    transform(key.begin(), key.end(), key.begin(), ::toupper);
+    std::replace(key.begin(), key.end(), '-', '_');
+    env[key] = (*iter).second;
   }
-  env["SCRIPT_NAME"] = client->rootcgi;
-  std::map<string, string>::iterator iter = env.begin();
-  std::vector<std::string> envp_map;
-  std::vector<char *> envp;
-  for (; iter != env.end(); iter++)
-    envp_map.push_back(iter->first + "=" + iter->second);
+  // cout << client->_method << "\n";
+  // exit(0);
+  // if () {
+  // }
+  // env["REQUEST_METHOD"] =
+  // if (client->cgiExtension == 1) {
+  //   env["CGI_INTERPRETER"] = "/usr/bin/php";
+  // } else {
+  //   env["CGI_INTERPRETER"] = "/usr/bin/python";
+  // }
+  // env["SCRIPT_NAME"] = client->rootcgi;
+  // std::map<string, string>::iterator iter = env.begin();
+  // std::vector<std::string> envp_map;
+  // std::vector<char *> envp;
+  // for (; iter != env.end(); iter++)
+  //   envp_map.push_back(iter->first + "=" + iter->second);
 
-  for (size_t i = 0; i < envp_map.size(); i++)
-    envp.push_back(&envp_map[i][0]);
-  envp.push_back(NULL);
+  // for (size_t i = 0; i < envp_map.size(); i++)
+  //   envp.push_back(&envp_map[i][0]);
+  // envp.push_back(NULL);
 
-  std::vector<char *> args;
-  args.push_back((char *)env["PATH"].c_str());
-  args.push_back((char *)env["SCRIPT_NAME"].c_str());
-  args.push_back(NULL);
-  run_script(client, args, envp);
+  // std::vector<char *> args;
+  // args.push_back((char *)env["CGI_INTERPRETER"].c_str());
+  // args.push_back((char *)env["SCRIPT_NAME"].c_str());
+  // args.push_back(NULL);
+  // run_script(client, args, envp);
 }
 
-void WebServer::pipe_read(int fd) {
-  char buffer[1024];
-  ssize_t n = read(fd, buffer, sizeof(buffer) - 1);
-  if (n > 0) {
-    cout << "\nn--------------" << n << "\n";
-    buffer[n] = '\0';
-    HttpRequest *request = pipe_fds[fd];
-    request->setbufferCgi(buffer);
-    cout << "This =>" << request->getCGIBuffer() << "\n";
-  }
-  if (n == 0) {
-    HttpRequest *request = pipe_fds[fd];
-    request->cgi_for_test = 0;
-    struct kevent ev;
-    EV_SET(&ev, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-    if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1) {
-      std::cerr << "Error removing EVFILT_READ event: " << strerror(errno)
-                << "\n";
-    }
-    struct kevent evt;
-    EV_SET(&evt, fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
-    if (kevent(kqueue_fd, &evt, 1, NULL, 0, NULL) == -1) {
-      std::cerr << "Error adding EVFILT_WRITE event: " << strerror(errno)
-                << "\n";
-    }
-  }
-}
+// void WebServer::pipe_read(int fd) {
+//   char buffer[1024];
+//   ssize_t n = read(fd, buffer, sizeof(buffer) - 1);
+//   if (n > 0) {
+//     cout << "\nn--------------" << n << "\n";
+//     buffer[n] = '\0';
+//     HttpRequest *request = pipe_fds[fd];
+//     request->setbufferCgi(buffer);
+//     cout << "This =>" << request->getCGIBuffer() << "\n";
+//   }
+//   if (n == 0) {
+//     HttpRequest *request = pipe_fds[fd];
+//     request->cgi_for_test = 0;
+//     struct kevent ev;
+//     EV_SET(&ev, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+//     if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1) {
+//       std::cerr << "Error removing EVFILT_READ event: " << strerror(errno)
+//                 << "\n";
+//     }
+//     struct kevent evt;
+//     EV_SET(&evt, fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+//     if (kevent(kqueue_fd, &evt, 1, NULL, 0, NULL) == -1) {
+//       std::cerr << "Error adding EVFILT_WRITE event: " << strerror(errno)
+//                 << "\n";
+//     }
+//   }
+// }
 void send_cgi_response() { cout << "response\n"; }
 void WebServer::run() {
 
@@ -392,26 +433,30 @@ void WebServer::run() {
       if (serverSockets[i]->getServer_fd() == event_fd)
         is_server_socket = true;
     }
-    if (events[i].filter == EVFILT_TIMER) {
-      kill(events[i].ident, SIGKILL);
-    }
-    if (events[i].fflags & NOTE_EXIT) {
-      pid_t pid = events[i].ident;
-      int status;
-      pid_t reaped_pid = waitpid(pid, &status, 0);
-      if (reaped_pid == -1) {
-        perror("waitpid");
-      }
-    }
+    // if (events[i].filter == EVFILT_TIMER) {
+    //   kill(events[i].ident, SIGKILL);
+    // }
+    // if (events[i].fflags & NOTE_EXIT) {
+    //   pid_t pid = events[i].ident;
+    //   int status;
+    //   pid_t reaped_pid = waitpid(pid, &status, 0);
+    //   if (reaped_pid == -1) {
+    //     perror("waitpid");
+    //   }
+    // }
     if (is_server_socket)
       handle_new_connection(event_fd);
     else {
       if (filter == EVFILT_READ) {
+        // puts("OK");
+        // puts("request");
         receive_from_client(event_fd);
+
         if (isCGIRequest(event_fd)) {
           handleCGIRequest(event_fd);
         }
       } else if (filter == EVFILT_WRITE) {
+        // puts("response");
         respond_to_client(event_fd);
       }
     }

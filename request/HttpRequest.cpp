@@ -150,9 +150,9 @@ void HttpRequest::checkPathIscgi(string &path)
     if (f==false)
       this->rootcgi = "";
     if (s==".php")
-      this->cgiExtension = 1;
+      this->cgiExtension = PHP;
     else
-      this->cgiExtension = 2;
+      this->cgiExtension = PYTHON;
 
 }
 int HttpRequest::defineTypeMethod(string firstline) {

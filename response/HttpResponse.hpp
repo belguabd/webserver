@@ -36,6 +36,7 @@ public:
       return val;
   }
   void postResponse();
+  void cgiResponse();
   void defautlRoot(ServerConfig &config);
   void redirectionResponse(string &str);
   int checkDataResev();
