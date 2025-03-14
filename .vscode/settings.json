@@ -1,5 +1,6 @@
 {
     "files.associations": {
+<<<<<<< HEAD
         "test": "txt",
         "__bit_reference": "cpp",
         "__config": "cpp",
@@ -71,5 +72,10 @@
         "csignal": "cpp",
         "filesystem": "cpp",
         "set": "cpp"
+=======
+        "string": "cpp",
+        "iostream": "cpp",
+        "ostream": "cpp"
+>>>>>>> 9bf1e9ce526bf8058360b03ac030969b4b9fab63
     }
 }
