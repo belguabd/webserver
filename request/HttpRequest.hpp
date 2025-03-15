@@ -15,6 +15,8 @@
 #include <vector>
 // class HttpRequest;
 
+enum { PHP = 1, PYTHON = 2 };
+
 enum Method { NONE = 0, GET = 1, POST = 2, DELETE = 3 };
 
 using namespace std;
@@ -40,14 +42,10 @@ private:
   int handleDeleteRequest(std::string filePath);
 
 public:
-
-
   int checkCgi;
   int cgiExtension;
   string rootcgi;
   string pathInfo;
-
-
 
   string filename;
   int getCgi() { return cgi_fd; }
@@ -96,9 +94,10 @@ public:
 vector<string> splitstring(const string &str);
 void checkHeaders(string &str, map<string, string> &headersMap);
 void printNonPrintableChars(const std::string &str);
-LocationCgi getValueMapcgi(map<string, LocationCgi> & configNormal,map<string, LocationCgi> ::const_iterator it);
+LocationCgi getValueMapcgi(map<string, LocationCgi> &configNormal,
+                           map<string, LocationCgi>::const_iterator it);
 // void    checkHeaders(string& str, map<string, string>& headersMap);
-void    printNonPrintableChars(const std::string &str);
+void printNonPrintableChars(const std::string &str);
 char characterEncodeing(string &tmp);
 string encodeUrl(string &str);
 int indexValidPath(string str);

@@ -1,4 +1,5 @@
 #include "HttpResponse.hpp"
+#include <iterator>
 
 void	status_line(int client_socket,string status) {
   // cout <<status;
@@ -350,7 +351,7 @@ void    sendResponse(HttpResponse &response)
     return ;
   }
   if (response.request->checkCgi){
-    //  cout << response.request->filename << "\n";
+     cout << response.request->filename << "\n";
      response.cgiResponse();
     return ;
   }
@@ -584,11 +585,15 @@ int checkTypePath(string &path) {
 /*-------------------------------------- CGI ------------------------------------------*/
 void HttpResponse::cgiResponse()
 {
+  static int i =0;
   // cout << "--->"<<this->request->filename << "\n";
   ServerConfig config;
   ifstream file(this->request->filename);
   stringstream fileContent;
-  fileContent << file.rdbuf();
+  fileContent << file.rdbuf() ;
+  cout << std::endl;
+  // std::cout << fileContent.str() << std::endl;
+  
   if (file) {
       fileContent << file.rdbuf(); 
       file.close();

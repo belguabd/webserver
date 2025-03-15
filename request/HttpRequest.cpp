@@ -184,10 +184,10 @@ void HttpRequest::checkPathIscgi(string &path)
     bool f = fileExists(this->rootcgi);
     if (f==false)
       this->rootcgi = "";
-    if (s == ".php")
-      this->cgiExtension = 1;
+    if (s==".php")
+      this->cgiExtension = PHP;
     else
-      this->cgiExtension = 2;
+      this->cgiExtension = PYTHON;
 
 
 }
