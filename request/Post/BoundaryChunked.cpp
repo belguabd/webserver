@@ -1,23 +1,13 @@
 #include "BoundaryChunked.hpp"
 
-BoundaryChunked::BoundaryChunked(std::map<std::string, std::string> &queryParam, std::string &bufferBody, \
-	std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status, std::string &uploadStore):
+BoundaryChunked::BoundaryChunked(std::map<std::string, std::string> &queryParam, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
     _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
 {
-    _boundary = new Boundary(queryParam, _boundaryBuffer, _remainingBoundaryBuffer, _headers, _status, uploadStore);
+    _boundary = new Boundary(queryParam, _boundaryBuffer, _remainingBoundaryBuffer, _headers, _status);
 	_chunkSize = 0;
     setFileName("filePost");
 	// initializeMimeTypes();
 }
-
-// BoundaryChunked::BoundaryChunked(std::map<std::string, std::string> &queryParam, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
-//     _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
-// {
-//     _boundary = new Boundary(queryParam, _boundaryBuffer, _remainingBoundaryBuffer, _headers, _status);
-// 	_chunkSize = 0;
-//     setFileName("filePost");
-// 	// initializeMimeTypes();
-// }
 
 void BoundaryChunked::setFileName(std::string extention)
 {

@@ -1,38 +1,6 @@
 #include "HttpRequest.hpp"
 
-LocationUplaods &getMatchedLocationUpload(const std::string &path, map<string, LocationUplaods> &configUploads)
-{
-	size_t pos = path.find("/", 1);
-	string keyLocationUpload;
-
-    if (pos == std::string::npos)
-      pos = path.size() + 1;
-	keyLocationUpload = path.substr(0, pos);
-	if (configUploads.find(keyLocationUpload) == configUploads.end())
-		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = UPLOAD_FOLDER}; // 
-	return (configUploads.find(keyLocationUpload))->second;
-}
-
-void HttpRequest::handlePost()
-{
-  if (_post == NULL)
-  {
-    LocationUplaods &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.getConfigUpload());
-    
-	  std::cout << "lc: " << lc.upload_store << std::endl;
-    _post = new Post(mapheaders, queryParam, _buffer, lc);
-  }
-  else
-  {
-    _post->proseRequest(readBuffer);
-    // std::cout << "abcd\n";
-  }
-  setRequestStatus(_post->getStatus());
-	this->readBuffer.clear();
-}
-
-int HttpRequest::handleDeleteRequest(std::string filePath)
-{
+int HttpRequest::handleDeleteRequest(std::string filePath) {
   struct stat meteData;
   filePath.insert(0, ".");
   // std::cout << "filePath: " << filePath << std::endl;
@@ -82,21 +50,27 @@ void HttpRequest::handleRequest()
   else if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
     setRequestStatus(200);
   else if (_method == POST && getendHeaders() == 1)
-    handlePost();
+  {
+    if (_post == NULL)
+      _post = new Post(mapheaders, queryParam, _buffer);
+    else
+      _post->proseRequest(readBuffer);
+    setRequestStatus(_post->getStatus());
+
+    joinBuffer();
+  }
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0), server_config(server_config)
-{
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) , isCGi(false) , checkCgi(0), cgi_for_test(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
-  // server_config.
   _post = NULL;
 }
 
 int HttpRequest::readData()
 {
-  char buffer[1024];
+  char buffer[5000];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
@@ -183,10 +157,10 @@ void HttpRequest::checkPathIscgi(string &path)
     bool f = fileExists(this->rootcgi);
     if (f==false)
       this->rootcgi = "";
-    if (s==".php")
-      this->cgiExtension = PHP;
+    if (s == ".php")
+      this->cgiExtension = 1;
     else
-      this->cgiExtension = PYTHON;
+      this->cgiExtension = 2;
 
 
 }
@@ -209,7 +183,6 @@ int HttpRequest::defineTypeMethod(string firstline) {
   }
   if (words.size() != 3 || words[1][0] != '/')
   {
-    cout << "bad request" << endl;
     this->requestStatus = 400;
     this->endHeaders = 1;
     return 0;
@@ -250,7 +223,10 @@ void HttpRequest::checkHeaders(string &str)
   str = trimNewline(str);
   size_t pos = str.find(':');
   string result;
+  string host;
+  int i = 0;
   vector<string> words;
+  vector<string> hostsize;
   if (pos == string::npos || (pos > 0 && str[pos - 1] == ' '))
   {
     this->requestStatus = 400;
@@ -267,6 +243,16 @@ void HttpRequest::checkHeaders(string &str)
   }
   string headerName = str.substr(0, pos);
   result.erase(0, result.find_first_not_of(" "));
+  hostsize = splitstring(result);
+  host = convertToUpper(headerName);
+  if (host == "HOST") {
+    if (hostsize.size() != 1 || this->mapheaders.find(headerName) != this->mapheaders.end()) {
+      cout <<"bad request "<<endl;
+      this->requestStatus = 400;
+      this->endHeaders = 1;
+      return ;
+    }
+  }
   this->mapheaders[headerName] = result;
 }
 
@@ -308,7 +294,15 @@ void HttpRequest ::joinBuffer()
   this->_buffer += this->readBuffer;
   this->readBuffer.clear();
 }
-
+/*-----------------*/
+string convertToUpper(string str) {
+  string result;
+    for (size_t i = 0; i < str.size(); i++) {
+        result += toupper(str[i]); 
+    }
+  return result;
+}
+/*-----------------*/
 void HttpRequest ::parsePartRequest(string str_parse)
 {
   if (this->endHeaders == 1)
@@ -360,7 +354,7 @@ void HttpRequest ::requestLine() {
     else
     {
       this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
-    //   cout << "-- > " << this->dataFirstLine[1] << endl;
+      cout << "-- > " << this->dataFirstLine[1] << endl;
       return;
     }
   }
@@ -384,7 +378,6 @@ void HttpRequest ::requestLine() {
         value = querydata.substr(endkey + 1, endval - endkey - 1);
       else
         value = querydata.substr(endkey + 1);
-    //   cout << "Key: " << key << ", Value: " << value << endl;
       if (endval != string::npos)
         i = endval + 1;
       else

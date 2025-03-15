@@ -469,7 +469,7 @@ void WebServer::run() {
         int status;
         waitpid(pid, &status, 0);
         cgi_requests.erase(pid);
-        
+
       } else if (filter == EVFILT_TIMER) {
         pid_t pid = events[i].ident;
         std::cout << "[SERVER] CGI process " << pid << " timed out! Killing..."
@@ -480,10 +480,11 @@ void WebServer::run() {
         cgi_requests.erase(pid);
       } else if (filter == EVFILT_READ) {
         receive_from_client(event_fd);
-        // if (isCGIRequest(event_fd)) {
-        //   handleCGIRequest(event_fd);
-        // }
+        if (isCGIRequest(event_fd)) {
+          handleCGIRequest(event_fd);
+        }
       } else if (filter == EVFILT_WRITE) {
+        puts("response");
         respond_to_client(event_fd);
       }
     }
