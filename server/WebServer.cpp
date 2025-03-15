@@ -480,6 +480,18 @@ void WebServer::run() {
         cgi_requests.erase(pid);
       } else if (filter == EVFILT_READ) {
         receive_from_client(event_fd);
+        // if (isCGIRequest(event_fd)) {
+        //   handleCGIRequest(event_fd);
+        // }
+      }
+      else if (filter == EVFILT_WRITE)
+      {
+        puts("response OK");
+        struct kevent changes[1];
+        EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+        kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+        // puts("OK");
+        // respond_to_client(event_fd);
         if (isCGIRequest(event_fd)) {
           handleCGIRequest(event_fd);
         }
