@@ -481,12 +481,12 @@ void WebServer::run()
       }
       else if (filter == EVFILT_WRITE)
       {
-        // puts("response OK");
-        // struct kevent changes[1];
-        // EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-        // kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+        puts("response OK");
+        struct kevent changes[1];
+        EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+        kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
         // puts("OK");
-        respond_to_client(event_fd);
+        // respond_to_client(event_fd);
       }
     }
   }
