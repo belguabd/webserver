@@ -31,7 +31,6 @@ private:
   ServerConfig server_config;
   string file;
   std::string buffer_cgi;
-  std::string fileName;
   bool isCGi;
 
   // Delete _delete;
@@ -74,6 +73,7 @@ public:
   void setRequestStatus(int i) { this->requestStatus = i; }
   const string &getbuffer() const { return this->_buffer; }
   string getreadbuffer() const { return this->readBuffer; }
+  string &getFileName() { return _post->getFileName(); }
   void checkHeaders(string &str);
   void checkPathIscgi(string &path);
   void requestLine();
