@@ -34,6 +34,7 @@ private:
 public:
   WebServer(string &str);
   std::vector<HttpRequest *> connected_clients;
+  std::vector<HttpResponse *> responses_clients;
   void addServerSocket(ServerConfig &conf);
   void handle_new_connection(int server_fd);
   void receive_from_client(int client_fd);

@@ -3,6 +3,7 @@
 #include "./request/HttpRequest.hpp"
 #include "./request/Post/Post.hpp"
 #include <system_error>
+#include <signal.h>
 
 void makeFileEmpty(const std::string filename) {
     std::ofstream file(filename, std::ios::trunc);
@@ -18,6 +19,7 @@ int main(int arc, char **arv)
 {
     if (!arv[1])
         return 0;
+    signal(SIGPIPE, SIG_IGN);
     string str = arv[1];
     WebServer server (str);
     // makeFileEmpty(CURREQ);

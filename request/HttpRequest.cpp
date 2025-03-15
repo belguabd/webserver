@@ -70,7 +70,7 @@ HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
 
 int HttpRequest::readData()
 {
-  char buffer[80];
+  char buffer[5000];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);

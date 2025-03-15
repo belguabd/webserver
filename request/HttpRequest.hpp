@@ -46,8 +46,6 @@ public:
   string rootcgi;
   string pathInfo;
 
-
-
   string filename;
   int getCgi() { return cgi_fd; }
   void setCgi(int fd) { this->cgi_fd = fd; }

@@ -19,6 +19,12 @@ class HttpResponse {
 private:
 public:
   HttpRequest *request;
+   int firstTimeResponse;
+  int complete;
+  ifstream file;
+  streampos file_offset;
+  size_t file_size;
+  std::map<std::string, std::string> mimeType;
   HttpResponse(HttpRequest *re);
   ~HttpResponse();
   int writeData();
@@ -36,6 +42,7 @@ public:
       return val;
   }
   void postResponse();
+  string getMimeType(string &extension);
   void cgiResponse();
   void defautlRoot(ServerConfig &config);
   void redirectionResponse(string &str);
@@ -45,9 +52,11 @@ public:
   void fileDataSend(string &data,ServerConfig &config);
   void dirDataSend(string &data,string &root,LocationConfig &normal, ServerConfig &config);
   void dirDataSend(string &data, string &root,LocationUplaods &upload, ServerConfig &config);
+  void dirDataSend(string &data, ServerConfig &config);
   void forbidden(int client_socket,ServerConfig &config);
 };
 
 int checkTypePath(string &path);
 bool ExistFile(string &filePath);
 string dirAutoindex(string &dirPath,string &root);
+string dirDirctlyAutoindex(string &dirPath,string &root);

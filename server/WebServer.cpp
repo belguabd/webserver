@@ -122,6 +122,8 @@ void WebServer::receive_from_client(int client_fd) {
     // connected_clients.erase(it);
   }
   if (client->getRequestStatus()) {
+     HttpResponse *responseclient = new HttpResponse(client);
+     responses_clients.push_back(responseclient);
     client->cgi_for_test = client->checkCgi;
     struct kevent changes[1];
     EV_SET(&changes[0], client_fd, EVFILT_READ, EV_DELETE, 0, 0, client);
@@ -184,24 +186,30 @@ void WebServer::receive_from_client(int client_fd) {
 }
 
 void WebServer::respond_to_client(int client_fd) {
-  HttpRequest *client = NULL;
-  std::vector<HttpRequest *>::iterator it;
-  for (it = connected_clients.begin(); it != connected_clients.end(); ++it) {
-    if ((*it)->getfd() == client_fd) {
-      client = *it;
+  HttpResponse * response= NULL;
+  std::vector<HttpResponse*>::iterator it;
+
+  for (it = responses_clients.begin(); it != responses_clients.end(); ++it) {
+    if ((*it)->request->getfd() == client_fd) {
+      response = *it;
       break;
     }
   }
-
-  HttpResponse *responseclient = new HttpResponse(client);
-  responseclient->writeData();
-  struct kevent changes[1];
-  EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-  kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
-  close(client_fd);
-  connected_clients.erase(it);
-  delete client;
-  delete responseclient;
+  if (!response) return;
+  response->writeData();
+  if (response->complete ==1) {
+    struct kevent changes[1];
+    EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+    kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+    close(client_fd);
+    responses_clients.erase(it); 
+    delete response;
+    // connected_clients.erase(it);
+    // if (to_erase != responses_clients.end()) {
+    //     responses_clients.erase(to_erase);  // Erase only if found
+    //   }
+    // delete response;
+  }
 }
 /*----------------------------------------------------*/
 int beforStart(string str) {
@@ -412,6 +420,7 @@ void WebServer::run() {
           handleCGIRequest(event_fd);
         }
       } else if (filter == EVFILT_WRITE) {
+        // puts("OK");
         respond_to_client(event_fd);
       }
     }
