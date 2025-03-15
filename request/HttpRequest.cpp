@@ -70,7 +70,7 @@ HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
 
 int HttpRequest::readData()
 {
-  char buffer[5000];
+  char buffer[4096];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
@@ -189,6 +189,7 @@ int HttpRequest::defineTypeMethod(string firstline) {
   }
   this->dataFirstLine = words;
   checkPathIscgi(words[1]);
+  cout << "-->"<<checkCgi<<endl;
   if (words[0] == "GET")
     return (1);
   else if (words[0] == "POST")
