@@ -183,7 +183,6 @@ int HttpRequest::defineTypeMethod(string firstline) {
   }
   if (words.size() != 3 || words[1][0] != '/')
   {
-    cout << "bad request" << endl;
     this->requestStatus = 400;
     this->endHeaders = 1;
     return 0;
@@ -224,7 +223,10 @@ void HttpRequest::checkHeaders(string &str)
   str = trimNewline(str);
   size_t pos = str.find(':');
   string result;
+  string host;
+  int i = 0;
   vector<string> words;
+  vector<string> hostsize;
   if (pos == string::npos || (pos > 0 && str[pos - 1] == ' '))
   {
     this->requestStatus = 400;
@@ -241,6 +243,16 @@ void HttpRequest::checkHeaders(string &str)
   }
   string headerName = str.substr(0, pos);
   result.erase(0, result.find_first_not_of(" "));
+  hostsize = splitstring(result);
+  host = convertToUpper(headerName);
+  if (host == "HOST") {
+    if (hostsize.size() != 1 || this->mapheaders.find(headerName) != this->mapheaders.end()) {
+      cout <<"bad request "<<endl;
+      this->requestStatus = 400;
+      this->endHeaders = 1;
+      return ;
+    }
+  }
   this->mapheaders[headerName] = result;
 }
 
@@ -282,7 +294,15 @@ void HttpRequest ::joinBuffer()
   this->_buffer += this->readBuffer;
   this->readBuffer.clear();
 }
-
+/*-----------------*/
+string convertToUpper(string str) {
+  string result;
+    for (size_t i = 0; i < str.size(); i++) {
+        result += toupper(str[i]); 
+    }
+  return result;
+}
+/*-----------------*/
 void HttpRequest ::parsePartRequest(string str_parse)
 {
   if (this->endHeaders == 1)

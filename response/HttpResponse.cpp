@@ -104,7 +104,7 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
     if (bytes_read > 0) {
         send(this->request->getfd(), buffer, bytes_read, 0);
        this->file_offset += bytes_read;
-      //  cout <<"file_offset = " << round((double)this->file_offset / (1024*1024) * 10) / 10 << " MB" << endl;
+       cout <<"fd client = "<<this->request->getfd()<<"   file_offset = " << round((double)this->file_offset / (1024*1024) * 10) / 10 << " MB" << endl;
     }
     if (bytes_read == 0) {
         this->file.close();
@@ -449,11 +449,11 @@ void    sendResponse(HttpResponse &response)
   if (response.checkDataResev() != 0) {
     return ;
   }
-  if (response.request->checkCgi){
-    //  cout << response.request->filename << "\n";
-     response.cgiResponse();
-    return ;
-  }
+  // if (response.request->checkCgi){
+  //   //  cout << response.request->filename << "\n";
+  //    response.cgiResponse();
+  //   return ;
+  // }
   if (method == GET) {
     response.getResponse();
   }
@@ -468,7 +468,12 @@ void    sendResponse(HttpResponse &response)
 }
 
 HttpResponse::HttpResponse(HttpRequest *re) :request(re),firstTimeResponse(0) ,file_offset(0),complete(0) {
-
+  
+  // static int i =0;
+  // if (i ==1)
+  //   exit(102);
+  cout <<"here ----->"<<endl;
+  // i++;
 }
 
 HttpResponse:: ~HttpResponse() { }
@@ -519,7 +524,7 @@ void HttpResponse::HttpVersionNotSupported(int client_socket,ServerConfig &confi
     stringstream response1;
     response1 << "Content-Type: text/html\r\n"
               << "Content-Length: " << body.size() << "\r\n"
-              << "Connection: close\r\n"
+              << "Connection: keep-alive\r\n"
               << "\r\n"
               << body;
     string responseStr = response1.str();
@@ -648,12 +653,12 @@ string dirDirctlyAutoindex(string &dirPath,string &root) {
         return "<h1>Directory not found</h1>";
     }
   string str = dirPath.substr(root.length() + 1);
-  cout <<"str "<<str<<endl;
+  // cout <<"str "<<str<<endl;
     struct dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             html += "<li><a href=\"" + str + "/" + entry->d_name + "\">";
-            cout << "name "<<entry->d_name<<endl;
+            // cout << "name "<<entry->d_name<<endl;
             html += entry->d_name;
             html += "</a></li>\n";
         }

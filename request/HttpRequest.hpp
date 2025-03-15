@@ -64,6 +64,7 @@ public:
   int getfd() const { return this->client_fd; }
   void joinBuffer();
   string partRquest();
+  int validHeadres(map<string,string>&headrs);
   int defineTypeMethod(string firstline);
   void parsePartRequest(string str_parse);
   int getFirstTimeFlag() const { return this->firsttime; }
@@ -100,3 +101,4 @@ char characterEncodeing(string &tmp);
 string encodeUrl(string &str);
 int indexValidPath(string str);
 bool fileExists(std::string &filePath);
+string convertToUpper(string str) ;

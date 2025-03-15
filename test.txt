@@ -35,6 +35,5 @@ headers parse
 
 bad request
 
-Host : stripe.com
 duplicate Host
 host more string

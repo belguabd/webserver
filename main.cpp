@@ -19,7 +19,7 @@ int main(int arc, char **arv)
 {
     if (!arv[1])
         return 0;
-    signal(SIGPIPE, SIG_IGN);
+    // signal(SIGPIPE, SIG_IGN);
     string str = arv[1];
     WebServer server (str);
     // makeFileEmpty(CURREQ);
