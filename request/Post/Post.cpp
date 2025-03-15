@@ -15,6 +15,13 @@ void Post::createBodyTypeObject(std::string& buffer) {
 		setFileName(_mimeToExtension[_headers["Content-Type"]]);
 	}
 }
+
+std::string &Post::getFileName()
+{
+	if (_bodyType == chunked)
+		return chunk->_fileName;
+	return _fileName;
+}
 Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer, LocationUplaods &configUpload)
 :_headers(headers), _queryParam(queryParam)
 , _configUpload(configUpload)
@@ -22,11 +29,12 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 	// setHeaders(headers);
 	_status = 0;
 	_bodySize = 0;
-	// if (configUpload.allowed_methods.find("POST") == std::string::npos)
-	// {
-	// 	_status = 1; // 405
-	// 	return;	
-	// }
+	std::cout << "configUpload.allowed_methods: " << configUpload.allowed_methods << std::endl;
+	if (configUpload.allowed_methods.find("POST") == std::string::npos)
+	{
+		_status = 405; // 405
+		return;	
+	}
 	// std::cout << "_bodySize: " << _bodySize << std::endl;
 	initializeMimeTypes();
 	_uploadStore = _configUpload.upload_store;
@@ -42,11 +50,6 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 
 int Post::proseRequest(std::string &buffer)
 {
-	// if (buffer.empty())
-	// {
-	// 	_status = 1; // 404
-	// 	return _status;
-	// }
 	_bodySize += buffer.size(); // attention of pre added \r\n in buffer;
 	if (_bodySize > _configUpload.client_max_body_size)
 	{
@@ -54,8 +57,6 @@ int Post::proseRequest(std::string &buffer)
 		_status = 404;
 		return _status;
 	}
-	std::cout << "_bodySize: " << _bodySize << std::endl;
-	std::cout << " client_max_body_size: " <<  _configUpload.client_max_body_size << std::endl;
 	if (this->_bodyType == contentLength)
 		return handleContentLength(buffer);
 	if (this->_bodyType == keyVal)
@@ -119,6 +120,18 @@ void Post::setBodyType()
 	}
 	else
 		_bodyType = contentLength;
+
+	if (_bodyType == boundary && _headers["isCgi"] == "1")
+	{
+		std::cout << "I am boundary and cgi\n";
+		_bodyType = contentLength;
+	}
+	else if (_bodyType == boundaryChunked && _headers["isCgi"] == "1")
+	{
+		std::cout << "I am boundaryChunked and cgi\n";
+		_bodyType = chunked;
+	}
+
 }
 
 void printNonPrintableChars(const std::string &str)
@@ -153,6 +166,7 @@ void Post::setFileName(std::string extention)
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	_fileName = (name + extention);
+	std::cout << "content-length fileName : " << _fileName << std::endl;
 }
 
 int Post::handleContentLength(std::string &buffer)

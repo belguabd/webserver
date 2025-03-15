@@ -9,7 +9,7 @@ LocationUplaods &getMatchedLocationUpload(const std::string &path, map<string, L
       pos = path.size() + 1;
 	keyLocationUpload = path.substr(0, pos);
 	if (configUploads.find(keyLocationUpload) == configUploads.end())
-		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = UPLOAD_FOLDER, .client_max_body_size= 1000000000}; // 
+		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = UPLOAD_FOLDER, .client_max_body_size= 1000000000, .allowed_methods="POST GET"}; // 
 	return (configUploads.find(keyLocationUpload))->second;
 }
 
@@ -18,9 +18,10 @@ void HttpRequest::handlePost()
   if (_post == NULL)
   {
     LocationUplaods &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.getConfigUpload());
-    
 	  std::cout << "lc: " << lc.upload_store << std::endl;
-    _post = new Post(mapheaders, queryParam, _buffer, lc);
+      mapheaders["isCgi"] = std::to_string(checkCgi);
+      std::cout << "is cgi: " << checkCgi << std::endl;
+      _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
   else
   {
@@ -87,7 +88,7 @@ void HttpRequest::handleRequest()
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0), server_config(server_config)
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0), server_config(server_config),checkCgi(0) , cgi_for_test(0)
 {
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
@@ -97,7 +98,7 @@ HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
 
 int HttpRequest::readData()
 {
-  char buffer[1024];
+  char buffer[5120];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);

@@ -13,7 +13,6 @@ Boundary::Boundary(std::map<std::string, std::string> &queryParam, std::string &
     _remainingBuffer(remainingBuffer), _headers(headers), _status(status)
     ,_uploadStore(uploadStore)
 {
-    std::cout << "I am in boundary\n";
     _status = 0;
     setBoundaryString();
 }

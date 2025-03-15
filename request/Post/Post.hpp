@@ -49,8 +49,9 @@ public:
     // Post();
     // Post(std::map<std::string, std::string> &headers, std::map<std::string, \
     //     std::string> &queryParam, std::string &buffer);
-    Post(std::map<std::string, std::string> &headers, std::map<std::string, \
-        std::string> &queryParam, std::string &buffer, LocationUplaods &configUpload);
+    Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, 
+    std::string &buffer, LocationUplaods &configUpload);
+    std::string &getFileName();
     int getStatus() {return _status;}
     int handleKeyVal(std::string &buffer);
     int handleContentLength(std::string &buffer);

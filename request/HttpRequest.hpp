@@ -32,6 +32,7 @@ private:
   ServerConfig server_config;
   string file;
   std::string buffer_cgi;
+  std::string fileName;
   bool isCGi;
    map<string, string> queryParam;
 
