@@ -480,9 +480,9 @@ void WebServer::run() {
         cgi_requests.erase(pid);
       } else if (filter == EVFILT_READ) {
         receive_from_client(event_fd);
-        if (isCGIRequest(event_fd)) {
-          handleCGIRequest(event_fd);
-        }
+        // if (isCGIRequest(event_fd)) {
+        //   handleCGIRequest(event_fd);
+        // }
       } else if (filter == EVFILT_WRITE) {
         respond_to_client(event_fd);
       }
