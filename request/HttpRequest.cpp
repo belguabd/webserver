@@ -88,11 +88,9 @@ void HttpRequest::handleRequest()
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0), server_config(server_config),checkCgi(0) , cgi_for_test(0)
-{
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) , isCGi(false) , checkCgi(0), cgi_for_test(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
-  // server_config.
   _post = NULL;
 }
 
@@ -185,10 +183,10 @@ void HttpRequest::checkPathIscgi(string &path)
     bool f = fileExists(this->rootcgi);
     if (f==false)
       this->rootcgi = "";
-    if (s==".php")
-      this->cgiExtension = PHP;
+    if (s == ".php")
+      this->cgiExtension = 1;
     else
-      this->cgiExtension = PYTHON;
+      this->cgiExtension = 2;
 
 
 }
@@ -211,13 +209,13 @@ int HttpRequest::defineTypeMethod(string firstline) {
   }
   if (words.size() != 3 || words[1][0] != '/')
   {
-    cout << "bad request" << endl;
     this->requestStatus = 400;
     this->endHeaders = 1;
     return 0;
   }
   this->dataFirstLine = words;
   checkPathIscgi(words[1]);
+  cout << "-->"<<checkCgi<<endl;
   if (words[0] == "GET")
     return (1);
   else if (words[0] == "POST")
@@ -252,7 +250,10 @@ void HttpRequest::checkHeaders(string &str)
   str = trimNewline(str);
   size_t pos = str.find(':');
   string result;
+  string host;
+  int i = 0;
   vector<string> words;
+  vector<string> hostsize;
   if (pos == string::npos || (pos > 0 && str[pos - 1] == ' '))
   {
     this->requestStatus = 400;
@@ -269,6 +270,16 @@ void HttpRequest::checkHeaders(string &str)
   }
   string headerName = str.substr(0, pos);
   result.erase(0, result.find_first_not_of(" "));
+  hostsize = splitstring(result);
+  host = convertToUpper(headerName);
+  if (host == "HOST") {
+    if (hostsize.size() != 1 || this->mapheaders.find(headerName) != this->mapheaders.end()) {
+      cout <<"bad request "<<endl;
+      this->requestStatus = 400;
+      this->endHeaders = 1;
+      return ;
+    }
+  }
   this->mapheaders[headerName] = result;
 }
 
@@ -310,7 +321,15 @@ void HttpRequest ::joinBuffer()
   this->_buffer += this->readBuffer;
   this->readBuffer.clear();
 }
-
+/*-----------------*/
+string convertToUpper(string str) {
+  string result;
+    for (size_t i = 0; i < str.size(); i++) {
+        result += toupper(str[i]); 
+    }
+  return result;
+}
+/*-----------------*/
 void HttpRequest ::parsePartRequest(string str_parse)
 {
   if (this->endHeaders == 1)
@@ -362,7 +381,7 @@ void HttpRequest ::requestLine() {
     else
     {
       this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
-    //   cout << "-- > " << this->dataFirstLine[1] << endl;
+      cout << "-- > " << this->dataFirstLine[1] << endl;
       return;
     }
   }
@@ -386,7 +405,6 @@ void HttpRequest ::requestLine() {
         value = querydata.substr(endkey + 1, endval - endkey - 1);
       else
         value = querydata.substr(endkey + 1);
-    //   cout << "Key: " << key << ", Value: " << value << endl;
       if (endval != string::npos)
         i = endval + 1;
       else

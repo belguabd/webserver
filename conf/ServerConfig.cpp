@@ -81,13 +81,19 @@ ServerConfig :: ~ServerConfig() { }
 
 void ServerConfig :: locationRedirection(string &location) {
     string tmp;
+    vector <string> words;
     size_t returnPos;
-    vector<string> words;
     string val;
     size_t pos = location.find("{");
     tmp =location.substr(8, pos - 8);
+
     string key = trim(tmp);
-        if (key.empty()|| key[0]!='/') {
+    words = splitstring(key);
+    if (words.size()!=1) {
+        cout <<"error location path not valid "<<endl;
+        exit(0);
+    }
+    if (key.empty()|| key[0]!='/') {
         cout <<"error location path not valid "<<endl;
         exit(0);
     }
@@ -126,11 +132,18 @@ void ServerConfig :: locationRedirection(string &location) {
 
 void ServerConfig ::locationCgi(string &location) {
     string tmp;
+        vector <string> words;
     size_t pos = location.find("{");
     tmp = location.substr(8, pos - 8);
     string str = location.substr(pos + 1);
     checkContentLocationCgi(str);
     string key = trim(tmp);
+    words = splitstring(key);
+    if (words.size()!=1) {
+        cout <<"error location path not valid "<<endl;
+        exit(0);
+    }
+
     if (key.empty()|| key[0]!='/') {
         cout <<"error location path not valid "<<endl;
         exit(0);
@@ -191,6 +204,10 @@ size_t checkValidBadySise(string str)
         cout<<"error client_max_body_size not valid"<<endl;
         exit(0);
     }
+    if (i==0) {
+        cout<<"error client_max_body_size not valid"<<endl;
+        exit(0);
+    }
     maxBadysize = static_cast<size_t>(stoll(number));
 
     typeStorage = str.substr(i);
@@ -228,11 +245,18 @@ size_t checkValidBadySise(string str)
 
 void ServerConfig :: locationUpload(string &location) {
     string tmp;
+    vector <string> words;
     size_t pos = location.find("{");
     tmp =location.substr(8, pos - 8);
     string str = location.substr(pos + 1);
     checkContentLocationUpload(str);
     string key = trim(tmp);
+    words = splitstring(key);
+    if (words.size()!=1) {
+        cout <<"error location path not valid "<<endl;
+        exit(0);
+    }
+
     if (key.empty() || key[0]!='/') {
         cout <<"error location path not valid "<<endl;
         exit(0);
@@ -381,12 +405,19 @@ void    checkContentLocationCgi(string &str)
 
 void ServerConfig :: locationNormal(string &location) {
     string tmp;
+    vector <string> words;
     size_t pos = location.find("{");
     tmp = location.substr(8, pos - 8);
     string str = location.substr(pos + 1);
     checkContentLocationNormal(str);
 
     string key = trim(tmp);
+    words = splitstring(key);
+    if (words.size()!=1) {
+        cout <<"error location path not valid "<<endl;
+        exit(0);
+    }
+
     if (key.empty()|| key[0]!='/') {
         cout <<"error location path not valid "<<endl;
         exit(0);
@@ -460,89 +491,49 @@ void ServerConfig :: locationData(string &strlocat) {
 
 }
 
-void ServerConfig :: setGlobaleData(string &strConfig, string &str) {
-    int sig = 0;
-    string val;
-    int cont = 0;
-    if (str =="index") {
-        sig = 1;
-    }
-    size_t i = 0;
-    while(i < strConfig.length())
-    {
-        size_t pos = strConfig.find(str,i);
-        if (pos ==string::npos)
-            break;
-        if (sig ==1 && pos!=string::npos) {
-            string tmp = strConfig.substr(pos-4,9);
-            string tmp1 = strConfig.substr(pos,6);
-            if (strncmp(tmp.c_str(),"autoindex",9)==0||strncmp(tmp1.c_str(),"index.",9)==0) {
-                i = pos + 1;
-                continue;
-            }
-        }
-        size_t endKey = strConfig.find_first_of(" \t", pos);
-        size_t valStart = strConfig.find_first_not_of(" \t", endKey);
-        size_t lastpos = strConfig.find(';',valStart);
-        if (lastpos==string::npos) {
-			cout <<"error ; not found"<<endl;
-			exit(0) ;
-		}
-        if (valStart != std::string::npos && lastpos != std::string::npos) {
-            val = strConfig.substr(valStart,lastpos - valStart);
-            if (val.find("\n")!=string::npos) {
-			    cout <<"error newlinw in val"<<endl;
-			    exit(0) ;
-		    }
-            cont++;
-            if (val.empty()) {
-			    cout <<"error empty val"<<endl;
-			    exit(0) ;
-		    }
-        }
-        strConfig.replace(pos, lastpos - pos + 2, " ");
-        if (str == "listen") {
-            isNumber(val);
-            int a = atoi(val.c_str());
-            this->ports.push_back(a);
-        }
-        if (str == "error_page") {
-            vector <string > words;
-            words = splitstring(val);
-            if (words.size()==2)
-            {
-                isNumber(words[0]);
-                this->errorpage[words[0]] = words[1];
-            }
-            else {
-                string key;
-                size_t i = 0;
-                while(i <(words.size() - 1)) {
-                    isNumber(words[i]);
-                    key +=words[i];
-                    key +=" ";
-                    i++;
-                }
-                if (i==0) {
-                    cout<<"error_page not valid"<<endl;
-                    exit(0);
-                }
-                this->errorpage[key] = words[words.size() - 1];
-            }
-            
-        }
-        i = pos + 1;
-    }
-    if (str!="listen"&&str!="error_page"&& cont!= 1) {
-        cout <<"error duplicate var "<<endl;
-        exit(0);
-    }
-    this->setVal(str,val);
-}
-
 void ServerConfig :: setVal(string &str,string &val)
 {
-    if (str == "host") {
+    if (str == "listen") {
+        isNumber(val);
+        int a = atoi(val.c_str());
+        if (a==0) {
+            cout <<"error port or error_page number not valid "<<val<<endl;
+            exit(0);
+        }
+        for(size_t i = 0;i<this->ports.size();i++)
+        {
+            if (this->ports[i]==a) {
+                cout << "error: duplicate port: " << val << endl;
+                exit(0);
+            }
+        }
+        this->ports.push_back(a);
+        
+    }else if (str == "error_page") {
+        vector <string > words;
+        words = splitstring(val);
+        if (words.size()==2)
+        {
+            isNumber(words[0]);
+            this->errorpage[words[0]] = words[1];
+        }
+        else {
+            string key;
+            size_t i = 0;
+            while(i <(words.size() - 1)) {
+                isNumber(words[i]);
+                key +=words[i];
+                key +=" ";
+                i++;
+            }
+            if (i==0) {
+                cout<<"error_page not valid"<<endl;
+                exit(0);
+            }
+            this->errorpage[key] = words[words.size() - 1];
+        }
+    }
+    else if (str == "host") {
         this->host = val;
     } else if (str == "client_max_body_size") {
         this->client_max_body_size = checkValidBadySise(val);
@@ -577,38 +568,52 @@ void isNumber(string& str) {
 }
 
 void ServerConfig :: checkGlobalConfig(string strConfig) {
-
-	string list[] = {"listen","host","client_max_body_size","root"};
-	size_t listSize = sizeof(list) / sizeof(list[0]);
-	for (size_t i = 0; i < listSize; i++) {
-		if (strConfig.find(list[i]) == string::npos) {
-			cout << "Error in global config" << endl;
-			exit(0) ;
-		}
-	}
-    size_t index = strConfig.find("index");
-    int i = 0;
-    while (index!=string::npos) {
-        string tmp = strConfig.substr(index - 4,index + 5);
-        if (strncmp(tmp.c_str(),"autoindex",9)!=0) {
-            i++;
-            break;
-        } else {
-            index = strConfig.find("index",index + 1);
+    strConfig.pop_back();
+    string line;
+    set <string> words;
+    vector <string> valid;
+    istringstream stream(strConfig);
+    while (getline(stream, line)) {
+        istringstream linestream(line);
+        string firstWord;
+        linestream >> firstWord;
+        if (firstWord != "listen" && firstWord != "error_page" && !firstWord.empty()) {
+            if (words.find(firstWord) != words.end()) {
+                cout << "Error: Duplicate parameter found - " << firstWord << endl;
+                exit(1);
+            }
+            words.insert(firstWord);
+        }
+        if (firstWord == "listen" || firstWord == "host"
+            || firstWord == "server_name" || firstWord == "client_max_body_size"
+            || firstWord == "error_page"|| firstWord == "autoindex"
+            || firstWord == "root"|| firstWord == "index") {
+            // valid.push_back(firstWord);
+            size_t pos = line.find(";");
+            if (pos == string::npos) {
+                cout << "; not found" << endl;
+                exit(0);
+            }
+            string tmp = line.substr(pos + 1);
+            size_t startPos = line.find_first_of(" \t", firstWord.length());
+            if (startPos != string::npos) {
+                startPos = line.find_first_not_of(" \t", startPos);
+            }
+            string val = line.substr(startPos, pos - startPos);
+            checkcontent(tmp);
+            this->setVal(firstWord,val);
+            if (find(valid.begin(), valid.end(), firstWord) == valid.end()) {
+                    valid.push_back(firstWord);
+            }
+        } 
+        else {
+            checkcontent(line);
         }
     }
-    if (i == 0) {
-		cout << "Error in global config" << endl;
-		exit(0) ;
-	}
-    string globalvar[] = {"listen","server_name","host","client_max_body_size","error_page","autoindex","root","index"};
-	size_t Size = sizeof(globalvar) / sizeof(globalvar[0]);
-	for (size_t i = 0; i < Size; i++) {
-        this->setGlobaleData(strConfig,globalvar[i]);
-	}
-    // cout <<"str = "<<strConfig<<endl;
-    checkcontent(strConfig);
-    // exit(0);
+   if (valid.size() != 7) {
+    cout <<"error default param not found"<<endl;
+    exit(0);
+   }
 }
 void validbrackets(string &str) {
     int sig = 0;

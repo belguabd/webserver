@@ -16,6 +16,7 @@
 #include "../request/HttpRequest.hpp"
 #include "../response/HttpResponse.hpp"
 #include "ServerSocket.hpp"
+#include <unordered_map>
 
 class WebServer {
 private:
@@ -24,6 +25,7 @@ private:
   std::vector<ServerSocket *> serverSockets;
   std::vector<ServerConfig> config;
   std::map<int, ServerConfig> map_configs;
+  std::unordered_map<pid_t, HttpRequest*> cgi_requests;
 
   std::map<int, HttpRequest*> pipe_fds;
   std::map<int, pid_t> pid_processes;
@@ -34,6 +36,7 @@ private:
 public:
   WebServer(string &str);
   std::vector<HttpRequest *> connected_clients;
+  std::vector<HttpResponse *> responses_clients;
   void addServerSocket(ServerConfig &conf);
   void handle_new_connection(int server_fd);
   void receive_from_client(int client_fd);

@@ -62,11 +62,12 @@ class ServerConfig
         void setVal(string &str,string &val);
         string getdata() const {return this->data;}
         string getHost(){return  host;}
+        bool getAutoindex(){return  autoindex;}
         string getRoot() const {return this->root;}
         string getIndex() const {return this->index;}
         string getServerName(){return  server_name;}
-        map<string, LocationUplaods> &getConfigUpload(){return  configUpload;}
       std::vector<int> getPorts(){return ports;}
+      map <string ,LocationUplaods> &getConfigUpload() {return configUpload;}
 };
 
 void validbrackets(string &str);

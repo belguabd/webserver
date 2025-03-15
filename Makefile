@@ -1,5 +1,5 @@
 NAME = webserver
-CPP = c++ -fsanitize=address -g -std=c++98 
+CPP = c++ -fsanitize=address -g -std=c++98
 CPPFLAGS = #-Wall -Wextra -Werror -std=c++98
 RM = rm -f
 
@@ -17,9 +17,12 @@ $(NAME):$(OBJ)
 	./response/HttpResponse.hpp ./conf/ServerConfig.hpp ./request/Post/Macros.hpp
 	$(CPP) $(CPPFLAGS) -c $< -o $@ 
 
+rm:
+	$(RM) -f ./upload/*
 
 clean:
 	$(RM) $(OBJ)
+	$(RM) ./upload/*
 	$(RM) ./currentRequest
 	$(RM) ./out.yaml
 

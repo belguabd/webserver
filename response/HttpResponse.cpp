@@ -1,5 +1,4 @@
 #include "HttpResponse.hpp"
-#include <iterator>
 
 void	status_line(int client_socket,string status) {
   // cout <<status;
@@ -23,30 +22,97 @@ void	headersSending(int client_socket,string serverName) {
 	send(client_socket, header.c_str(), header.size(), 0);
 }
 /*---------------------- Get method------------------------------------------*/
-void HttpResponse::fileDataSend(string &data,ServerConfig &config)
-{
+// void HttpResponse::fileDataSend(string &data,ServerConfig &config)
+// {
+//   string ContentType;
+//     char buffer[5000];
+//   ifstream file(data, ios::binary);;
+//   size_t pos = data.find(".");
+//   string extension = data.substr(pos);
+//   ContentType = getMimeType(extension);
+//   // cout <<"ContentType = "<<ContentType<<endl;
+//   // stringstream fileContent;
+//   // fileContent << file.rdbuf();
+//   if (!file) {
+    
+//       cout<<"here"<<endl;
+//   }
+//   if (firstTimeResponse==0)
+//   {
+//     file.seekg(0, ios::end); 
+//     std::streampos file_size = file.tellg();
+//     file.seekg(0, std::ios::beg);
+//     cout <<"file size = "<<file_size<<endl;
+//     status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
+//     headersSending(this->request->getfd(),config.getServerName());
+//     // string body = fileContent.str();
+//     // file.read(buffer, sizeof(buffer));
+//     stringstream response1;
+//     response1 << "Content-Type: "<<ContentType<<"\r\n"
+//               << "Content-Length: " << (long)file_size << "\r\n"
+//               << "Connection: close\r\n"
+//               << "\r\n";
+//     string responseStr = response1.str();
+//     send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+//       this->firstTimeResponse = 1;
 
-  ifstream file(data);
-  stringstream fileContent;
-  fileContent << file.rdbuf();
-  if (file) {
-      fileContent << file.rdbuf(); 
-      file.close();
-  }
-  status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
-  headersSending(this->request->getfd(),config.getServerName());
-  string body = fileContent.str();
-  stringstream response1;
-  response1 << "Content-Type: text/html\r\n"
-  // response1 << "Content-Type: image/jpeg\r\n"
-            << "Content-Length: " << body.size() << "\r\n"
-            << "Connection: close\r\n"
-            << "\r\n"
-             << body;
-  string responseStr = response1.str();
-  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+//   }
+//   file.read(buffer, sizeof(buffer));
+//   send(this->request->getfd(), buffer, file.gcount(), 0);
+//   //  file.close();
+// }
 
+void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
+    std::string ContentType;
+     if (!this->file.is_open()) {
+        this->file.open(data, std::ios::binary);
+        if (!this->file.is_open()) {
+            std::cerr << "Error opening file: " << data << std::endl;
+            return;
+        }
+    }
+    if (firstTimeResponse == 0) {
+        file_size = 0;
+        this->file.seekg(0, std::ios::end);
+        file_size = this->file.tellg();
+        this->file.seekg(0, std::ios::beg);
+        size_t pos = data.find(".");
+        if (pos == string::npos) {
+            ContentType = "text/plai";
+        }
+        else
+        {
+          string extension = data.substr(pos);
+          ContentType = getMimeType(extension);
+        }
+        std::ostringstream response_headers;
+        status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
+        headersSending(this->request->getfd(),config.getServerName());
+        response_headers << "Content-Type: " << ContentType << "\r\n"
+                         << "Content-Length: " << file_size << "\r\n"
+                         << "Connection: close\r\n"
+                         << "\r\n";
+
+        send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
+        firstTimeResponse = 1;
+    }
+    this->file.seekg(this->file_offset, std::ios::beg); 
+    const size_t buffer_size = 4096;
+    char buffer[buffer_size];
+    this->file.read(buffer, buffer_size);
+    std::streamsize bytes_read = this->file.gcount();
+    if (bytes_read > 0) {
+        send(this->request->getfd(), buffer, bytes_read, 0);
+       this->file_offset += bytes_read;
+       cout <<"fd client = "<<this->request->getfd()<<"   file_offset = " << round((double)this->file_offset / (1024*1024) * 10) / 10 << " MB" << endl;
+    }
+    if (bytes_read == 0) {
+        this->file.close();
+        complete = 1;
+       cout <<"----- END file --------"<<endl;
+    }
 }
+
 void HttpResponse:: forbidden(int client_socket,ServerConfig &config)
 {
   string body;
@@ -89,6 +155,7 @@ void HttpResponse:: forbidden(int client_socket,ServerConfig &config)
             << "\r\n"
             << body;
   string responseStr = response1.str();
+  
   send(client_socket, responseStr.c_str(), responseStr.size(), 0);
 }
 int  HttpResponse::checkFileAndSendData(string &data ,ServerConfig &config,string &index)
@@ -163,11 +230,39 @@ void  HttpResponse::dirDataSend(string &data, string &root,LocationConfig &norma
       send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
     }
 }
-
+void  HttpResponse::dirDataSend(string &data, ServerConfig &config)
+{
+  int checkExist;
+  string index;
+  string root = config.getRoot();
+  index = config.getIndex();
+  checkExist = this->checkFileAndSendData(data, config, index);
+  if (checkExist == 1) {
+    this->notFound(this->request->getfd(),config);
+    return;
+  }
+  if (config.getAutoindex() == false)
+  {
+      this->forbidden(this->request->getfd(),config);
+  } else {
+      status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
+      headersSending(this->request->getfd(),config.getServerName());
+      string body = dirDirctlyAutoindex(data,root);
+      stringstream response1;
+          response1 << "Content-Type: text/html\r\n"
+            << "Content-Length: " << body.size() << "\r\n"
+            << "Connection: close\r\n"
+            << "\r\n"
+            << body;
+      string responseStr = response1.str();
+      send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+    }
+}
 void    HttpResponse:: getLocationResponse(LocationConfig &normal,string &str,ServerConfig &config)
 {
   string data;
   string root;
+  int typePath;
   int flag;
   if (normal.root.empty()) {
     root = config.getRoot();
@@ -178,9 +273,11 @@ void    HttpResponse:: getLocationResponse(LocationConfig &normal,string &str,Se
     flag = 2;
   }
   data += str;
-  if (checkTypePath(data)==0) {
+  typePath = checkTypePath(data);
+
+  if (typePath==0) {
     this->notFound(this->request->getfd(),config);
-  } else if (checkTypePath(data)==1) {
+  } else if (typePath==1) {
     this->fileDataSend(data,config);
 
   } else if (checkTypePath(data)==2) {
@@ -240,7 +337,7 @@ void HttpResponse::redirectionResponse(string &str)
 int indexValidPath(string str)
 {
   int i = 0;
-  if (str.length()==1)
+  if (str.length() == 1)
     return 0;
   i++;
   while (str[i] && str[i]!='/')
@@ -250,45 +347,47 @@ int indexValidPath(string str)
 void    HttpResponse::getResponse()
 {
   string data;
+  string path;
   string str;
   ServerConfig config;
   config = this->request->getServerConf();
   vector<string>  words = this->request->getDataFirstLine();
   int i = indexValidPath(words[1]);
-  if (i != 0 && words[1][i]==0) {
-    words[1]+="/";
-  }
   str = words[1].substr(0,i);
-  data = words[1].substr(i);
+  if (words[1][i] != 0)
+    data = words[1].substr(i);
+  else
+    data += "/";
   if(config.configRedirection.find(str) != config.configRedirection.end()) {
     string urlRedirection = getValueFromMap(config.configRedirection,config.configRedirection.find(str));
     redirectionResponse(urlRedirection);
-    // cout <<"str --> "<<str1<<endl;
+    return ;
   }
   if (config.configNormal.find(str) != config.configNormal.end()) {
     LocationConfig log = getValueFromMap(config.configNormal,config.configNormal.find(str));
+    cout<<data << endl;
     getLocationResponse(log,data,config);
+    return ;
   }
   if (config.configUpload.find(str) != config.configUpload.end()) {
     LocationUplaods log = getValueFromMap(config.configUpload,config.configUpload.find(str));
     getLocationResponse(log,data,config);
-  }
-
-  // cout<<"data = > " << words[1] <<endl;
-  if (words[1]=="/")
-  {
-    this->defautlRoot(config);
+    return ;
+  } 
+  path = config.getRoot();
+  if (words[1].length()==1) {
+    defautlRoot(config);
     return;
   }
-  // if (checkTypePath(data)==0) {
-  //   this->notFound(this->request->getfd());
-  //   return;
-  // } else if (checkTypePath(data)==1) {
-  //   this->fileDataSend(data);
-  // } else if (checkTypePath(data)==2) {
-  //   this->dirDataSend(data);
-
-
+  path += words[1]; 
+  // cout <<"fd  =   "<<this->request->getfd()<<", path = "<<path<<endl;
+  if (checkTypePath(path) == 0) {
+    this->notFound(this->request->getfd(),config);
+  } else if (checkTypePath(path) == 1) {
+    this->fileDataSend(path,config);
+  } else if (checkTypePath(path) == 2) {
+    this->dirDataSend(path,config);
+  }
 }
 void HttpResponse::defautlRoot(ServerConfig &config)
 {
@@ -347,14 +446,14 @@ int HttpResponse:: checkDataResev()
 void    sendResponse(HttpResponse &response)
 {
   int method = response.request->_method;
-  if (response.checkDataResev()!=0) {
+  if (response.checkDataResev() != 0) {
     return ;
   }
-  if (response.request->checkCgi){
-     cout << response.request->filename << "\n";
-     response.cgiResponse();
-    return ;
-  }
+  // if (response.request->checkCgi){
+  //   //  cout << response.request->filename << "\n";
+  //    response.cgiResponse();
+  //   return ;
+  // }
   if (method == GET) {
     response.getResponse();
   }
@@ -368,8 +467,13 @@ void    sendResponse(HttpResponse &response)
 
 }
 
-HttpResponse::HttpResponse(HttpRequest *re) :request(re) {
-
+HttpResponse::HttpResponse(HttpRequest *re) :request(re),firstTimeResponse(0) ,file_offset(0),complete(0) {
+  
+  // static int i =0;
+  // if (i ==1)
+  //   exit(102);
+  cout <<"here ----->"<<endl;
+  // i++;
 }
 
 HttpResponse:: ~HttpResponse() { }
@@ -420,7 +524,7 @@ void HttpResponse::HttpVersionNotSupported(int client_socket,ServerConfig &confi
     stringstream response1;
     response1 << "Content-Type: text/html\r\n"
               << "Content-Length: " << body.size() << "\r\n"
-              << "Connection: close\r\n"
+              << "Connection: keep-alive\r\n"
               << "\r\n"
               << body;
     string responseStr = response1.str();
@@ -525,6 +629,45 @@ bool ExistFile(string&filePath) {
   }
   return false;
 }
+string dirDirctlyAutoindex(string &dirPath,string &root) {
+    string html = "<!DOCTYPE html>\n"
+                  "<html>\n"
+                  "<head>\n"
+                    "<meta charset=\"UTF-8\">\n"
+                    "<title>Autoindex</title>\n"
+                    "<style>\n"
+                      "body { font-family: Arial, sans-serif; margin: 20px; }\n"
+                      "h1 { font-size: 24px; }\n"
+                      "ul { list-style-type: none; padding: 0; }\n"
+                      "li { margin: 5px 0; }\n"
+                      "a { text-decoration: none; color: #3498db; }\n"
+                      "a:hover { text-decoration: underline; }\n"
+                    "</style>\n"
+                  "</head>\n"
+                  "<body>\n"
+                  "<h1>Index of /</h1>\n";
+
+    DIR *dir = opendir(dirPath.c_str());
+    if (!dir) {
+        cerr << "Error: Unable to open directory " << dirPath << "\n";
+        return "<h1>Directory not found</h1>";
+    }
+  string str = dirPath.substr(root.length() + 1);
+  // cout <<"str "<<str<<endl;
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            html += "<li><a href=\"" + str + "/" + entry->d_name + "\">";
+            // cout << "name "<<entry->d_name<<endl;
+            html += entry->d_name;
+            html += "</a></li>\n";
+        }
+    }
+    closedir(dir);
+
+    html += "</ul>\n</body>\n</html>";
+    return html;
+}
 
 string dirAutoindex(string &dirPath,string &root) {
 
@@ -570,7 +713,7 @@ int checkTypePath(string &path) {
     if (stat(path.c_str(), &pathInfo) != 0) {
         return 0;
     }
-
+  // cout << "path"<<endl;
     if (S_ISREG(pathInfo.st_mode)) {
         // std::cout << path<< " is a file.\n";
         return 1;
@@ -585,15 +728,11 @@ int checkTypePath(string &path) {
 /*-------------------------------------- CGI ------------------------------------------*/
 void HttpResponse::cgiResponse()
 {
-  static int i =0;
   // cout << "--->"<<this->request->filename << "\n";
   ServerConfig config;
   ifstream file(this->request->filename);
   stringstream fileContent;
-  fileContent << file.rdbuf() ;
-  cout << std::endl;
-  // std::cout << fileContent.str() << std::endl;
-  
+  fileContent << file.rdbuf();
   if (file) {
       fileContent << file.rdbuf(); 
       file.close();
@@ -620,7 +759,7 @@ void HttpResponse::postResponse()
   string body;
   config = this->request->getServerConf();
   vector<string>  words = this->request->getDataFirstLine();
-  cout <<"URL = "<<words[1]<<endl;
+  // cout <<"URL = "<<words[1]<<endl;
   ifstream file("./doc/html/Upload_/succ.html"); ///
   stringstream fileContent;
         
@@ -684,3 +823,110 @@ void HttpResponse::postResponse()
 //            "</body>\n"
 //            "</html>";
 // }
+
+
+
+
+
+    // _mimeToExtension["text/plain"] = ".txt";
+    // _mimeToExtension["text/html"] = ".html";
+    // _mimeToExtension["text/css"] = ".css";
+    // _mimeToExtension["text/javascript"] = ".js";
+    // _mimeToExtension["text/markdown"] = ".md";
+    // _mimeToExtension["text/csv"] = ".csv";
+    // _mimeToExtension["text/x-c"] = ".cpp";
+    
+    // // Application types
+    // _mimeToExtension["application/json"] = ".json";
+    // _mimeToExtension["application/xml"] = ".xml";
+    // _mimeToExtension["application/pdf"] = ".pdf";
+    // _mimeToExtension["application/zip"] = ".zip";
+    // _mimeToExtension["application/x-rar-compressed"] = ".rar";
+    // _mimeToExtension["application/x-tar"] = ".tar";
+    // _mimeToExtension["application/gzip"] = ".gz";
+    // _mimeToExtension["application/msword"] = ".doc";
+    // _mimeToExtension["application/vnd.ms-excel"] = ".xls";
+    // _mimeToExtension["application/vnd.openxmlformats-officedocument.wordprocessingml.document"] = ".docx";
+    // _mimeToExtension["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] = ".xlsx";
+    // _mimeToExtension["application/octet-stream"] = ".bin";
+    
+    // // Image types
+    // _mimeToExtension["image/jpeg"] = ".jpg";
+    // _mimeToExtension["image/png"] = ".png";
+    // _mimeToExtension["image/gif"] = ".gif";
+    // _mimeToExtension["image/svg+xml"] = ".svg";
+    // _mimeToExtension["image/webp"] = ".webp";
+    // _mimeToExtension["image/tiff"] = ".tiff";
+    // _mimeToExtension["image/bmp"] = ".bmp";
+    // _mimeToExtension["image/x-icon"] = ".ico";
+    
+    // // Audio types
+    // _mimeToExtension["audio/mpeg"] = ".mp3";
+    // _mimeToExtension["audio/wav"] = ".wav";
+    // _mimeToExtension["audio/webm"] = ".weba";
+    
+    // // Video types
+    // _mimeToExtension["video/mp4"] = ".mp4";
+    // _mimeToExtension["video/webm"] = ".webm";
+    // _mimeToExtension["video/ogg"] = ".ogv";
+    
+    // // Font types
+    // _mimeToExtension["font/ttf"] = ".ttf";
+    // _mimeToExtension["font/woff"] = ".woff";
+    // _mimeToExtension["font/woff2"] = ".woff2";
+    // _mimeToExtension["font/otf"] = ".otf";
+
+
+string HttpResponse::getMimeType(string &extension)
+{
+  mimeType[".txt"]= "text/plai";
+  mimeType[".html"] = "text/html";
+  mimeType[".css"] = "text/css";
+  mimeType[".js"] = "text/javascript";
+  mimeType[".md"] = "text/markdown";
+  mimeType[".csv"] = "text/csv";
+  mimeType[".cpp"] = "text/x-c";
+    
+    // Application types
+  mimeType[".json"] = "application/json";
+  mimeType[".xml"] = "application/xml";
+  mimeType[".pdf"] = "application/pdf";
+  mimeType[".zip"] = "application/zip";
+  mimeType[".rar"] = "application/x-rar-compressed";
+  mimeType[".tar"] = "application/x-tar";
+  mimeType[".gz"] = "application/gzip";
+  mimeType[".doc"] = "application/msword";
+  mimeType[".xls"] = "application/vnd.ms-excel";
+  mimeType[".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  mimeType[".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  mimeType[".bin"] = "application/octet-stream";
+    
+    // Image types
+  mimeType[".jpg"] = "image/jpeg";
+  mimeType[".png"] = "image/png";
+  mimeType[".gif"] = "image/gif";
+  mimeType[".svg"] = "image/svg+xml";
+  mimeType[".webp"] = "image/webp";
+  mimeType[".tiff"] = "image/tiff";
+  mimeType[".bmp"] = "image/bmp";
+  mimeType[".ico"] = "image/x-icon";
+    
+    // Audio types
+  mimeType[".mp3"] = "audio/mpeg";
+  mimeType[".wav"] = "audio/wav";
+  mimeType[".weba"] = "audio/webm";
+    
+    // Video types
+  mimeType[".mp4"] = "video/mp4";
+  mimeType[".webm"] = "video/webm";
+  mimeType[".ogv"] = "video/ogg";
+    
+    // Font types
+  mimeType[".ttf"] = "font/ttf";
+  mimeType[".woff"] = "font/woff";
+  mimeType[".woff2"] = "font/woff2";
+  mimeType[".otf"] = "font/otf";
+    if (mimeType.find(extension) != mimeType.end())
+        return mimeType[extension];
+    return "application/octet-stream"; // Default binary type
+}
