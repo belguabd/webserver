@@ -29,7 +29,6 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 	// setHeaders(headers);
 	_status = 0;
 	_bodySize = 0;
-	std::cout << "configUpload.allowed_methods: " << configUpload.allowed_methods << std::endl;
 	if (configUpload.allowed_methods.find("POST") == std::string::npos)
 	{
 		_status = 405; // 405
@@ -40,8 +39,6 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 	_uploadStore = _configUpload.upload_store;
 	buffer = "\r\n" + buffer;
 	setBodyType();
-	std::cout << "_headers[\"Transfer-Encoding\"]: " << _headers["Transfer-Encoding"] << std::endl;
-	std::cout << "bodyType : " << _bodyType << std::endl;
 	createBodyTypeObject(buffer);
 
 	setContentLengthSize();
@@ -100,7 +97,7 @@ void Post::setContentLengthSize()
 
 void Post::setBodyType()
 {
-	std::cout << "_headers[\"Content-Type\"] :";printNonPrintableChars(_headers["Content-Type"]);
+	// std::cout << "_headers[\"Content-Type\"] :";printNonPrintableChars(_headers["Content-Type"]);
 	if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("; boundary=") != std::string::npos)
 	{
 		if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")

@@ -18,9 +18,7 @@ void HttpRequest::handlePost()
   if (_post == NULL)
   {
     LocationUplaods &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.getConfigUpload());
-	  std::cout << "lc: " << lc.upload_store << std::endl;
       mapheaders["isCgi"] = std::to_string(checkCgi);
-      std::cout << "is cgi: " << checkCgi << std::endl;
       _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
   else

@@ -60,7 +60,6 @@ public:
     void setHeaders(std::map<std::string, std::string> &headers);
     void setBodyType();
     Body getBodyType() { return _bodyType; }
-    int start(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer);
     int proseRequest(std::string &buffer);
 };
 void printNonPrintableChars(const std::string &str);

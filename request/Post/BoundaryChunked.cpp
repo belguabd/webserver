@@ -60,10 +60,7 @@ int BoundaryChunked::boundaryPart()
 
 int BoundaryChunked::handleChunkedRec()
 {
-    // std::cout << "in buffer in chunkedBoundary============\n";
-    // printNonPrintableChars(_bufferBody);
-    // std::cout << "============\n";
-	if (_chunkSize <= 0) // check is remending data
+    if (_chunkSize <= 0) // check is remending data
 	{
 		// std::cout << "buffer head : "; printNonPrintableChars(_bufferBody.substr(0, 12));
 		_chunkSize = getChunkSize(_bufferBody);

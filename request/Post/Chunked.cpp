@@ -38,7 +38,6 @@ void Chunked::setFileName(std::string extention)
 int Chunked::handleChunked()
 {
 	std::string fileData;
-	std::cout << "in chunked\n";
 	if (_chunkSize <= 0) // check is remending data
 	{
 		// std::cout << "buffer head : "; printNonPrintableChars(_bufferBody.substr(0, 12));
