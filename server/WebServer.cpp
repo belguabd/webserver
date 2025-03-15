@@ -302,19 +302,30 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
     alarm(10);
     dup2(fd, STDOUT_FILENO);
     close(fd);
-
     if (execve(args[0], &args[0], &envp[0]) == -1) {
       std::cerr << "Failed to execute script: " << strerror(errno) << std::endl;
       exit(1);
     }
   } else {
     close(fd);
-    int status;
+    struct kevent events[2];
+
+    // Monitor process exit (NOTE_EXIT)
+    EV_SET(&events[0], pid, EVFILT_PROC, EV_ADD | EV_ENABLE, NOTE_EXIT, 0,
+           NULL);
+
+    // Add timeout event (EVFILT_TIMER)
+    EV_SET(&events[1], pid, EVFILT_TIMER, EV_ADD | EV_ENABLE, 0, 10000, NULL);
+
+    kevent(kqueue_fd, events, 2, NULL, 0, NULL); // Register both events
+
+    cgi_requests[pid] = request;
+    // int status;
     // waitpid(pid, &status, 0);
-    waitpid(pid, &status, WNOHANG);
-    if (WIFSIGNALED(status) && WTERMSIG(status) == SIGALRM) {
-      puts("OK");
-    }
+
+    // if (WIFSIGNALED(status) && WTERMSIG(status) == SIGALRM) {
+    //   puts("OK");
+    // }
 
     // if (WIFEXITED(status)) {
     //   std::cout << "Child process exited with status: " <<
@@ -437,6 +448,7 @@ void WebServer::run() {
       if (serverSockets[i]->getServer_fd() == event_fd)
         is_server_socket = true;
     }
+
     // if (events[i].filter == EVFILT_TIMER) {
     //   kill(events[i].ident, SIGKILL);
     // }
@@ -451,12 +463,26 @@ void WebServer::run() {
     if (is_server_socket)
       handle_new_connection(event_fd);
     else {
-      if (filter == EVFILT_READ) {
+      if (events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT)) {
+        pid_t pid = events[i].ident;
+        std::cout << "[SERVER] CGI process " << pid << " exited." << std::endl;
+        int status;
+        waitpid(pid, &status, 0);
+        cgi_requests.erase(pid);
+        
+      } else if (filter == EVFILT_TIMER) {
+        pid_t pid = events[i].ident;
+        std::cout << "[SERVER] CGI process " << pid << " timed out! Killing..."
+                  << std::endl;
+        kill(pid, SIGKILL);
+        waitpid(pid, NULL, 0);
+
+        cgi_requests.erase(pid);
+      } else if (filter == EVFILT_READ) {
         receive_from_client(event_fd);
-        // if (isCGIRequest(event_fd)) {
-          
-        //   handleCGIRequest(event_fd);
-        // }
+        if (isCGIRequest(event_fd)) {
+          handleCGIRequest(event_fd);
+        }
       } else if (filter == EVFILT_WRITE) {
         respond_to_client(event_fd);
       }

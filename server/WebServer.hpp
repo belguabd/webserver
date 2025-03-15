@@ -16,6 +16,7 @@
 #include "../request/HttpRequest.hpp"
 #include "../response/HttpResponse.hpp"
 #include "ServerSocket.hpp"
+#include <unordered_map>
 
 class WebServer {
 private:
@@ -24,6 +25,7 @@ private:
   std::vector<ServerSocket *> serverSockets;
   std::vector<ServerConfig> config;
   std::map<int, ServerConfig> map_configs;
+  std::unordered_map<pid_t, HttpRequest*> cgi_requests;
 
   std::map<int, HttpRequest*> pipe_fds;
   std::map<int, pid_t> pid_processes;
