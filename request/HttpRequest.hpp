@@ -45,6 +45,8 @@ public:
   int cgiExtension;
   string rootcgi;
   string pathInfo;
+  bool start_cgi;
+  int status_code;
 
   string filename;
   int getCgi() { return cgi_fd; }

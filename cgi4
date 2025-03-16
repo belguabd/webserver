@@ -1,5 +1,4 @@
-Could not open input file: /Users/belguabd/Desktop/webserver/hello.php
-er/hello.php
-=======
-<html><body><h1>Hello, World!</h1><p>You are unknown years old.</p><p>This is an infinite loop!</p><p>This is an infinite loop!</p><p>This is an infinite loop!</p><p>This is an infinite loop!</p><p>This is an infinite loop!</p><p>This is an infinite loop!</p><p>This is an infinite loop!</p><p>This is an infinite loop!</p><p>This is an infinite loop!</p><p>This is an infinite loop!</p>
->>>>>>> 5c1dcd9a9ccf2678e456f9f7981fb24389656f10
+X-Powered-By: PHP/8.2.8
+Content-type: text/html;charset=UTF-8
+
+<html><body><h1>Hello, World!</h1><p>You are 25 years old.</p></body></html>
