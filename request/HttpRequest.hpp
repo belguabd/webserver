@@ -20,6 +20,7 @@ enum Method { NONE = 0, GET = 1, POST = 2, DELETE = 3 };
 using namespace std;
 class HttpRequest {
 private:
+  string body_cgi;
   int client_fd;
   int cgi_fd;
   int firsttime;
@@ -38,8 +39,12 @@ private:
   void handleRequest();
   int handleDeleteRequest(std::string filePath);
   void handlePost();
-public:
 
+public:
+  string getBodyCgi() const { return body_cgi; }
+
+  // Setter for body_cgi
+  void setBodyCgi(const string &bodyCgi) { body_cgi = bodyCgi; }
 
   int checkCgi;
   int cgiExtension;
@@ -66,7 +71,7 @@ public:
   int getfd() const { return this->client_fd; }
   void joinBuffer();
   string partRquest();
-  int validHeadres(map<string,string>&headrs);
+  int validHeadres(map<string, string> &headrs);
   int defineTypeMethod(string firstline);
   void parsePartRequest(string str_parse);
   int getFirstTimeFlag() const { return this->firsttime; }
@@ -97,11 +102,12 @@ public:
 vector<string> splitstring(const string &str);
 void checkHeaders(string &str, map<string, string> &headersMap);
 void printNonPrintableChars(const std::string &str);
-LocationCgi getValueMapcgi(map<string, LocationCgi> & configNormal,map<string, LocationCgi> ::const_iterator it);
+LocationCgi getValueMapcgi(map<string, LocationCgi> &configNormal,
+                           map<string, LocationCgi>::const_iterator it);
 // void    checkHeaders(string& str, map<string, string>& headersMap);
-void    printNonPrintableChars(const std::string &str);
+void printNonPrintableChars(const std::string &str);
 char characterEncodeing(string &tmp);
 string encodeUrl(string &str);
 int indexValidPath(string str);
 bool fileExists(std::string &filePath);
-string convertToUpper(string str) ;
+string convertToUpper(string str);

@@ -187,7 +187,25 @@ void WebServer::receive_from_client(int client_fd) {
   //   // connected_clients.erase(client_fd);
   // }
 }
+std::string readFileAndRemoveHeaders(const std::string &filename) {
+  std::ifstream file(filename);
+  if (!file.is_open()) {
+    throw std::runtime_error("Failed to open file: " + filename);
+  }
 
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  file.close();
+
+  std::string fileContent = buffer.str();
+  size_t header_end = fileContent.find("\r\n\r\n");
+
+  if (header_end != std::string::npos) {
+    return fileContent.substr(header_end + 4);
+  }
+
+  return fileContent;
+}
 void WebServer::respond_to_client(int client_fd) {
   HttpResponse *response = NULL;
   HttpRequest *request = NULL;
@@ -207,7 +225,8 @@ void WebServer::respond_to_client(int client_fd) {
       break;
     }
   }
-  cout << request->status_code << "\n";
+  request->setBodyCgi(readFileAndRemoveHeaders(request->filename));
+  cout << request->getBodyCgi() << "\n";
   ssize_t bytes_written = response->writeData();
   struct kevent changes[1];
   EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
@@ -220,11 +239,12 @@ void WebServer::respond_to_client(int client_fd) {
   response = NULL;
   request = NULL;
 
+  // ssize_t bytes_written = response->writeData();
   // if (response->complete == 1) {
   //   // puts("complete");
   //   struct kevent changes[2];
-  //   EV_SET(&changes[0], (*it)->request->getfd(), EVFILT_WRITE, EV_DELETE, 0,
-  //   0,
+  //   EV_SET(&changes[0], (*it)->request->getfd(), EVFILT_WRITE, EV_DELETE,
+  //   0, 0,
   //          NULL);
   //   kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
   //   EV_SET(&changes[1], (*it)->request->getfd(), EVFILT_READ, EV_DELETE, 0,
@@ -340,7 +360,7 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
     dup2(fd, STDOUT_FILENO);
     close(fd);
     if (request->_method == POST) {
-      int fd_body = open("upload/filePost", O_RDWR, 0644);
+      int fd_body = open(request->getFileName().c_str(), O_RDWR, 0644);
       if (fd_body < 0) {
         std::cerr << "Error: failed to open file: " << strerror(errno)
                   << std::endl;
@@ -384,54 +404,6 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
                 << std::endl;
       return;
     }
-
-    // // cgi_requests[pid] = request;
-    // int status;
-    // pid_t result = waitpid(pid, &status, 0);
-
-    // if (WIFSIGNALED(status) && WTERMSIG(status) == SIGALRM) {
-    //   struct kevent changes[1];
-    //   EV_SET(&changes[0], request->getfd(), EVFILT_WRITE, EV_ADD | EV_ENABLE,
-    //   0,
-    //          0, request);
-    //   if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-    //     std::cerr << "Error setting write event: " << strerror(errno)
-    //               << std::endl;
-    //     // close(request->getfd());
-    //     // connected_clients.erase(it);
-    //     return;
-    //   }
-    //   return;
-    // } else if (result == 0) {
-    //   cout << "child process still running" << "\n";
-    // } else if (result == pid) {
-    //   struct kevent changes[1];
-    //   EV_SET(&changes[0], request->getfd(), EVFILT_WRITE, EV_ADD | EV_ENABLE,
-    //   0,
-    //          0, request);
-    //   if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-    //     std::cerr << "Error setting write event: " << strerror(errno)
-    //               << std::endl;
-    //     // close(request->getfd());
-    //     // connected_clients.erase(it);
-    //     return;
-    //   }
-
-    //   // Child process has finished
-    //   std::cout << "Child process finished with exit status: "
-    //             << WEXITSTATUS(status) << std::endl;
-    // } else {
-    //   // Error or no such child process
-    //   std::cerr << "Error or no such child process." << std::endl;
-    // }
-
-    // if (WIFEXITED(status)) {
-    //   std::cout << "Child process exited with status: " <<
-    //   WEXITSTATUS(status)
-    //             << std::endl;
-    // } else {
-    //   std::cerr << "Child process did not exit normally" << std::endl;
-    // }
   }
 }
 
