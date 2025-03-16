@@ -1,4 +1,6 @@
 #include "HttpResponse.hpp"
+#include <cstddef>
+#include <sys/_types/_ssize_t.h>
 
 void	status_line(int client_socket,string status) {
   // cout <<status;
@@ -78,7 +80,7 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
         this->file.seekg(0, std::ios::beg);
         size_t pos = data.find(".");
         if (pos == string::npos) {
-            ContentType = "text/plai";
+            ContentType = "text/plain";
         }
         else
         {
@@ -90,14 +92,15 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
         headersSending(this->request->getfd(),config.getServerName());
         response_headers << "Content-Type: " << ContentType << "\r\n"
                          << "Content-Length: " << file_size << "\r\n"
-                         << "Connection: close\r\n"
+                         << "Connection: Keep-Alive\r\n"
                          << "\r\n";
 
         send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
         firstTimeResponse = 1;
     }
+    
     this->file.seekg(this->file_offset, std::ios::beg); 
-    const size_t buffer_size = 4096;
+    const size_t buffer_size = 1024;
     char buffer[buffer_size];
     this->file.read(buffer, buffer_size);
     std::streamsize bytes_read = this->file.gcount();

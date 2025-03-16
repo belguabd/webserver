@@ -189,7 +189,7 @@ int HttpRequest::defineTypeMethod(string firstline) {
   }
   this->dataFirstLine = words;
   checkPathIscgi(words[1]);
-  cout << "-->"<<checkCgi<<endl;
+  // cout << "-->"<<checkCgi<<endl;
   if (words[0] == "GET")
     return (1);
   else if (words[0] == "POST")

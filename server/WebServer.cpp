@@ -79,6 +79,7 @@ WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
 
 void WebServer::handle_new_connection(int server_fd) {
   int client_fd = accept(server_fd, NULL, NULL);
+  cout << "client_fd => " << client_fd << "\n";
   if (client_fd == -1) {
     std::cerr << "Error accepting client connection: " << strerror(errno)
               << std::endl;
@@ -92,6 +93,7 @@ void WebServer::handle_new_connection(int server_fd) {
     close(client_fd);
     return;
   }
+  // puts("here");
   connected_clients.push_back(
       new HttpRequest(client_fd, map_configs[server_fd]));
   // connected_clients[client_fd] = new HttpRequest(client_fd);
@@ -119,10 +121,12 @@ void WebServer::receive_from_client(int client_fd) {
   }
   if (bytes_read == 0) {
     std::cout << "Client disconnected" << std::endl;
-    close(client_fd);
-    connected_clients.erase(it);
+    // close(client_fd);
+    // connected_clients.erase(it);
   }
   if (client->getRequestStatus()) {
+    HttpResponse *responseclient = new HttpResponse(client);
+    responses_clients.push_back(responseclient);
     client->cgi_for_test = client->checkCgi;
     struct kevent changes[1];
     EV_SET(&changes[0], client_fd, EVFILT_READ, EV_DELETE, 0, 0, client);
@@ -185,26 +189,45 @@ void WebServer::receive_from_client(int client_fd) {
 }
 
 void WebServer::respond_to_client(int client_fd) {
-  HttpRequest *client = NULL;
-  std::vector<HttpRequest *>::iterator it;
-  for (it = connected_clients.begin(); it != connected_clients.end(); ++it) {
-    if ((*it)->getfd() == client_fd) {
-      client = *it;
+  std::cout << "coco" << std::endl;
+  HttpResponse *response = NULL;
+  std::vector<HttpResponse *>::iterator it;
+
+  for (it = responses_clients.begin(); it != responses_clients.end(); ++it) {
+    if ((*it)->request->getfd() == client_fd) {
+      response = *it;
       break;
     }
   }
-  HttpResponse *responseclient = new HttpResponse(client);
-  responseclient->writeData();
-  struct kevent changes[1];
-  EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-  kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
-  // unlink(client->filename.c_str());
 
-  // puts("OK");
-  close(client_fd);
-  connected_clients.erase(it);
-  delete client;
-  delete responseclient;
+  // puts("help");
+  ssize_t bytes_written = response->writeData();
+  // struct kevent changes[1];
+  // EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+  // kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+  // close(client_fd);
+  // responses_clients.erase(it);
+  // delete response;
+  // response = NULL;
+
+  if (response->complete == 1) {
+    // puts("complete");
+    struct kevent changes[2];
+    EV_SET(&changes[0], (*it)->request->getfd(), EVFILT_WRITE, EV_DELETE, 0, 0,
+           NULL);
+    kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+    EV_SET(&changes[1], (*it)->request->getfd(), EVFILT_READ, EV_DELETE, 0, 0,
+           NULL);
+    kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+    // close(client_fd);
+    // responses_clients.erase(it);
+    // delete response;
+    // connected_clients.erase(it);
+    // if (to_erase != responses_clients.end()) {
+    //     responses_clients.erase(to_erase);  // Erase only if found
+    //   }
+    // delete response;
+  }
 }
 /*----------------------------------------------------*/
 int beforStart(string str) {
@@ -369,7 +392,7 @@ void WebServer::handleCGIRequest(int client_fd) {
     if ((*it)->getfd() == client_fd)
       client = *it;
   }
-
+  cout << 
   map<string, string>::iterator iter_headers = client->mapheaders.begin();
 
   map<string, string> env;
@@ -377,9 +400,13 @@ void WebServer::handleCGIRequest(int client_fd) {
     string key = (*iter_headers).first;
     transform(key.begin(), key.end(), key.begin(), ::toupper);
     std::replace(key.begin(), key.end(), '-', '_');
-    env[key] = (*iter_headers).second;
+    env["HTTP_" + key] = (*iter_headers).second;
   }
-
+  env["REQUEST_METHOD"];
+  env["SCRIPT_NAME"];
+  env["PATH_INFO"];
+  env["CONTENT_LENGTH"];
+  env["QUERY_STRING"];
   // _method ?
   // client->_method == 1 ? env["REQUEST_METHOD"] = "GET"
   //                      : env["REQUEST_METHOD"] = "POST";
@@ -439,9 +466,8 @@ void send_cgi_response() { cout << "response\n"; }
 void WebServer::run() {
 
   int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
-  bool is_server_socket = false;
-
   for (size_t i = 0; i < nev; i++) {
+    bool is_server_socket = false;
     int event_fd = events[i].ident;
     int filter = events[i].filter;
     for (size_t i = 0; i < serverSockets.size(); i++) {
@@ -460,45 +486,41 @@ void WebServer::run() {
     //     perror("waitpid");
     //   }
     // }
-    if (is_server_socket)
+    if (is_server_socket) {
+      // puts("accept new connection");
       handle_new_connection(event_fd);
-    else {
-      if (events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT)) {
-        pid_t pid = events[i].ident;
-        std::cout << "[SERVER] CGI process " << pid << " exited." << std::endl;
-        int status;
-        waitpid(pid, &status, 0);
-        cgi_requests.erase(pid);
 
-      } else if (filter == EVFILT_TIMER) {
-        pid_t pid = events[i].ident;
-        std::cout << "[SERVER] CGI process " << pid << " timed out! Killing..."
-                  << std::endl;
-        kill(pid, SIGKILL);
-        waitpid(pid, NULL, 0);
+    } else {
+      // if (events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT))
+      // {
+      //   pid_t pid = events[i].ident;
+      //   std::cout << "[SERVER] CGI process " << pid << " exited." <<
+      //   std::endl; int status; waitpid(pid, &status, 0);
+      //   cgi_requests.erase(pid);
 
-        cgi_requests.erase(pid);
-      } else if (filter == EVFILT_READ) {
+      // } else if (filter == EVFILT_TIMER) {
+      //   pid_t pid = events[i].ident;
+      //   std::cout << "[SERVER] CGI process " << pid << " timed out!
+      //   Killing..."
+      //             << std::endl;
+      //   kill(pid, SIGKILL);
+      //   waitpid(pid, NULL, 0);
+
+      if (filter == EVFILT_READ) {
+
         receive_from_client(event_fd);
-        // if (isCGIRequest(event_fd)) {
-        //   handleCGIRequest(event_fd);
-        // }
-      }
-      else if (filter == EVFILT_WRITE)
-      {
-        puts("response OK");
-        struct kevent changes[1];
-        EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-        kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
-        // puts("OK");
-        // respond_to_client(event_fd);
         if (isCGIRequest(event_fd)) {
           handleCGIRequest(event_fd);
         }
       } else if (filter == EVFILT_WRITE) {
         puts("response");
-        respond_to_client(event_fd);
+        struct kevent changes[1];
+        EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+        kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+        close(event_fd);
+        // respond_to_client(event_fd);
       }
+      //   cgi_requests.erase(pid);
     }
   }
 }
