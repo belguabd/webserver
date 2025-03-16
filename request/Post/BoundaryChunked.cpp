@@ -1,13 +1,23 @@
 #include "BoundaryChunked.hpp"
 
-BoundaryChunked::BoundaryChunked(std::map<std::string, std::string> &queryParam, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
+BoundaryChunked::BoundaryChunked(std::map<std::string, std::string> &queryParam, std::string &bufferBody, \
+	std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status, std::string &uploadStore):
     _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
 {
-    _boundary = new Boundary(queryParam, _boundaryBuffer, _remainingBoundaryBuffer, _headers, _status);
+    _boundary = new Boundary(queryParam, _boundaryBuffer, _remainingBoundaryBuffer, _headers, _status, uploadStore);
 	_chunkSize = 0;
     setFileName("filePost");
 	// initializeMimeTypes();
 }
+
+// BoundaryChunked::BoundaryChunked(std::map<std::string, std::string> &queryParam, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
+//     _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
+// {
+//     _boundary = new Boundary(queryParam, _boundaryBuffer, _remainingBoundaryBuffer, _headers, _status);
+// 	_chunkSize = 0;
+//     setFileName("filePost");
+// 	// initializeMimeTypes();
+// }
 
 void BoundaryChunked::setFileName(std::string extention)
 {
@@ -50,10 +60,7 @@ int BoundaryChunked::boundaryPart()
 
 int BoundaryChunked::handleChunkedRec()
 {
-    // std::cout << "in buffer in chunkedBoundary============\n";
-    // printNonPrintableChars(_bufferBody);
-    // std::cout << "============\n";
-	if (_chunkSize <= 0) // check is remending data
+    if (_chunkSize <= 0) // check is remending data
 	{
 		// std::cout << "buffer head : "; printNonPrintableChars(_bufferBody.substr(0, 12));
 		_chunkSize = getChunkSize(_bufferBody);

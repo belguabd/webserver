@@ -7,10 +7,13 @@
 //     setBoundaryString();
 // }
 
-Boundary::Boundary(std::map<std::string, std::string> &queryParam, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
+Boundary::Boundary(std::map<std::string, std::string> &queryParam, std::string &bufferBody, \
+    std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &status, std::string &uploadStore):
     _queryParam(queryParam), _bufferBody(bufferBody),
-    _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
+    _remainingBuffer(remainingBuffer), _headers(headers), _status(status)
+    ,_uploadStore(uploadStore)
 {
+    _status = 0;
     setBoundaryString();
 }
 
@@ -19,24 +22,27 @@ void Boundary::setBoundaryString()
     std::string str = _headers["Content-Type"];
     size_t pos = str.find("; boundary=") + 11;
     _boundaryString = std::string("\r\n--").append(str.substr(pos) + "\r\n");
-    _boundaryStringEnd = std::string("\r\n--").append(str.substr(pos) + "--\r\n");
+    _boundaryStringEnd = std::string("\r\n--").append(str.substr(pos) + "--\r\n");           
 }
 
 
 void Boundary::setFileName(std::string &fileName)
 {
+    fileName.insert(0, _uploadStore + "/");
     if (fileName == "") return ;
 	struct stat b;
-    fileName = fileName;
+    // fileName = fileName;
     size_t pos =  fileName.find(".");
 	std::string name = fileName.substr(0, pos);
     std::string extention ;
     if (pos < fileName.size())
         extention = fileName.substr(pos);
 	int n = 0;
-	while (stat((std::string(UPLOAD_FOLDER + name + extention)).c_str(), &b) != -1)
+	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	fileName = name + extention;
+    std::cout << "fileName : " << fileName << std::endl;
+
 }
 
 std::string Boundary::getBoundaryString()
@@ -112,12 +118,20 @@ bool Boundary::checkHeaderIsCompleted()
 int Boundary::handleBoundary()
 {
     
-    if (_bufferBody.empty())
-    {
-        _status = 1; // 404
-        std::cout << "adsdasda\n";
-        return _status;
-    }
+    // if (_bufferBody.empty())
+    // {
+    //     _status = 1; // 404
+    //     std::cout << "adsdasda\n";
+    //     return _status;
+    // }
+    // if (_bufferBody.size() < 5120)
+    // {
+    //     if (_bufferBody.find(_boundaryStringEnd) == std::string::npos)
+    //     {
+    //         _status = 1; // 404
+    //         return _status;
+    //     }
+    // }
     handleBoundaryRec();
     return _status;
 }
@@ -132,7 +146,7 @@ int Boundary::handleBoundaryRec()
     if (_bufferBody.substr(0, _boundaryStringEnd.size()) == _boundaryStringEnd)
     {
         std::cout << "end boundary" << std::endl;
-        _status = 1;
+        _status = 201;
         _bufferBody = "";
         return _status;
     }
@@ -149,7 +163,7 @@ int Boundary::handleBoundaryRec()
     std::string content = _bufferBody.substr(0, _indexNextBoundary);
     if (!(_metadata["filename"] == "")) // filename
     {
-        pasteInFile(std::string(UPLOAD_FOLDER) + _metadata["filename"], content);
+        pasteInFile( _metadata["filename"], content);
         // this is can be something
     }
     else

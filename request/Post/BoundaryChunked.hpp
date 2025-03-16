@@ -22,6 +22,8 @@ public:
 	std::string _remainingBoundaryBuffer;
     int &_status;
     // BoundaryChunked();
+    BoundaryChunked(std::map<std::string, std::string> &queryParam, std::string &bufferBody, std::string &remainingBuffer,\
+        std::map<std::string, std::string> &headers, int &_status, std::string &uploadStore);
     BoundaryChunked(std::map<std::string, std::string> &queryParam, std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status);
     // BoundaryChunked &operator=(const BoundaryChunked &);
     int handleChunkedBoundary();

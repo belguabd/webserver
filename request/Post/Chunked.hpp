@@ -17,9 +17,10 @@ public:
     std::string _fileName;
     std::map<std::string, std::string> _mimeToExtension;
     size_t _chunkSize;
+    std::string &_uploadStore;
     int &_status;
     // Chunked();
-    Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status);
+    Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status, std::string &uploadStore);
     Chunked &operator=(const Chunked &);
     size_t getChunkSize(std::string &buffer);
     void setFileName(std::string extention);

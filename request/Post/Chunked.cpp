@@ -15,8 +15,8 @@ Chunked &Chunked::operator=(const Chunked &other)
 	return *this;
 }
 
-Chunked::Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
-    _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
+Chunked::Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status, std::string &uploadStore):
+    _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status), _uploadStore(uploadStore)
 {
 	_chunkSize = 0;
 	initializeMimeTypes();
@@ -26,11 +26,13 @@ Chunked::Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map
 void Chunked::setFileName(std::string extention)
 {
 	struct stat b;
-	std::string name = UPLOAD_FOLDER + std::string("filePost");
+	std::string name = _uploadStore + "/" + std::string("filePost");
+	std::cout << "_uploadStore : " <<_uploadStore << std::endl;
 	int n = 0;
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	_fileName = name + extention;
+	std::cout << "file : " << _fileName << std::endl;
 }
 
 int Chunked::handleChunked()

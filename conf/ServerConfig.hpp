@@ -67,6 +67,7 @@ class ServerConfig
         string getIndex() const {return this->index;}
         string getServerName(){return  server_name;}
       std::vector<int> getPorts(){return ports;}
+      map <string ,LocationUplaods> &getConfigUpload() {return configUpload;}
 };
 
 void validbrackets(string &str);

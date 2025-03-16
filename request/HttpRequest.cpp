@@ -1,6 +1,37 @@
 #include "HttpRequest.hpp"
 
-int HttpRequest::handleDeleteRequest(std::string filePath) {
+LocationUplaods &getMatchedLocationUpload(const std::string &path, map<string, LocationUplaods> &configUploads)
+{
+	size_t pos = path.find("/", 1);
+	string keyLocationUpload;
+
+    if (pos == std::string::npos)
+      pos = path.size() + 1;
+	keyLocationUpload = path.substr(0, pos);
+	if (configUploads.find(keyLocationUpload) == configUploads.end())
+		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = UPLOAD_FOLDER, .client_max_body_size= 1000000000, .allowed_methods="POST GET"}; // 
+	return (configUploads.find(keyLocationUpload))->second;
+}
+
+void HttpRequest::handlePost()
+{
+  if (_post == NULL)
+  {
+    LocationUplaods &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.getConfigUpload());
+      mapheaders["isCgi"] = std::to_string(checkCgi);
+      _post = new Post(mapheaders, queryParam, _buffer, lc);
+  }
+  else
+  {
+    _post->proseRequest(readBuffer);
+    // std::cout << "abcd\n";
+  }
+  setRequestStatus(_post->getStatus());
+	this->readBuffer.clear();
+}
+
+int HttpRequest::handleDeleteRequest(std::string filePath)
+{
   struct stat meteData;
   filePath.insert(0, ".");
   // std::cout << "filePath: " << filePath << std::endl;
@@ -29,6 +60,7 @@ int HttpRequest::handleDeleteRequest(std::string filePath) {
 void HttpRequest::handleRequest()
 {
   string str_parse;
+  pasteInFile("currentRequest", readBuffer);
   joinBuffer();
   str_parse = partRquest();
   if (getFirstTimeFlag() == 0)
@@ -50,15 +82,7 @@ void HttpRequest::handleRequest()
   else if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
     setRequestStatus(200);
   else if (_method == POST && getendHeaders() == 1)
-  {
-    if (_post == NULL)
-      _post = new Post(mapheaders, queryParam, _buffer);
-    else
-      _post->proseRequest(readBuffer);
-    setRequestStatus(_post->getStatus());
-
-    joinBuffer();
-  }
+    handlePost();
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
@@ -70,7 +94,7 @@ HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
 
 int HttpRequest::readData()
 {
-  char buffer[4096];
+  char buffer[5120];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
