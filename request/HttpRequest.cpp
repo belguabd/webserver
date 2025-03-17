@@ -383,7 +383,7 @@ void HttpRequest ::requestLine() {
     this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
 
   }
-  cout <<"querydata = "<<querydata<<endl;
+  // cout <<"querydata = "<<querydata<<endl;
   cout <<"this->dataFirstLine[1] = "<<this->dataFirstLine[1]<<endl;
   cout <<"path_nfo"<<this->pathInfo<<endl;
 }
