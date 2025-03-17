@@ -110,10 +110,9 @@ void WebServer::receive_from_client(int client_fd) {
   }
   if (!client)
     return;
-  
+
   client->setRequestStatus(0);
-  // ssize_t bytes_read = client->readData();
-  ssize_t bytes_read = 0;
+  ssize_t bytes_read = client->readData();
   if (bytes_read == -1) {
     std::cerr << "Error receiving data from client " << client_fd << ": "
               << strerror(errno) << std::endl;
@@ -255,7 +254,7 @@ void WebServer::respond_to_client(int client_fd) {
 
   // ssize_t bytes_written = response->writeData();
   if (response->complete == 1) {
-    // puts("complete");
+    puts("complete");
     struct kevent changes[2];
     EV_SET(&changes[0], (*it)->request->getfd(), EVFILT_WRITE, EV_DELETE, 0, 0,
            NULL);
@@ -535,7 +534,6 @@ void WebServer::run() {
         is_server_socket = true;
     }
     if (is_server_socket) {
-      // puts("accept new connection");
       handle_new_connection(event_fd);
     } else {
       if (events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT)) {
@@ -571,21 +569,13 @@ void WebServer::run() {
         int status;
         waitpid(pid, &status, 0);
       }
-
       else if (filter == EVFILT_READ) {
-
         receive_from_client(event_fd);
-        if (isCGIRequest(event_fd)) {
+        if (isCGIRequest(event_fd))
           handleCGIRequest(event_fd);
-        }
       } else if (filter == EVFILT_WRITE) {
-        // struct kevent changes[1];
-        // EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-        // kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
-        // close(event_fd);
         respond_to_client(event_fd);
       }
-      //   cgi_requests.erase(pid);
     }
   }
 }
