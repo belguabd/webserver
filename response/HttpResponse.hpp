@@ -28,15 +28,13 @@ public:
   HttpResponse(HttpRequest *re);
   ~HttpResponse();
   int writeData();
-  void notFound(int client_socket,ServerConfig &config);
-  void badRequest(int client_socket,ServerConfig &config);
-  void HttpVersionNotSupported(int client_socket,ServerConfig &config);
+  bool methodIsValid(ServerConfig &config,string method);
   int checkFileAndSendData(string &data ,ServerConfig &config,string &index);
   void getResponse();
   template <typename K, typename V>
   V getValueFromMap(std::map<K, V>& map, typename std::map<K, V>::iterator it) {
       V val;
-      if (it != map.end()) {
+      if (it != map.end()) { 
           val= it->second;
       }
       return val;
@@ -46,6 +44,7 @@ public:
   void cgiResponse();
   void defautlRoot(ServerConfig &config);
   void redirectionResponse(string &str);
+  void sendErrorPage(ServerConfig &config,int status);
   int checkDataResev();
   void getLocationResponse(LocationConfig &normal,string &str,ServerConfig &config);
   void getLocationResponse(LocationUplaods &upload,string &str,ServerConfig &config);
@@ -59,4 +58,5 @@ public:
 int checkTypePath(string &path);
 bool ExistFile(string &filePath);
 string dirAutoindex(string &dirPath,string &root);
-string dirDirctlyAutoindex(string &dirPath,string &root);
+string errorPage(int statusCode);
+void	status_line(int client_socket,int status);

@@ -65,6 +65,7 @@ string removeComments(string& input) {
 
 string removeLocationBlocks(string& configData) {
 	string result = configData;
+    // cout <<configData;
 	// Regex pattern to match "location { ... }" blocks
 	string locationRegexPattern = "\\s*location\\s+[^}]*\\{[^}]*\\}\\s*";
 	regex locationRegex(locationRegexPattern);

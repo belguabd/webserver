@@ -171,13 +171,19 @@ void HttpRequest::checkPathIscgi(string &path)
     size_t startPathInfo;
     size_t endPathInfo;
     startPathInfo =  this->rootcgi.find(s);
+
     endPathInfo = this->rootcgi.find("?");
-    if (endPathInfo!=string::npos) {
-      this->pathInfo = this->rootcgi.substr(startPathInfo + s.length(),endPathInfo - startPathInfo - s.length());
+    if (startPathInfo!=string::npos)
+    {
+      if (endPathInfo!=string::npos) {
+        this->pathInfo = this->rootcgi.substr(startPathInfo + s.length(),endPathInfo - startPathInfo - s.length());
+      }
+      else
+        this->pathInfo = this->rootcgi.substr(startPathInfo + s.length());
+      size_t pos = this->dataFirstLine[1].find(s);
+      this->dataFirstLine[1] = this->dataFirstLine[1].substr(0,pos+s.length());
     }
-    else
-      this->pathInfo = this->rootcgi.substr(startPathInfo + s.length());
-    this->rootcgi = this->rootcgi.substr(0,startPathInfo + s.length());
+    this->rootcgi = this->rootcgi.substr(0,startPathInfo+s.length());
     bool f = fileExists(this->rootcgi);
     if (f==false)
       this->rootcgi = "";
@@ -185,8 +191,7 @@ void HttpRequest::checkPathIscgi(string &path)
       this->cgiExtension = 1;
     else
       this->cgiExtension = 2;
-
-
+    cout << "---------->"<<this->rootcgi<<endl;
 }
 int HttpRequest::defineTypeMethod(string firstline) {
   firstline = trimNewline(firstline);
@@ -369,48 +374,18 @@ void HttpRequest ::requestLine() {
     return ;
   }
   size_t pos = path.find("?");
-  if (pos == string::npos)
-  {
-    pos = path.find("#");
-    if (pos == string::npos)
-    {
-      return;
-    }
-    else
-    {
-      this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
-      cout << "-- > " << this->dataFirstLine[1] << endl;
-      return;
-    }
+  size_t posHashtag = path.find("#");
+  if (posHashtag !=string::npos) {
+    this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, posHashtag);
   }
-  if (this->dataFirstLine[1][pos + 1] == '\0')
-  {
+  if (pos != string::npos) {
+    querydata = this->dataFirstLine[1].substr(pos + 1);
     this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
-    return;
+
   }
-  querydata = this->dataFirstLine[1].substr(pos + 1);
-  this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
-  size_t i = 0;
-  while (i < querydata.length())
-  {
-    size_t endkey = querydata.find("=", i);
-    size_t endval = querydata.find("&", i);
-    if (endkey != string::npos)
-    {
-      string key = querydata.substr(i, endkey - i);
-      string value;
-      if (endval != string::npos)
-        value = querydata.substr(endkey + 1, endval - endkey - 1);
-      else
-        value = querydata.substr(endkey + 1);
-      if (endval != string::npos)
-        i = endval + 1;
-      else
-        i = querydata.length();
-        cout <<"key  = "<<key<<", value  = "<<value<<endl;
-      this->queryParam[key] = value;
-    }
-  }
+  cout <<"querydata = "<<querydata<<endl;
+  cout <<"this->dataFirstLine[1] = "<<this->dataFirstLine[1]<<endl;
+  cout <<"path_nfo"<<this->pathInfo<<endl;
 }
 
 string encodeUrl(string &str)
