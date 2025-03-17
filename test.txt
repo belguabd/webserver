@@ -2,38 +2,21 @@ ranges
 
 // Use set instead of vector
 
+close and keep-alive
+cgi 
+Client disconnected
 
-//////////
+headers
 
 
-Your second output (1.06738 kB) is correct and expected! Here’s why:
+delete status code 
+delete response 
 
-Understanding the File Size
-Your file (index.html) is 1.1K, which usually means between 1100 and 1126 bytes, depending on how the OS rounds it.
 
-Why Does It Show 1.06738 kB Instead of 1.1 kB?
-Exact Byte Count Matters
+quereStirng
+void HttpRequest ::requestLine() 
 
-The OS might round 1.1K to 1,126 bytes or 1,100 bytes for display.
-Your calculation (file_offset / 1024.0) is precise:
-If the file is 1092 bytes, it would show:
-cpp
-Copy
-Edit
-1092 / 1024.0 = 1.06738 kB
-If the file were 1126 bytes, it would be:
-cpp
-Copy
-Edit
-1126 / 1024.0 = 1.09961 kB
-Rounding Differences
 
-The system (ls -lh) rounds up to 1.1K, but your program calculates the exact floating-point value.
-///////
+allowed_methods in post didnt check 
 
-headers parse 
-
-bad request
-
-duplicate Host
-host more string
+.php .py 

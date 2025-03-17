@@ -2,9 +2,44 @@
 #include <cstddef>
 #include <sys/_types/_ssize_t.h>
 
-void	status_line(int client_socket,string status) {
-  // cout <<status;
-	send(client_socket, status.c_str(), status.size(), 0);
+string statusText(int status)
+{
+  string text ;
+  if (status==200) { //200 400 403 404 405 413 414 500 501 505  201 CREATED
+    text = "200 OK\r\n";
+  } else if(status == 201) {
+    text = "201 CREATED\r\n";
+  } else if(status==400) {
+    text ="400 Bad Request\r\n"; 
+  }  else if(status==403) {
+    text = "403 Forbidden\r\n";
+  } else if(status==404) {
+    text = "404 Not Found\r\n";
+  } else if (status==405){
+    text = "405 Method Not Allowed\r\n";
+  } else if (status==413){
+    text = "413 Request Entity Too Large\r\n";
+  } else if(status==414) {
+    text = "414 Request-URI Too Long\r\n";
+  } else if(status==500) {
+    text = "500 Request-URI Too Long\r\n";///
+  } else if(status==501) {
+    text = "501 Not Implemented\r\n";///
+  } else if (status==505){
+    text = "505 HTTP Version Not Supported\r\n";
+  } else if (status==301){
+    text = "301 Moved Permanently\r\n";
+  } else if (status==409){
+    text = "409 conflict\r\n";///
+  } else if (status==204){
+    text = "204 No Content\r\n";
+  }
+  return text;
+}
+void	status_line(int client_socket,int status) {
+  string firstline = "HTTP/1.1 ";
+  firstline += statusText(status);
+	send(client_socket, firstline.c_str(), firstline.size(), 0);
 }
 
 void	headersSending(int client_socket,string serverName) {
@@ -24,53 +59,13 @@ void	headersSending(int client_socket,string serverName) {
 	send(client_socket, header.c_str(), header.size(), 0);
 }
 /*---------------------- Get method------------------------------------------*/
-// void HttpResponse::fileDataSend(string &data,ServerConfig &config)
-// {
-//   string ContentType;
-//     char buffer[5000];
-//   ifstream file(data, ios::binary);;
-//   size_t pos = data.find(".");
-//   string extension = data.substr(pos);
-//   ContentType = getMimeType(extension);
-//   // cout <<"ContentType = "<<ContentType<<endl;
-//   // stringstream fileContent;
-//   // fileContent << file.rdbuf();
-//   if (!file) {
-    
-//       cout<<"here"<<endl;
-//   }
-//   if (firstTimeResponse==0)
-//   {
-//     file.seekg(0, ios::end); 
-//     std::streampos file_size = file.tellg();
-//     file.seekg(0, std::ios::beg);
-//     cout <<"file size = "<<file_size<<endl;
-//     status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
-//     headersSending(this->request->getfd(),config.getServerName());
-//     // string body = fileContent.str();
-//     // file.read(buffer, sizeof(buffer));
-//     stringstream response1;
-//     response1 << "Content-Type: "<<ContentType<<"\r\n"
-//               << "Content-Length: " << (long)file_size << "\r\n"
-//               << "Connection: close\r\n"
-//               << "\r\n";
-//     string responseStr = response1.str();
-//     send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
-//       this->firstTimeResponse = 1;
-
-//   }
-//   file.read(buffer, sizeof(buffer));
-//   send(this->request->getfd(), buffer, file.gcount(), 0);
-//   //  file.close();
-// }
-
 void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
     std::string ContentType;
      if (!this->file.is_open()) {
         this->file.open(data, std::ios::binary);
         if (!this->file.is_open()) {
             std::cerr << "Error opening file: " << data << std::endl;
-            return;
+            return ;
         }
     }
     if (firstTimeResponse == 0) {
@@ -88,11 +83,11 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
           ContentType = getMimeType(extension);
         }
         std::ostringstream response_headers;
-        status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
+        status_line(this->request->getfd(),200);
         headersSending(this->request->getfd(),config.getServerName());
         response_headers << "Content-Type: " << ContentType << "\r\n"
                          << "Content-Length: " << file_size << "\r\n"
-                         << "Connection: Keep-Alive\r\n"
+                         << "Connection: close\r\n"
                          << "\r\n";
 
         send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
@@ -107,7 +102,7 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
     if (bytes_read > 0) {
         send(this->request->getfd(), buffer, bytes_read, 0);
        this->file_offset += bytes_read;
-       cout <<"fd client = "<<this->request->getfd()<<"   file_offset = " << round((double)this->file_offset / (1024*1024) * 10) / 10 << " MB" << endl;
+      //  cout <<"fd client = "<<this->request->getfd()<<"   file_offset = " << round((double)this->file_offset / (1024*1024) * 10) / 10 << " MB" << endl;
     }
     if (bytes_read == 0) {
         this->file.close();
@@ -116,51 +111,6 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
     }
 }
 
-void HttpResponse:: forbidden(int client_socket,ServerConfig &config)
-{
-  string body;
-  string val;
-  string root = config.getRoot();
-  stringstream fileContent;
-    map<string, string>::const_iterator it;
-    for (it = config.errorpage.begin(); it != config.errorpage.end(); ++it) {
-        if (it->first.find("403")!=string::npos) {
-          val = it->second;
-          break;
-        }
-    }
-    root += val;
-  	ifstream file(root);
-  if (file) {
-      fileContent << file.rdbuf();
-      body = fileContent.str();
-      file.close();
-  } else {
-      body =  "<!DOCTYPE html>\n"
-              "<html lang=\"en\">\n"
-              "<head>\n"
-              "<meta charset=\"UTF-8\">\n"
-              " <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-              "<title>403 - Forbidden</title>\n"
-              "</head> \n"
-              "<body>\n"
-              "<h1>403 Forbidden</h1>\n"
-              " <p>You do not have permission to access this page.</p>\n"
-              "</body>\n</html>";
-  }
-  status_line(client_socket,"HTTP/1.1 403 FORBIDDEN\r\n");
-  headersSending(client_socket,config.getServerName());
-  stringstream response1;
-  response1 << "Content-Type: text/html\r\n"
-  // response1 << "Content-Type: image/jpeg\r\n"
-            << "Content-Length: " << body.size() << "\r\n"
-            << "Connection: close\r\n"
-            << "\r\n"
-            << body;
-  string responseStr = response1.str();
-  
-  send(client_socket, responseStr.c_str(), responseStr.size(), 0);
-}
 int  HttpResponse::checkFileAndSendData(string &data ,ServerConfig &config,string &index)
 {
   string str;
@@ -196,10 +146,10 @@ void  HttpResponse::dirDataSend(string &data, string &root,LocationUplaods &uplo
     checkExist = this->checkFileAndSendData(data, config, index);
   }
   if (checkExist == 1) {
-    this->notFound(this->request->getfd(),config);
+    this->sendErrorPage(config,404);
     return;
   }
-  this->forbidden(this->request->getfd(),config);
+  this->sendErrorPage(config,403);
 }
 
 void  HttpResponse::dirDataSend(string &data, string &root,LocationConfig &normal, ServerConfig &config)
@@ -213,14 +163,14 @@ void  HttpResponse::dirDataSend(string &data, string &root,LocationConfig &norma
     checkExist = this->checkFileAndSendData(data, config, index);
   }
   if (checkExist == 1) {
-    this->notFound(this->request->getfd(),config);
+    this->sendErrorPage(config,404);
     return;
   }
   if (normal.autoindex == false)
   {
-      this->forbidden(this->request->getfd(),config);
+      this->sendErrorPage(config,403);
   } else {
-      status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
+      status_line(this->request->getfd(),200);
       headersSending(this->request->getfd(),config.getServerName());
       string body = dirAutoindex(data,root);
       stringstream response1;
@@ -241,16 +191,16 @@ void  HttpResponse::dirDataSend(string &data, ServerConfig &config)
   index = config.getIndex();
   checkExist = this->checkFileAndSendData(data, config, index);
   if (checkExist == 1) {
-    this->notFound(this->request->getfd(),config);
+    this->sendErrorPage(config,404);
     return;
   }
   if (config.getAutoindex() == false)
   {
-      this->forbidden(this->request->getfd(),config);
+      this->sendErrorPage(config,403);
   } else {
-      status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
+      status_line(this->request->getfd(),200);
       headersSending(this->request->getfd(),config.getServerName());
-      string body = dirDirctlyAutoindex(data,root);
+      string body = dirAutoindex(data,root);
       stringstream response1;
           response1 << "Content-Type: text/html\r\n"
             << "Content-Length: " << body.size() << "\r\n"
@@ -277,14 +227,13 @@ void    HttpResponse:: getLocationResponse(LocationConfig &normal,string &str,Se
   }
   data += str;
   typePath = checkTypePath(data);
-
   if (typePath==0) {
-    this->notFound(this->request->getfd(),config);
+    this->sendErrorPage(config,404);
   } else if (typePath==1) {
     this->fileDataSend(data,config);
 
   } else if (checkTypePath(data)==2) {
-    if (flag==1)
+    if (flag == 1)
       this->dirDataSend(data,root,normal,config);
     else
       this->dirDataSend(data,normal.root,normal,config);
@@ -305,7 +254,7 @@ void    HttpResponse:: getLocationResponse(LocationUplaods &upload,string &str,S
   }
   data += str;
   if (checkTypePath(data)==0) {
-    this->notFound(this->request->getfd(),config);
+    this->sendErrorPage(config,404);
   } else if (checkTypePath(data)==1) {
     this->fileDataSend(data,config);
 
@@ -330,7 +279,7 @@ void HttpResponse::redirectionResponse(string &str)
   } else {
     data = str;
   }
-  status_line(this->request->getfd(),"HTTP/1.1 301 Moved Permanently\r\n");
+  status_line(this->request->getfd(),301);
   headersSending(this->request->getfd(),config.getServerName());
   stringstream response1;
   response1 << "Location:"<<data<< "\r\n\r\n";
@@ -346,6 +295,15 @@ int indexValidPath(string str)
   while (str[i] && str[i]!='/')
     i++;
   return (i);
+}
+bool HttpResponse::methodIsValid(ServerConfig &config,string method)
+{
+  size_t pos = method.find("GET");
+  if (pos ==string::npos) {
+    this->sendErrorPage(config,405);
+    return false;
+  }
+  return true;
 }
 void    HttpResponse::getResponse()
 {
@@ -368,12 +326,17 @@ void    HttpResponse::getResponse()
   }
   if (config.configNormal.find(str) != config.configNormal.end()) {
     LocationConfig log = getValueFromMap(config.configNormal,config.configNormal.find(str));
-    cout<<data << endl;
+    if (!methodIsValid(config,log.allowed_methods)) {
+       return ;
+    }
     getLocationResponse(log,data,config);
     return ;
   }
   if (config.configUpload.find(str) != config.configUpload.end()) {
     LocationUplaods log = getValueFromMap(config.configUpload,config.configUpload.find(str));
+    if (!methodIsValid(config,log.allowed_methods)) {
+       return ;
+    }
     getLocationResponse(log,data,config);
     return ;
   } 
@@ -385,7 +348,7 @@ void    HttpResponse::getResponse()
   path += words[1]; 
   // cout <<"fd  =   "<<this->request->getfd()<<", path = "<<path<<endl;
   if (checkTypePath(path) == 0) {
-    this->notFound(this->request->getfd(),config);
+    this->sendErrorPage(config,404);
   } else if (checkTypePath(path) == 1) {
     this->fileDataSend(path,config);
   } else if (checkTypePath(path) == 2) {
@@ -396,7 +359,6 @@ void HttpResponse::defautlRoot(ServerConfig &config)
 {
   vector<string> words;
   string root  = config.getRoot();
-  stringstream fileContent;
   size_t i = 0;
   words = splitstring(config.getIndex());
   bool exist = false;
@@ -412,25 +374,11 @@ void HttpResponse::defautlRoot(ServerConfig &config)
     i++;
   }
   if (exist == true) {
-    ifstream file(root);
-    fileContent << file.rdbuf();
-    file.close();
+    this->fileDataSend(root,config);
   }
   else {
-    this->notFound(this->request->getfd(),config);
-    return ;
+    this->sendErrorPage(config,404);
   }
-  status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
-  headersSending(this->request->getfd(),config.getServerName());
-  string body = fileContent.str();
-  stringstream response1;
-  response1 << "Content-Type: text/html\r\n"
-            << "Content-Length: " << body.size() << "\r\n"
-            << "Connection: close\r\n"
-            << "\r\n"
-             << body;
-  string responseStr = response1.str();
-  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
 }
 
 int HttpResponse:: checkDataResev()
@@ -438,10 +386,10 @@ int HttpResponse:: checkDataResev()
   ServerConfig config = this->request->getServerConfig();
   int statuscode = this->request->getRequestStatus();
   if (statuscode == 400) {
-    this->badRequest(this->request->getfd(),config);
+    this->sendErrorPage(config,400);
     return 1;
   } else if (statuscode ==505) {
-    this->HttpVersionNotSupported(this->request->getfd(),config);
+    this->sendErrorPage(config,505);
     return 1;
   }
   return 0;
@@ -452,11 +400,11 @@ void    sendResponse(HttpResponse &response)
   if (response.checkDataResev() != 0) {
     return ;
   }
-  // if (response.request->checkCgi){
-  //   //  cout << response.request->filename << "\n";
-  //    response.cgiResponse();
-  //   return ;
-  // }
+  if (response.request->checkCgi){
+    //  cout << response.request->filename << "\n";
+     response.cgiResponse();
+    return ;
+  }
   if (method == GET) {
     response.getResponse();
   }
@@ -475,7 +423,7 @@ HttpResponse::HttpResponse(HttpRequest *re) :request(re),firstTimeResponse(0) ,f
   // static int i =0;
   // if (i ==1)
   //   exit(102);
-  cout <<"here ----->"<<endl;
+  // cout <<"here ----->"<<endl;
   // i++;
 }
 
@@ -491,132 +439,8 @@ int HttpResponse::writeData() {
 //     std::cerr << "Error sending message to client" << std::endl;
   return bytes_send;
 }
-void HttpResponse::HttpVersionNotSupported(int client_socket,ServerConfig &config) {
-    string body;
-    string val;
-    string root = config.getRoot();
-    stringstream fileContent;
-    map<string, string>::const_iterator it;
-    for (it = config.errorpage.begin(); it != config.errorpage.end(); ++it) {
-        if (it->first.find("505")!=string::npos) {
-          val = it->second;
-          break;
-        }
-    }
-    root += val;
-  	ifstream file(root);
-    if (file) {
-        fileContent << file.rdbuf(); 
-        body = fileContent.str();
-        file.close();
-    } else {
-      body =  "<!DOCTYPE html>\n"
-              "<html lang=\"en\">\n"
-              "<head>\n"
-              "<meta charset=\"UTF-8\">\n"
-              " <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-              "<title>505 - HTTP Version not supported</title>\n"
-              "</head> \n"
-              "<body>\n"
-              "<h1>505 HTTP Version Not Supported</h1>\n"
-              "<p>The page you are looking for does not exist.</p>\n"
-              "</body>\n</html>";
-    }
-    status_line(client_socket,"HTTP/1.1 505 HTTP Version Not Supported\r\n");
-    headersSending(client_socket,config.getServerName());
-    stringstream response1;
-    response1 << "Content-Type: text/html\r\n"
-              << "Content-Length: " << body.size() << "\r\n"
-              << "Connection: keep-alive\r\n"
-              << "\r\n"
-              << body;
-    string responseStr = response1.str();
-    send(client_socket, responseStr.c_str(), responseStr.size(), 0);
-}
-void HttpResponse::badRequest(int client_socket,ServerConfig &config) {
-    string body;
-    string val;
-    string root = config.getRoot();
-    stringstream fileContent;
-    map<string, string>::const_iterator it;
-    for (it = config.errorpage.begin(); it != config.errorpage.end(); ++it) {
-        if (it->first.find("400")!=string::npos) {
-          val = it->second;
-          break;
-        }
-    }
-    root += val;
-  	ifstream file(root);
-    if (file) {
-        fileContent << file.rdbuf(); 
-        body = fileContent.str();
-        file.close();
-    } else {
-      body =  "<!DOCTYPE html>\n"
-              "<html lang=\"en\">\n"
-              "<head>\n"
-              "<meta charset=\"UTF-8\">\n"
-              " <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-              "<title>400 - Bad Request</title>\n"
-              "</head> \n"
-              "<body>\n"
-              "<h1>404 Bad Request</h1>\n"
-              "</body>\n</html>";
-    }
-    status_line(client_socket,"HTTP/1.1 400 Bad Request\r\n");
-    headersSending(client_socket,config.getServerName());
-    stringstream response1;
-    response1 << "Content-Type: text/html\r\n"
-              << "Content-Length: " << body.size() << "\r\n"
-              << "Connection: close\r\n"
-              << "\r\n"
-              << body;
-    string responseStr = response1.str();
-    send(client_socket, responseStr.c_str(), responseStr.size(), 0);
-}
 
-void HttpResponse::notFound(int client_socket,ServerConfig &config) {
-    string body;
-    string val;
-    string root = config.getRoot();
-    stringstream fileContent;
-    map<string, string>::const_iterator it;
-    for (it = config.errorpage.begin(); it != config.errorpage.end(); ++it) {
-        if (it->first.find("404")!=string::npos) {
-          val = it->second;
-          break;
-        }
-    }
-    root += val;
-  	ifstream file(root);
-    if (file) {
-        fileContent << file.rdbuf(); 
-        body = fileContent.str();
-        file.close();
-    } else {
-      body =  "<!DOCTYPE html>\n"
-              "<html lang=\"en\">\n"
-              "<head>\n"
-              "<meta charset=\"UTF-8\">\n"
-              " <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-              "<title>404 - Page Not Found</title>\n"
-              "</head> \n"
-              "<body>\n"
-              "<h1>404 Not Found</h1>\n"
-              "<p>The page you are looking for does not exist.</p>\n"
-              "</body>\n</html>";
-    }
-    status_line(client_socket,"HTTP/1.1 404 Not Found\r\n");
-    headersSending(client_socket,config.getServerName());
-    stringstream response1;
-    response1 << "Content-Type: text/html\r\n"
-              << "Content-Length: " << body.size() << "\r\n"
-              << "Connection: close\r\n"
-              << "\r\n"
-              << body;
-    string responseStr = response1.str();
-    send(client_socket, responseStr.c_str(), responseStr.size(), 0);
-}
+
 
 /*--------------------------------------------------------------------------------------------*/
 
@@ -632,45 +456,7 @@ bool ExistFile(string&filePath) {
   }
   return false;
 }
-string dirDirctlyAutoindex(string &dirPath,string &root) {
-    string html = "<!DOCTYPE html>\n"
-                  "<html>\n"
-                  "<head>\n"
-                    "<meta charset=\"UTF-8\">\n"
-                    "<title>Autoindex</title>\n"
-                    "<style>\n"
-                      "body { font-family: Arial, sans-serif; margin: 20px; }\n"
-                      "h1 { font-size: 24px; }\n"
-                      "ul { list-style-type: none; padding: 0; }\n"
-                      "li { margin: 5px 0; }\n"
-                      "a { text-decoration: none; color: #3498db; }\n"
-                      "a:hover { text-decoration: underline; }\n"
-                    "</style>\n"
-                  "</head>\n"
-                  "<body>\n"
-                  "<h1>Index of /</h1>\n";
 
-    DIR *dir = opendir(dirPath.c_str());
-    if (!dir) {
-        cerr << "Error: Unable to open directory " << dirPath << "\n";
-        return "<h1>Directory not found</h1>";
-    }
-  string str = dirPath.substr(root.length() + 1);
-  // cout <<"str "<<str<<endl;
-    struct dirent* entry;
-    while ((entry = readdir(dir)) != nullptr) {
-        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-            html += "<li><a href=\"" + str + "/" + entry->d_name + "\">";
-            // cout << "name "<<entry->d_name<<endl;
-            html += entry->d_name;
-            html += "</a></li>\n";
-        }
-    }
-    closedir(dir);
-
-    html += "</ul>\n</body>\n</html>";
-    return html;
-}
 
 string dirAutoindex(string &dirPath,string &root) {
 
@@ -696,7 +482,8 @@ string dirAutoindex(string &dirPath,string &root) {
         cerr << "Error: Unable to open directory " << dirPath << "\n";
         return "<h1>Directory not found</h1>";
     }
-  string str = dirPath.substr(root.length() + 1);
+    size_t pos =  dirPath.rfind("/");
+    string str = dirPath.substr(pos + 1);
     struct dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
@@ -740,7 +527,7 @@ void HttpResponse::cgiResponse()
       fileContent << file.rdbuf(); 
       file.close();
   }
-  status_line(this->request->getfd(),"HTTP/1.1 200 OK\r\n");
+  status_line(this->request->getfd(),200);
   headersSending(this->request->getfd(),config.getServerName());
   string body = fileContent.str();
   stringstream response1;
@@ -758,10 +545,9 @@ void HttpResponse::cgiResponse()
 
 void HttpResponse::postResponse()
 {
-  ServerConfig config;
   string body;
+  ServerConfig config;
   config = this->request->getServerConf();
-  vector<string>  words = this->request->getDataFirstLine();
   // cout <<"URL = "<<words[1]<<endl;
   ifstream file("./doc/html/Upload_/succ.html"); ///
   stringstream fileContent;
@@ -786,7 +572,7 @@ void HttpResponse::postResponse()
               "</html>\n";
 
   }
-  status_line(this->request->getfd(),"HTTP/1.1 201 CREATED\r\n");
+  status_line(this->request->getfd(),201);
   headersSending(this->request->getfd(),config.getServerName());
   stringstream response1;
   response1 << "Content-Type: text/html\r\n"
@@ -806,78 +592,6 @@ void HttpResponse::postResponse()
 
 
 
-
-// string generateErrorPage(int statusCode, const string& message) {
-//     return "<!DOCTYPE html>\n"
-//            "<html lang=\"en\">\n"
-//            "<head>\n"
-//            "<meta charset=\"UTF-8\">\n"
-//            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-//            "<title>" + to_string(statusCode) + " - " + message + "</title>\n"
-//            "<style>\n"
-//            "body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }\n"
-//            "h1 { font-size: 50px; color: red; }\n"
-//            "p { font-size: 20px; color: #666; }\n"
-//            "</style>\n"
-//            "</head>\n"
-//            "<body>\n"
-//            "<h1>" + to_string(statusCode) + " " + message + "</h1>\n"
-//            "<p>The request could not be processed.</p>\n"
-//            "</body>\n"
-//            "</html>";
-// }
-
-
-
-
-
-    // _mimeToExtension["text/plain"] = ".txt";
-    // _mimeToExtension["text/html"] = ".html";
-    // _mimeToExtension["text/css"] = ".css";
-    // _mimeToExtension["text/javascript"] = ".js";
-    // _mimeToExtension["text/markdown"] = ".md";
-    // _mimeToExtension["text/csv"] = ".csv";
-    // _mimeToExtension["text/x-c"] = ".cpp";
-    
-    // // Application types
-    // _mimeToExtension["application/json"] = ".json";
-    // _mimeToExtension["application/xml"] = ".xml";
-    // _mimeToExtension["application/pdf"] = ".pdf";
-    // _mimeToExtension["application/zip"] = ".zip";
-    // _mimeToExtension["application/x-rar-compressed"] = ".rar";
-    // _mimeToExtension["application/x-tar"] = ".tar";
-    // _mimeToExtension["application/gzip"] = ".gz";
-    // _mimeToExtension["application/msword"] = ".doc";
-    // _mimeToExtension["application/vnd.ms-excel"] = ".xls";
-    // _mimeToExtension["application/vnd.openxmlformats-officedocument.wordprocessingml.document"] = ".docx";
-    // _mimeToExtension["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] = ".xlsx";
-    // _mimeToExtension["application/octet-stream"] = ".bin";
-    
-    // // Image types
-    // _mimeToExtension["image/jpeg"] = ".jpg";
-    // _mimeToExtension["image/png"] = ".png";
-    // _mimeToExtension["image/gif"] = ".gif";
-    // _mimeToExtension["image/svg+xml"] = ".svg";
-    // _mimeToExtension["image/webp"] = ".webp";
-    // _mimeToExtension["image/tiff"] = ".tiff";
-    // _mimeToExtension["image/bmp"] = ".bmp";
-    // _mimeToExtension["image/x-icon"] = ".ico";
-    
-    // // Audio types
-    // _mimeToExtension["audio/mpeg"] = ".mp3";
-    // _mimeToExtension["audio/wav"] = ".wav";
-    // _mimeToExtension["audio/webm"] = ".weba";
-    
-    // // Video types
-    // _mimeToExtension["video/mp4"] = ".mp4";
-    // _mimeToExtension["video/webm"] = ".webm";
-    // _mimeToExtension["video/ogg"] = ".ogv";
-    
-    // // Font types
-    // _mimeToExtension["font/ttf"] = ".ttf";
-    // _mimeToExtension["font/woff"] = ".woff";
-    // _mimeToExtension["font/woff2"] = ".woff2";
-    // _mimeToExtension["font/otf"] = ".otf";
 
 
 string HttpResponse::getMimeType(string &extension)
@@ -932,4 +646,110 @@ string HttpResponse::getMimeType(string &extension)
     if (mimeType.find(extension) != mimeType.end())
         return mimeType[extension];
     return "application/octet-stream"; // Default binary type
+}
+
+
+/*----------------------------------error page ----------------*/
+
+string errorPage(int statusCode) {
+  string message = statusText(statusCode);
+    return "<!DOCTYPE html>\n"
+           "<html lang=\"en\">\n"
+           "<head>\n"
+           "<meta charset=\"UTF-8\">\n"
+           "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+           "<title>" + to_string(statusCode) +"</title>\n"
+           "<style>\n"
+           "body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }\n"
+           "h1 { font-size: 50px; color: red; }\n"
+           "p { font-size: 20px; color: #666; }\n"
+           "</style>\n" 
+           "</head>\n"
+           "<body>\n"
+           "<h1>" +  message + "</h1>\n"
+           "<hr>\n"
+           "</body>\n"
+           "</html>";
+}
+
+
+void HttpResponse::sendErrorPage(ServerConfig &config,int status) {
+    std::string ContentType;
+    string data;
+    if (firstTimeResponse == 0)
+    {
+      string val;
+      string root = config.getRoot();
+      std::ostringstream s;
+      s << status;
+      string statusStr = s.str();
+      map<string, string>::const_iterator it;
+      for (it = config.errorpage.begin(); it != config.errorpage.end(); ++it) {
+        if (it->first.find(statusStr)!=string::npos) {
+          val = it->second;
+          break;
+        }
+      }
+      root += val;
+      data = root;
+    }
+     if (!this->file.is_open()) {
+        this->file.open(data, std::ios::binary);
+        if (!this->file.is_open()) {
+          string body = errorPage(status);
+          status_line(this->request->getfd(),status);
+          headersSending(this->request->getfd(),config.getServerName());
+          stringstream response1;
+          response1 << "Content-Type: text/html\r\n"
+                    << "Content-Length: " << body.size() << "\r\n"
+                    << "Connection: close\r\n"
+                    << "\r\n"
+                    << body;
+          string responseStr = response1.str();
+          send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+          complete = 1;
+          return;
+        }
+    }
+    if (firstTimeResponse == 0) {
+        file_size = 0;
+        this->file.seekg(0, std::ios::end);
+        file_size = this->file.tellg();
+        this->file.seekg(0, std::ios::beg);
+        size_t pos = data.find(".");
+        if (pos == string::npos) {
+            ContentType = "text/plain";
+        }
+        else
+        {
+          string extension = data.substr(pos);
+          ContentType = getMimeType(extension);
+        }
+        std::ostringstream response_headers;
+        status_line(this->request->getfd(),status);
+        headersSending(this->request->getfd(),config.getServerName());
+        response_headers << "Content-Type: " << ContentType << "\r\n"
+                         << "Content-Length: " << file_size << "\r\n"
+                         << "Connection: close\r\n"
+                         << "\r\n";
+
+        send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
+        firstTimeResponse = 1;
+    }
+    
+    this->file.seekg(this->file_offset, std::ios::beg); 
+    const size_t buffer_size = 1024;
+    char buffer[buffer_size];
+    this->file.read(buffer, buffer_size);
+    std::streamsize bytes_read = this->file.gcount();
+    if (bytes_read > 0) {
+        send(this->request->getfd(), buffer, bytes_read, 0);
+      // cout <<"fd client = "<<this->request->getfd()<<"   file_offset = " << round((double)this->file_offset / (1024*1024) * 10) / 10 << " MB" << endl;
+       this->file_offset += bytes_read;
+    }
+    if (bytes_read == 0) {
+        this->file.close();
+        complete = 1;
+       cout <<"----- END file --------"<<endl;
+    }
 }
