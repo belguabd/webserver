@@ -9,6 +9,8 @@ string statusText(int status)
     text = "200 OK\r\n";
   } else if(status == 201) {
     text = "201 CREATED\r\n";
+  }else if (status==204){
+    text = "204 No Content\r\n";
   } else if(status==400) {
     text ="400 Bad Request\r\n"; 
   }  else if(status==403) {
@@ -18,21 +20,15 @@ string statusText(int status)
   } else if (status==405){
     text = "405 Method Not Allowed\r\n";
   } else if (status==413){
-    text = "413 Request Entity Too Large\r\n";
-  } else if(status==414) {
-    text = "414 Request-URI Too Long\r\n";
+    text = "413 Request Entity Too Large\r\n";///
   } else if(status==500) {
-    text = "500 Request-URI Too Long\r\n";///
-  } else if(status==501) {
-    text = "501 Not Implemented\r\n";///
+    text = "500 Internal Server Error\r\n";///
+  } else if(status==504) {
+    text = "504 Gateway Timeout\r\n";///
   } else if (status==505){
     text = "505 HTTP Version Not Supported\r\n";
   } else if (status==301){
     text = "301 Moved Permanently\r\n";
-  } else if (status==409){
-    text = "409 conflict\r\n";///
-  } else if (status==204){
-    text = "204 No Content\r\n";
   }
   return text;
 }
@@ -83,7 +79,7 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
           ContentType = getMimeType(extension);
         }
         std::ostringstream response_headers;
-        status_line(this->request->getfd(),200);
+        status_line(this->request->getfd(),this->request->getRequestStatus());
         headersSending(this->request->getfd(),config.getServerName());
         response_headers << "Content-Type: " << ContentType << "\r\n"
                          << "Content-Length: " << file_size << "\r\n"
@@ -174,7 +170,7 @@ void  HttpResponse::dirDataSend(string &data, string &root,LocationConfig &norma
       headersSending(this->request->getfd(),config.getServerName());
       string body = dirAutoindex(data,root);
       stringstream response1;
-          response1 << "Content-Type: text/html\r\n"
+            response1 << "Content-Type: text/html\r\n"
             << "Content-Length: " << body.size() << "\r\n"
             << "Connection: close\r\n"
             << "\r\n"
@@ -391,17 +387,34 @@ int HttpResponse:: checkDataResev()
   } else if (statuscode ==505) {
     this->sendErrorPage(config,505);
     return 1;
+  } else if (statuscode ==405) {
+    this->sendErrorPage(config,405);
+    return 1;
+  } else if (statuscode==404) {
+    this->sendErrorPage(config,404);
+    return 1;
+  } else if (statuscode==403) {
+    this->sendErrorPage(config,403);
+    return 1;
+  } else if (statuscode==500) {
+    this->sendErrorPage(config,500);
+    return 1;
+  } else if (statuscode==504) {
+    this->sendErrorPage(config,504);
+    return 1;
   }
   return 0;
 }
 void    sendResponse(HttpResponse &response)
 {
+  ServerConfig config = response.request->getServerConfig();
+  string data = "./doc/html/Upload_/succ.html";
   int method = response.request->_method;
   if (response.checkDataResev() != 0) {
     return ;
   }
   if (response.request->checkCgi){
-    //  cout << response.request->filename << "\n";
+     cout << response.request->filename << "\n";
      response.cgiResponse();
     return ;
   }
@@ -409,11 +422,11 @@ void    sendResponse(HttpResponse &response)
     response.getResponse();
   }
   else if (method == POST) {
-    response.postResponse();
+    response.fileDataSend(data,config);
   }
   else if (method == DELETE)
   {
-    // response.deleteResponse();
+    response.fileDataSend(data,config);
   }
 
 }
@@ -518,7 +531,6 @@ int checkTypePath(string &path) {
 /*-------------------------------------- CGI ------------------------------------------*/
 void HttpResponse::cgiResponse()
 {
-  // cout << "--->"<<this->request->filename << "\n";
   ServerConfig config;
   ifstream file(this->request->filename);
   stringstream fileContent;
@@ -540,58 +552,6 @@ void HttpResponse::cgiResponse()
   string responseStr = response1.str();
   send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
 }
-
-/*--------------------------------------Post method------------------------------------------*/
-
-void HttpResponse::postResponse()
-{
-  string body;
-  ServerConfig config;
-  config = this->request->getServerConf();
-  // cout <<"URL = "<<words[1]<<endl;
-  ifstream file("./doc/html/Upload_/succ.html"); ///
-  stringstream fileContent;
-        
-  if (file) {
-      fileContent << file.rdbuf();
-      body = fileContent.str();
-      file.close();
-  } else {
-      body =  "<!DOCTYPE html>\n"
-              "<html lang=\"en\">\n"
-              "<head>\n"
-              "<meta charset=\"UTF-8\">\n"
-              "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-              "<title>Upload Successful</title>\n"
-              "</head>\n"
-              "<body>\n"
-              "<h1>Upload Successful</h1>\n"
-              "<p>Your file has been uploaded successfully.</p>\n"
-              "<p><a href=\"/\">Return to Home</a></p>\n"
-              "</body>\n"
-              "</html>\n";
-
-  }
-  status_line(this->request->getfd(),201);
-  headersSending(this->request->getfd(),config.getServerName());
-  stringstream response1;
-  response1 << "Content-Type: text/html\r\n"
-            << "Content-Length: " << body.size() << "\r\n"
-            << "Connection: close\r\n"
-            << "\r\n"
-            << body;
-  string responseStr = response1.str();
-  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
-}
-
-
-
-/*--------------------------------------------------------------------------------------------*/
-
-
-
-
-
 
 
 string HttpResponse::getMimeType(string &extension)

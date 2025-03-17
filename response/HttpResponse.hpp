@@ -40,6 +40,7 @@ public:
       return val;
   }
   void postResponse();
+  void deleteResponse();
   string getMimeType(string &extension);
   void cgiResponse();
   void defautlRoot(ServerConfig &config);

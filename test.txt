@@ -17,6 +17,5 @@ quereStirng
 void HttpRequest ::requestLine() 
 
 
-allowed_methods in post didnt check 
 
 .php .py 

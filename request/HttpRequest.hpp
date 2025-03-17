@@ -28,6 +28,7 @@ private:
   int endHeaders;
   vector<string> dataFirstLine;
   map<string, string> queryParam;
+  string queryString;
   std::string readBuffer;
   ServerConfig server_config;
   string file;
@@ -92,6 +93,7 @@ public:
     return mapheaders;
   }
   std::map<std::string, std::string> &getQueryParams() { return queryParam; }
+  string &getQueryString() { return queryString; }
   const std::vector<std::string> &getDataFirstLine() const {
     return dataFirstLine;
   }

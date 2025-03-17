@@ -180,8 +180,6 @@ void HttpRequest::checkPathIscgi(string &path)
       }
       else
         this->pathInfo = this->rootcgi.substr(startPathInfo + s.length());
-      size_t pos = this->dataFirstLine[1].find(s);
-      this->dataFirstLine[1] = this->dataFirstLine[1].substr(0,pos+s.length());
     }
     this->rootcgi = this->rootcgi.substr(0,startPathInfo+s.length());
     bool f = fileExists(this->rootcgi);
@@ -359,7 +357,6 @@ void HttpRequest ::requestLine() {
     return ;
   }
   string path;
-  string querydata;
   this->dataFirstLine[1] = encodeUrl(this->dataFirstLine[1]);
   if (this->dataFirstLine[1].empty()) {
     this->requestStatus = 400;
@@ -374,16 +371,18 @@ void HttpRequest ::requestLine() {
     return ;
   }
   size_t pos = path.find("?");
+  cout <<"-------------" <<path <<endl;
+  cout <<pos <<endl;
   size_t posHashtag = path.find("#");
   if (posHashtag !=string::npos) {
     this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, posHashtag);
   }
   if (pos != string::npos) {
-    querydata = this->dataFirstLine[1].substr(pos + 1);
+    this->queryString = this->dataFirstLine[1].substr(pos + 1);
     this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
 
   }
-  cout <<"querydata = "<<querydata<<endl;
+  cout <<"querydata = "<<this->queryString<<endl;
   cout <<"this->dataFirstLine[1] = "<<this->dataFirstLine[1]<<endl;
   cout <<"path_nfo"<<this->pathInfo<<endl;
 }
