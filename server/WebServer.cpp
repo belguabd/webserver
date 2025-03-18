@@ -475,7 +475,7 @@ void WebServer::handleCGIRequest(int client_fd) {
   env["PATH_INFO"] = client->pathInfo;      // Path info from URL
   env["REDIRECT_STATUS"] = "1";             // Security feature for CGI
   env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"]; // Set content length
-  env["INTERPRETER"] = "/Users/belguabd/Desktop/webserver/cgi/php-cgi";
+  env["INTERPRETER"] = "./cgi/php-cgi";
   // env["QUERY_STRING"] = ;
   std::map<string, string>::iterator iter = env.begin();
   std::vector<std::string> envp_map;

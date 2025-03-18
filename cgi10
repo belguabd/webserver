@@ -1,4 +1,8 @@
 X-Powered-By: PHP/8.2.8
-Content-type: text/html;charset=UTF-8
+Content-type: text/html; charset=UTF-8
 
-<html><body><h1>Hello, World!</h1><p>You are unknown years old.</p></body></html>
+<h2>Login</h2><form method='POST'  enctype='multipart/form-data'>
+            <label>Username: <input type='text' name='username' required></label><br>
+            <label>Password: <input type='password' name='password' required></label><br>
+            <button type='submit'>Login</button>
+          </form>

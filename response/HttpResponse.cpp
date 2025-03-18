@@ -84,6 +84,7 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
     headersSending(this->request->getfd(), config.getServerName());
     response_headers << "Content-Type: " << ContentType << "\r\n"
                      << "Content-Length: " << file_size << "\r\n"
+                     << "Set-Cookie: qwerty=219ffwef9w0f\r\n"
                      << "Connection: close\r\n"
                      << "\r\n";
 
@@ -422,7 +423,7 @@ int HttpResponse::writeData() {
   
   int bytes_send = 0;
   sendResponse(*this);
-  cout << "complete ------>"<< this->complete << "\n";
+  // cout << "complete ------>"<< this->complete << "\n";
   //   const char *msg = "Hi I am server";
   //   ssize_t bytes_send = send(client_fd, msg, strlen(msg), 0);
   //   if (bytes_send == -1)
@@ -528,6 +529,7 @@ void HttpResponse::cgiResponse() {
             // response1 << "Content-Type: image/jpeg\r\n"
             << "Content-Length: " << body.size() << "\r\n"
             << "Connection: close\r\n"
+            << "Set-Cookie: username=login\r\n"
             << "\r\n"
             << body;
   string responseStr = response1.str();

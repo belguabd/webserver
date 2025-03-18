@@ -20,3 +20,10 @@ void HttpRequest ::requestLine()
 allowed_methods in post didnt check 
 
 .php .py 
+
+headers parse
+    host
+    connection : close
+    POS4 / HTTP/1.1
+    Connection: keep-alive
+    content-length  
