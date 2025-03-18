@@ -2,9 +2,7 @@ ranges
 
 // Use set instead of vector
 
-close and keep-alive
 cgi 
-Client disconnected
 
 headers
 
@@ -13,10 +11,10 @@ delete status code
 delete response 
 
 
-quereStirng
-void HttpRequest ::requestLine() 
 
-
-allowed_methods in post didnt check 
 
 .php .py 
+method_allowed delete; 
+
+location upload
+close and keep-alive

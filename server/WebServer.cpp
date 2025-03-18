@@ -147,17 +147,13 @@ void WebServer::receive_from_client(int client_fd) {
     }
   }
 }
-std::string
-HttpResponse::extractBodyFromFile(const std::string &filename) {
+std::string HttpResponse::extractBodyFromFile(const std::string &filename) {
   std::ifstream file(filename);
-  if (!file.is_open()) {
+  if (!file.is_open())
     throw std::runtime_error("Failed to open file: " + filename);
-  }
-
   std::stringstream buffer;
   buffer << file.rdbuf();
   file.close();
-
   std::string fileContent = buffer.str();
   size_t header_end = fileContent.find("\r\n\r\n");
 
@@ -195,6 +191,7 @@ void WebServer::respond_to_client(int client_fd) {
       break;
     }
   }
+  
   if (request->checkCgi)
     request->setBodyCgi(response->extractBodyFromFile(request->filename));
   ssize_t bytes_written = response->writeData();
@@ -207,7 +204,7 @@ void WebServer::respond_to_client(int client_fd) {
            NULL);
     kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
     if (request->_method == POST) {
-      unlink(request->getFileName().c_str());
+      // unlink(request->getFileName().c_str());
     }
     // unlink(request->filename.c_str());
     responses_clients.erase(it);
@@ -412,11 +409,16 @@ void WebServer::handleCGIRequest(int client_fd) {
   env["SCRIPT_FILENAME"] = client->rootcgi; // Path to script
   env["PATH_INFO"] = client->pathInfo;      // Path info from URL
   env["REDIRECT_STATUS"] = "1";             // Security feature for CGI
-  env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"]; // Set content length
+  if (client->_method == POST) {
+  // Set CONTENT_TYPE for POST requests (required for file uploads)
+  env["CONTENT_TYPE"] = env["HTTP_CONTENT_TYPE"]; // Ensure this method exists in your client class
+  // Set CONTENT_LENGTH for POST requests
+  env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"]; // Ensure this method exists in your client class
+}
+  // env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"]; // Set content length
   // env["INTERPRETER"] = "/usr/bin/php";
   env["INTERPRETER"] = "./cgi/php-cgi";
-  env["QUERY_STRING"] = "";
-  // env["QUERY_STRING"] = "name=GitHub+Copilot&age=30";
+  env["QUERY_STRING"] = client->getQueryString();
   std::map<string, string>::iterator iter = env.begin();
   std::vector<std::string> envp_map;
   std::vector<char *> envp;
@@ -479,8 +481,10 @@ void WebServer::run() {
         waitpid(pid, &status, 0);
       } else if (filter == EVFILT_READ) {
         receive_from_client(event_fd);
-        if (isCGIRequest(event_fd))
+        if (isCGIRequest(event_fd)){
           handleCGIRequest(event_fd);
+
+        }
       } else if (filter == EVFILT_WRITE) {
         respond_to_client(event_fd);
       }

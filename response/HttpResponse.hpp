@@ -46,6 +46,7 @@ public:
   }
   std::string extractBodyFromFile(const std::string &filename);
   void postResponse();
+  void deleteResponse();
   string getMimeType(string &extension);
   void cgiResponse();
   void defautlRoot(ServerConfig &config);
