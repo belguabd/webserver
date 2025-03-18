@@ -55,84 +55,54 @@ void headersSending(int client_socket, string serverName) {
 }
 /*---------------------- Get method------------------------------------------*/
 void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
-  std::string ContentType;
-  if (!this->file.is_open()) {
-    this->file.open(data, std::ios::binary);
+    std::string ContentType;
     if (!this->file.is_open()) {
-      std::cerr << "Error opening file: " << data << std::endl;
-      return;
-    }
-    if (firstTimeResponse == 0) {
-        file_size = 0;
-        this->file.seekg(0, std::ios::end);
-        file_size = this->file.tellg();
-        this->file.seekg(0, std::ios::beg);
-        size_t pos = data.find(".");
-        if (pos == string::npos) {
-            ContentType = "text/plain";
+        this->file.open(data, std::ios::binary);
+        if (!this->file.is_open()) {
+            std::cerr << "Error opening file: " << data << std::endl;
+            return;
         }
-        else
-        {
-          string extension = data.substr(pos);
-          ContentType = getMimeType(extension);
-        }
-        std::ostringstream response_headers;
-        status_line(this->request->getfd(),this->request->getRequestStatus());
-        headersSending(this->request->getfd(),config.getServerName());
-        response_headers << "Content-Type: " << ContentType << "\r\n"
-                         << "Content-Length: " << file_size << "\r\n"
-                         << "Connection: close\r\n"
-                         << "\r\n";
 
-        send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
-        firstTimeResponse = 1;
+        if (firstTimeResponse == 0) {
+            file_size = 0;
+            this->file.seekg(0, std::ios::end);
+            file_size = this->file.tellg();
+            this->file.seekg(0, std::ios::beg);
+            size_t pos = data.find(".");
+            if (pos == string::npos) {
+                ContentType = "text/plain";
+            }
+            else {
+                string extension = data.substr(pos);
+                ContentType = getMimeType(extension);
+            }
+            std::ostringstream response_headers;
+            status_line(this->request->getfd(), this->request->getRequestStatus());
+            headersSending(this->request->getfd(), config.getServerName());
+            response_headers << "Content-Type: " << ContentType << "\r\n"
+                             << "Content-Length: " << file_size << "\r\n"
+                             << "Connection: " << this->request->typeConnection << "\r\n"
+                             << "\r\n";
+
+            send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
+            firstTimeResponse = 1;
+        }
     }
-    
-    this->file.seekg(this->file_offset, std::ios::beg); 
+
+    this->file.seekg(this->file_offset, std::ios::beg);
     const size_t buffer_size = 1024;
     char buffer[buffer_size];
     this->file.read(buffer, buffer_size);
     std::streamsize bytes_read = this->file.gcount();
     if (bytes_read > 0) {
         send(this->request->getfd(), buffer, bytes_read, 0);
-       this->file_offset += bytes_read;
-      //  cout <<"fd client = "<<this->request->getfd()<<"   file_offset = " << round((double)this->file_offset / (1024*1024) * 10) / 10 << " MB" << endl;
+        this->file_offset += bytes_read;
     }
+
     if (bytes_read == 0) {
         this->file.close();
         complete = 1;
-       cout <<"----- END file --------"<<endl;
     }
-    std::ostringstream response_headers;
-    status_line(this->request->getfd(), 200);
-    headersSending(this->request->getfd(), config.getServerName());
-    response_headers << "Content-Type: " << ContentType << "\r\n"
-                     << "Content-Length: " << file_size << "\r\n"
-                     << "Connection: close\r\n"
-                     << "\r\n";
-
-    send(this->request->getfd(), response_headers.str().c_str(),
-         response_headers.str().size(), 0);
-    firstTimeResponse = 1;
-  }
-
-  this->file.seekg(this->file_offset, std::ios::beg);
-  const size_t buffer_size = 1024;
-  char buffer[buffer_size];
-  this->file.read(buffer, buffer_size);
-  std::streamsize bytes_read = this->file.gcount();
-  if (bytes_read > 0) {
-    send(this->request->getfd(), buffer, bytes_read, 0);
-    this->file_offset += bytes_read;
-    //  cout <<"fd client = "<<this->request->getfd()<<"   file_offset = " <<
-    //  round((double)this->file_offset / (1024*1024) * 10) / 10 << " MB" <<
-    //  endl;
-  }
-  if (bytes_read == 0) {
-    this->file.close();
-    complete = 1;
-    cout << "----- END file --------" << endl;
-  }
 }
 
 int HttpResponse::checkFileAndSendData(string &data, ServerConfig &config,
@@ -743,6 +713,6 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
   if (bytes_read == 0) {
     this->file.close();
     complete = 1;
-    cout << "----- END file --------" << endl;
+    // cout << "----- END file --------" << endl;
   }
 }

@@ -48,6 +48,7 @@ public:
   void setBodyCgi(const string &bodyCgi) { body_cgi = bodyCgi; }
 
   int checkCgi;
+  string typeConnection;
   int cgiExtension;
   string rootcgi;
   string pathInfo;

@@ -400,7 +400,7 @@ void WebServer::handleCGIRequest(int client_fd) {
   env["REDIRECT_STATUS"] = "1";             // Security feature for CGI
   env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"]; // Set content length
   env["INTERPRETER"] = "./cgi/php-cgi";
-  env["QUERY_STRING"] = "name=GitHub+Copilot&language=cpp";
+  env["QUERY_STRING"] = client->getQueryString();
   std::map<string, string>::iterator iter = env.begin();
   std::vector<std::string> envp_map;
   std::vector<char *> envp;

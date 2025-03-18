@@ -254,7 +254,7 @@ void HttpRequest::checkHeaders(string &str)
   str = trimNewline(str);
   size_t pos = str.find(':');
   string result;
-  string host;
+  string key;
   int i = 0;
   vector<string> words;
   vector<string> hostsize;
@@ -275,8 +275,13 @@ void HttpRequest::checkHeaders(string &str)
   string headerName = str.substr(0, pos);
   result.erase(0, result.find_first_not_of(" "));
   hostsize = splitstring(result);
-  host = convertToUpper(headerName);
-  if (host == "HOST") {
+  key = convertToUpper(headerName);
+  if (key == "CONNECTION") {
+    this->typeConnection = result;
+  }
+  // cout <<"key --->"<<key;
+  // cout <<"     val --->"<<result<<endl;
+  if (key == "HOST") {
     if (hostsize.size() != 1 || this->mapheaders.find(headerName) != this->mapheaders.end()) {
       cout <<"bad request "<<endl;
       this->requestStatus = 400;
