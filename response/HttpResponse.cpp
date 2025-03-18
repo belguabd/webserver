@@ -393,7 +393,6 @@ void sendResponse(HttpResponse &response) {
     return;
   }
   if (response.request->checkCgi) {
-    puts("==================================>");
     response.cgiResponse();
     return;
   }
@@ -407,7 +406,8 @@ void sendResponse(HttpResponse &response) {
 }
 
 HttpResponse::HttpResponse(HttpRequest *re)
-    : request(re), firstTimeResponse(0), file_offset(0), complete(0) {
+    : request(re), firstTimeResponse(0), file_offset(0), complete(0),
+      totalSent(0) {
 
   // static int i =0;
   // if (i ==1)
@@ -419,10 +419,10 @@ HttpResponse::HttpResponse(HttpRequest *re)
 HttpResponse::~HttpResponse() {}
 
 int HttpResponse::writeData() {
-  
+
   int bytes_send = 0;
   sendResponse(*this);
-  cout << "complete ------>"<< this->complete << "\n";
+  // cout << "complete ------>" << this->complete << "\n";
   //   const char *msg = "Hi I am server";
   //   ssize_t bytes_send = send(client_fd, msg, strlen(msg), 0);
   //   if (bytes_send == -1)
@@ -531,8 +531,8 @@ void HttpResponse::cgiResponse() {
             << "\r\n"
             << body;
   string responseStr = response1.str();
-  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
   this->complete = 1;
+  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
 }
 
 /*--------------------------------------Post
@@ -575,7 +575,14 @@ void HttpResponse::postResponse() {
             << "\r\n"
             << body;
   string responseStr = response1.str();
-  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+
+  ssize_t bytesSent =
+      send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+  this->totalSent += bytesSent;
+  if (responseStr.size() == totalSent) {
+    complete = 1;
+    this->totalSent = 0;
+  }
 }
 
 /*--------------------------------------------------------------------------------------------*/

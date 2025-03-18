@@ -9,16 +9,21 @@
 #include <netinet/in.h>
 #include <sstream>
 #include <string>
+#include <sys/_types/_ssize_t.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <unordered_map>
 using namespace std;
 class HttpResponse {
 private:
 public:
   HttpRequest *request;
+  std::unordered_map<std::string, std::string> parseCgiHeaders;
+
+  ssize_t totalSent ;
    int firstTimeResponse;
   int complete;
   ifstream file;
@@ -39,6 +44,7 @@ public:
       }
       return val;
   }
+  std::string extractBodyFromFile(const std::string &filename);
   void postResponse();
   string getMimeType(string &extension);
   void cgiResponse();

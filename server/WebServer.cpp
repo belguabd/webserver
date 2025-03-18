@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <utility>
 #include <vector>
+
+#define TIMEOUT_INTERVAL 5000
 void WebServer::initialize_kqueue() {
   kqueue_fd = kqueue();
   if (kqueue_fd < 0) {
@@ -145,7 +147,8 @@ void WebServer::receive_from_client(int client_fd) {
     }
   }
 }
-std::string readFileAndRemoveHeaders(const std::string &filename) {
+std::string
+HttpResponse::extractBodyFromFile(const std::string &filename) {
   std::ifstream file(filename);
   if (!file.is_open()) {
     throw std::runtime_error("Failed to open file: " + filename);
@@ -159,13 +162,21 @@ std::string readFileAndRemoveHeaders(const std::string &filename) {
   size_t header_end = fileContent.find("\r\n\r\n");
 
   if (header_end != std::string::npos) {
+    std::string headers = fileContent.substr(0, header_end);
+    size_t start = 0;
+    size_t end = 0;
+    while ((end = headers.find("\r\n", start)) != std::string::npos) {
+      string header_line = headers.substr(start, end - start);
+      size_t n = header_line.find(":");
+      if (n != std::string::npos)
+        parseCgiHeaders[header_line.substr(0, n)] = header_line.substr(n + 1);
+      start = end + 2;
+    }
     return fileContent.substr(header_end + 4);
   }
-
   return fileContent;
 }
 void WebServer::respond_to_client(int client_fd) {
-  puts("response");
   HttpResponse *response = NULL;
   HttpRequest *request = NULL;
   std::vector<HttpResponse *>::iterator it;
@@ -185,7 +196,7 @@ void WebServer::respond_to_client(int client_fd) {
     }
   }
   if (request->checkCgi)
-    request->setBodyCgi(readFileAndRemoveHeaders(request->filename));
+    request->setBodyCgi(response->extractBodyFromFile(request->filename));
   ssize_t bytes_written = response->writeData();
   if (response->complete == 1) {
     struct kevent changes[2];
@@ -195,8 +206,10 @@ void WebServer::respond_to_client(int client_fd) {
     EV_SET(&changes[1], (*it)->request->getfd(), EVFILT_READ, EV_DELETE, 0, 0,
            NULL);
     kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
-    unlink(request->getFileName().c_str());
-    unlink(request->filename.c_str());
+    if (request->_method == POST) {
+      unlink(request->getFileName().c_str());
+    }
+    // unlink(request->filename.c_str());
     responses_clients.erase(it);
     connected_clients.erase(iter_req);
     delete request;
@@ -290,8 +303,6 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
     std::cerr << "Failed to open file: " << strerror(errno) << std::endl;
     return;
   }
-  // cout << request->_method << "\n";
-  // int fd_body = open("")
   request->setCgi(fd);
   pid_t pid = fork();
   if (pid < 0) {
@@ -312,7 +323,8 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
       }
       dup2(fd_body, STDIN_FILENO);
       close(fd_body);
-    }
+    } else
+      close(STDIN_FILENO);
     if (execve(args[0], &args[0], &envp[0]) == -1) {
       perror("execve failed");
       _exit(EXIT_FAILURE);
@@ -334,8 +346,8 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
            request);
 
     // Add a timeout event (EVFILT_TIMER)
-    EV_SET(&changes[0], pid, EVFILT_TIMER, EV_ADD | EV_ENABLE, 0, 10000 / 2,
-           request);
+    EV_SET(&changes[0], pid, EVFILT_TIMER, EV_ADD | EV_ENABLE, 0,
+           TIMEOUT_INTERVAL, request);
 
     // Register both events with kevent
     if (kevent(kqueue_fd, changes, 2, NULL, 0, NULL) == -1) {
@@ -394,14 +406,17 @@ void WebServer::handleCGIRequest(int client_fd) {
   } else if (client->_method == POST) {
     env["REQUEST_METHOD"] = "POST";
   }
+
   cout << "method------->" << env["REQUEST_METHOD"] << "\n";
   env["SCRIPT_NAME"] = client->rootcgi;     // Path to script
   env["SCRIPT_FILENAME"] = client->rootcgi; // Path to script
   env["PATH_INFO"] = client->pathInfo;      // Path info from URL
   env["REDIRECT_STATUS"] = "1";             // Security feature for CGI
   env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"]; // Set content length
+  // env["INTERPRETER"] = "/usr/bin/php";
   env["INTERPRETER"] = "./cgi/php-cgi";
-  env["QUERY_STRING"] = "name=GitHub+Copilot&language=cpp";
+  env["QUERY_STRING"] = "";
+  // env["QUERY_STRING"] = "name=GitHub+Copilot&age=30";
   std::map<string, string>::iterator iter = env.begin();
   std::vector<std::string> envp_map;
   std::vector<char *> envp;

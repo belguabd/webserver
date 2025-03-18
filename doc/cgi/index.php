@@ -1,26 +1,19 @@
 <?php
-// Get the query string from the URL
-$name = isset($_GET['name']) ? $_GET['name'] : 'World';
-$age = isset($_GET['age']) ? $_GET['age'] : 'unknown';
+// CGI scripts MUST start with a Content-Type header
+header("Content-Type: text/html");
 
-// Print the content type (this is required for CGI)
-header('Content-Type: text/html');
+// Additional headers can be sent before output
+header("test: hello");
+header("X-Custom-Header: MyValue");
 
-// Print a simple HTML response
-echo "<html><body>";
-echo "<h1>Hello, $name!</h1>";
-echo "<p>You are $age years old.</p>";
 
-// Commenting out the infinite loop
-
+// Blank line to separate headers from content (automatically handled by PHP)
+// echo "<html><body><h1>Hello, World!</h1></body></html>";
 // while (true) {
-//     echo "<p>This is an infinite loop!</p>";
-//     // Add a sleep to prevent excessive CPU usage
-//     sleep(1); // Sleep for 1 second
+//     // Blank line to separate headers from content (automatically handled by PHP)
+//     echo "<html><body><h1>Hello, World!</h1></body></html>";
+
+//     // Optionally, to prevent too much load, you can add a small sleep interval
+//     sleep(1); // Sleep for 1 second to avoid overloading the server
 // }
-
-
-// End HTML
-echo "</body></html>";
-// echo "Done\n";
 ?>
