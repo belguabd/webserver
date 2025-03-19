@@ -8,30 +8,26 @@ string statusText(int status) {
     text = "200 OK\r\n";
   } else if (status == 201) {
     text = "201 CREATED\r\n";
-  } else if (status == 400) {
-    text = "400 Bad Request\r\n";
-  } else if (status == 403) {
+  }else if (status==204){
+    text = "204 No Content\r\n";
+  } else if(status==400) {
+    text ="400 Bad Request\r\n"; 
+  }  else if(status==403) {
     text = "403 Forbidden\r\n";
   } else if (status == 404) {
     text = "404 Not Found\r\n";
   } else if (status == 405) {
     text = "405 Method Not Allowed\r\n";
-  } else if (status == 413) {
-    text = "413 Request Entity Too Large\r\n";
-  } else if (status == 414) {
-    text = "414 Request-URI Too Long\r\n";
-  } else if (status == 500) {
-    text = "500 Request-URI Too Long\r\n"; ///
-  } else if (status == 501) {
-    text = "501 Not Implemented\r\n"; ///
-  } else if (status == 505) {
+  } else if (status==413){
+    text = "413 Request Entity Too Large\r\n";///
+  } else if(status==500) {
+    text = "500 Internal Server Error\r\n";///
+  } else if(status==504) {
+    text = "504 Gateway Timeout\r\n";///
+  } else if (status==505){
     text = "505 HTTP Version Not Supported\r\n";
   } else if (status == 301) {
     text = "301 Moved Permanently\r\n";
-  } else if (status == 409) {
-    text = "409 conflict\r\n"; ///
-  } else if (status == 204) {
-    text = "204 No Content\r\n";
   }
   return text;
 }
@@ -66,18 +62,46 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
       std::cerr << "Error opening file: " << data << std::endl;
       return;
     }
-  }
-  if (firstTimeResponse == 0) {
-    file_size = 0;
-    this->file.seekg(0, std::ios::end);
-    file_size = this->file.tellg();
-    this->file.seekg(0, std::ios::beg);
-    size_t pos = data.find(".");
-    if (pos == string::npos) {
-      ContentType = "text/plain";
-    } else {
-      string extension = data.substr(pos);
-      ContentType = getMimeType(extension);
+    if (firstTimeResponse == 0) {
+        file_size = 0;
+        this->file.seekg(0, std::ios::end);
+        file_size = this->file.tellg();
+        this->file.seekg(0, std::ios::beg);
+        size_t pos = data.find(".");
+        if (pos == string::npos) {
+            ContentType = "text/plain";
+        }
+        else
+        {
+          string extension = data.substr(pos);
+          ContentType = getMimeType(extension);
+        }
+        std::ostringstream response_headers;
+        status_line(this->request->getfd(),this->request->getRequestStatus());
+        headersSending(this->request->getfd(),config.getServerName());
+        response_headers << "Content-Type: " << ContentType << "\r\n"
+                         << "Content-Length: " << file_size << "\r\n"
+                         << "Connection: close\r\n"
+                         << "\r\n";
+
+        send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
+        firstTimeResponse = 1;
+    }
+    
+    this->file.seekg(this->file_offset, std::ios::beg); 
+    const size_t buffer_size = 1024;
+    char buffer[buffer_size];
+    this->file.read(buffer, buffer_size);
+    std::streamsize bytes_read = this->file.gcount();
+    if (bytes_read > 0) {
+        send(this->request->getfd(), buffer, bytes_read, 0);
+       this->file_offset += bytes_read;
+      //  cout <<"fd client = "<<this->request->getfd()<<"   file_offset = " << round((double)this->file_offset / (1024*1024) * 10) / 10 << " MB" << endl;
+    }
+    if (bytes_read == 0) {
+        this->file.close();
+        complete = 1;
+       cout <<"----- END file --------"<<endl;
     }
     std::ostringstream response_headers;
     status_line(this->request->getfd(), 200);
@@ -169,18 +193,18 @@ void HttpResponse::dirDataSend(string &data, string &root,
   if (normal.autoindex == false) {
     this->sendErrorPage(config, 403);
   } else {
-    status_line(this->request->getfd(), 200);
-    headersSending(this->request->getfd(), config.getServerName());
-    string body = dirAutoindex(data, root);
-    stringstream response1;
-    response1 << "Content-Type: text/html\r\n"
-              << "Content-Length: " << body.size() << "\r\n"
-              << "Connection: close\r\n"
-              << "\r\n"
-              << body;
-    string responseStr = response1.str();
-    send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
-  }
+      status_line(this->request->getfd(),200);
+      headersSending(this->request->getfd(),config.getServerName());
+      string body = dirAutoindex(data,root);
+      stringstream response1;
+            response1 << "Content-Type: text/html\r\n"
+            << "Content-Length: " << body.size() << "\r\n"
+            << "Connection: close\r\n"
+            << "\r\n"
+            << body;
+      string responseStr = response1.str();
+      send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+    }
 }
 void HttpResponse::dirDataSend(string &data, ServerConfig &config) {
   int checkExist;
@@ -385,25 +409,46 @@ int HttpResponse::checkDataResev() {
   } else if (statuscode == 505) {
     this->sendErrorPage(config, 505);
     return 1;
+  } else if (statuscode ==405) {
+    this->sendErrorPage(config,405);
+    return 1;
+  } else if (statuscode==404) {
+    this->sendErrorPage(config,404);
+    return 1;
+  } else if (statuscode==403) {
+    this->sendErrorPage(config,403);
+    return 1;
+  } else if (statuscode==500) {
+    this->sendErrorPage(config,500);
+    return 1;
+  } else if (statuscode==504) {
+    this->sendErrorPage(config,504);
+    return 1;
   }
   return 0;
 }
-void sendResponse(HttpResponse &response) {
+void    sendResponse(HttpResponse &response)
+{
+  ServerConfig config = response.request->getServerConfig();
+  string data = "./doc/html/Upload_/succ.html";
   int method = response.request->_method;
   if (response.checkDataResev() != 0) {
     return;
   }
-  if (response.request->checkCgi) {
-    puts("==================================>");
-    response.cgiResponse();
-    return;
+  if (response.request->checkCgi){
+     cout << response.request->filename << "\n";
+     response.cgiResponse();
+    return ;
   }
   if (method == GET) {
     response.getResponse();
-  } else if (method == POST) {
-    response.postResponse();
-  } else if (method == DELETE) {
-    // response.deleteResponse();
+  }
+  else if (method == POST) {
+    response.fileDataSend(data,config);
+  }
+  else if (method == DELETE)
+  {
+    response.fileDataSend(data,config);
   }
 }
 
@@ -537,53 +582,10 @@ void HttpResponse::cgiResponse() {
   this->complete = 1;
 }
 
-/*--------------------------------------Post
- * method------------------------------------------*/
 
-void HttpResponse::postResponse() {
-  string body;
-  ServerConfig config;
-  config = this->request->getServerConf();
-  // cout <<"URL = "<<words[1]<<endl;
-  ifstream file("./doc/html/Upload_/succ.html"); ///
-  stringstream fileContent;
-
-  if (file) {
-    fileContent << file.rdbuf();
-    body = fileContent.str();
-    file.close();
-  } else {
-    body = "<!DOCTYPE html>\n"
-           "<html lang=\"en\">\n"
-           "<head>\n"
-           "<meta charset=\"UTF-8\">\n"
-           "<meta name=\"viewport\" content=\"width=device-width, "
-           "initial-scale=1.0\">\n"
-           "<title>Upload Successful</title>\n"
-           "</head>\n"
-           "<body>\n"
-           "<h1>Upload Successful</h1>\n"
-           "<p>Your file has been uploaded successfully.</p>\n"
-           "<p><a href=\"/\">Return to Home</a></p>\n"
-           "</body>\n"
-           "</html>\n";
-  }
-  status_line(this->request->getfd(), 201);
-  headersSending(this->request->getfd(), config.getServerName());
-  stringstream response1;
-  response1 << "Content-Type: text/html\r\n"
-            << "Content-Length: " << body.size() << "\r\n"
-            << "Connection: close\r\n"
-            << "\r\n"
-            << body;
-  string responseStr = response1.str();
-  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
-}
-
-/*--------------------------------------------------------------------------------------------*/
-
-string HttpResponse::getMimeType(string &extension) {
-  mimeType[".txt"] = "text/plai";
+string HttpResponse::getMimeType(string &extension)
+{
+  mimeType[".txt"]= "text/plai";
   mimeType[".html"] = "text/html";
   mimeType[".css"] = "text/css";
   mimeType[".js"] = "text/javascript";
@@ -668,9 +670,9 @@ string errorPage(int statusCode) {
 
 void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
   std::string ContentType;
+  string val;
   string data;
   if (firstTimeResponse == 0) {
-    string val;
     string root = config.getRoot();
     std::ostringstream s;
     s << status;
@@ -687,7 +689,7 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
   }
   if (!this->file.is_open()) {
     this->file.open(data, std::ios::binary);
-    if (!this->file.is_open()) {
+    if (val.empty()||!this->file.is_open()) {
       string body = errorPage(status);
       status_line(this->request->getfd(), status);
       headersSending(this->request->getfd(), config.getServerName());
@@ -700,7 +702,7 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
       string responseStr = response1.str();
       send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
       complete = 1;
-      return;
+      return ;
     }
   }
   if (firstTimeResponse == 0) {

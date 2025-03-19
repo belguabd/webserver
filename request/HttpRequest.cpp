@@ -180,8 +180,6 @@ void HttpRequest::checkPathIscgi(string &path)
       }
       else
         this->pathInfo = this->rootcgi.substr(startPathInfo + s.length());
-      size_t pos = this->dataFirstLine[1].find(s);
-      this->dataFirstLine[1] = this->dataFirstLine[1].substr(0,pos+s.length());
     }
     this->rootcgi = this->rootcgi.substr(0,startPathInfo+s.length());
     bool f = fileExists(this->rootcgi);
@@ -191,7 +189,6 @@ void HttpRequest::checkPathIscgi(string &path)
       this->cgiExtension = 1;
     else
       this->cgiExtension = 2;
-    cout << "---------->"<<this->rootcgi<<endl;
 }
 int HttpRequest::defineTypeMethod(string firstline) {
   firstline = trimNewline(firstline);
@@ -218,7 +215,11 @@ int HttpRequest::defineTypeMethod(string firstline) {
   }
   this->dataFirstLine = words;
   checkPathIscgi(words[1]);
-  // cout << "-->"<<checkCgi<<endl;
+  if (this->checkCgi == 0 && (words[1].find(".php")!=string::npos||words[1].find(".py")!=string::npos)) {
+    this->requestStatus = 500;
+    this->endHeaders = 1;
+    return 0;
+  }
   if (words[0] == "GET")
     return (1);
   else if (words[0] == "POST")
@@ -359,7 +360,6 @@ void HttpRequest ::requestLine() {
     return ;
   }
   string path;
-  string querydata;
   this->dataFirstLine[1] = encodeUrl(this->dataFirstLine[1]);
   if (this->dataFirstLine[1].empty()) {
     this->requestStatus = 400;
@@ -379,13 +379,13 @@ void HttpRequest ::requestLine() {
     this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, posHashtag);
   }
   if (pos != string::npos) {
-    querydata = this->dataFirstLine[1].substr(pos + 1);
+    this->queryString = this->dataFirstLine[1].substr(pos);
     this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
 
   }
-  cout <<"querydata = "<<querydata<<endl;
-  cout <<"this->dataFirstLine[1] = "<<this->dataFirstLine[1]<<endl;
-  cout <<"path_nfo"<<this->pathInfo<<endl;
+  // cout <<"querydata = "<<this->queryString<<endl;
+  // cout <<"root cgi = "<<this->rootcgi<<endl;
+  // cout <<"path_nfo = "<<this->pathInfo<<endl;
 }
 
 string encodeUrl(string &str)
@@ -412,12 +412,8 @@ char characterEncodeing(string &tmp)
   }
   return (static_cast<char>(stol(tmp, nullptr, 16)));
 }
-/*
-find("%");
-str.substr(pos ,pos+3);
-%1
-www.val.com/path/id?key=val&name=mohamed ayd
 
+/*
 space         %20
 !             %21
 "             %22

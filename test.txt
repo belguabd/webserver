@@ -17,7 +17,6 @@ quereStirng
 void HttpRequest ::requestLine() 
 
 
-allowed_methods in post didnt check 
 
 .php .py 
 
@@ -27,3 +26,6 @@ headers parse
     POS4 / HTTP/1.1
     Connection: keep-alive
     content-length  
+method_allowed delete; 
+
+location upload
