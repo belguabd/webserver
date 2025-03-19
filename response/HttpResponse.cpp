@@ -56,6 +56,7 @@ void headersSending(int client_socket, string serverName) {
 /*---------------------- Get method------------------------------------------*/
 void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
     std::string ContentType;
+    
     if (!this->file.is_open()) {
         this->file.open(data, std::ios::binary);
         if (!this->file.is_open()) {
@@ -104,6 +105,35 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
         complete = 1;
     }
 }
+
+// void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
+//     std::string html_content = "<!DOCTYPE html>\n"
+//                                "<html lang=\"en\">\n"
+//                                "<head>\n"
+//                                "    <meta charset=\"UTF-8\">\n"
+//                                "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+//                                "    <title>Static HTML Page</title>\n"
+//                                "</head>\n"
+//                                "<body>\n"
+//                                "    <h1>Welcome to My Static HTML Page</h1>\n"
+//                                "    <p>This is a simple HTML page served without reading from a file.</p>\n"
+//                                "</body>\n"
+//                                "</html>\n";
+//     std::string ContentType = "text/html";
+//     size_t file_size = html_content.size();
+//     std::ostringstream response_headers;
+//     status_line(this->request->getfd(), this->request->getRequestStatus());
+//     headersSending(this->request->getfd(), config.getServerName());
+//     response_headers << "Content-Type: " << ContentType << "\r\n"
+//                      << "Content-Length: " << file_size << "\r\n"
+//                      << "Connection: " << this->request->typeConnection << "\r\n"
+//                      << "\r\n";
+//     send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
+//     send(this->request->getfd(), html_content.c_str(), html_content.size(), 0);
+//     complete = 1;  
+// }
+
+
 
 int HttpResponse::checkFileAndSendData(string &data, ServerConfig &config,
                                        string &index) {

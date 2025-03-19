@@ -53,6 +53,7 @@ public:
   string rootcgi;
   string pathInfo;
   bool start_cgi;
+  bool is_client_disconnected;
   int status_code;
 
   string filename;

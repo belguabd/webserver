@@ -18,3 +18,10 @@ method_allowed delete;
 
 location upload
 close and keep-alive
+
+
+
+
+ERROR
+localhost:8585 send request and disconnected client 
+localhost:8585/e  send request but location doesn't exist
