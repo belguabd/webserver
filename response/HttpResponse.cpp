@@ -409,19 +409,19 @@ int HttpResponse::checkDataResev() {
     this->sendErrorPage(config, 505);
     return 1;
   } else if (statuscode ==405) {
-    this->sendErrorPage(config,405);
+    this->sendErrorPage(config, 405);
     return 1;
   } else if (statuscode==404) {
-    this->sendErrorPage(config,404);
+    this->sendErrorPage(config, 404);
     return 1;
   } else if (statuscode==403) {
-    this->sendErrorPage(config,403);
+    this->sendErrorPage(config, 403);
     return 1;
   } else if (statuscode==500) {
-    this->sendErrorPage(config,500);
+    this->sendErrorPage(config, 500);
     return 1;
   } else if (statuscode==504) {
-    this->sendErrorPage(config,504);
+    this->sendErrorPage(config, 504);
     return 1;
   }
   return 0;

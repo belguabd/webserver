@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <algorithm>
 #include <vector>
 // class HttpRequest;
 
@@ -57,6 +58,8 @@ public:
   int status_code;
 
   string filename;
+  int parseFiledLine(std::string &headers);
+  std::string &parseFiledLineName(std::string &filedLine);
   int getCgi() { return cgi_fd; }
   void setCgi(int fd) { this->cgi_fd = fd; }
   int cgi_for_test;
