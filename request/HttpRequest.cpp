@@ -164,7 +164,6 @@ void HttpRequest::checkPathIscgi(string &path)
       }
   }
     if (method.empty()) {
-      cout <<"method not allowed"<<endl;
       exit(0);
     }
       if (s.empty()) {
@@ -359,6 +358,13 @@ void trimSpaces(std::string& str) {
 
     str = str.substr(start, end - start);
 }
+bool isAllowedUriChar(char c) {
+    
+    const std::string allowedChars = "-._~:/?#[]@!$&'()*+,;=";
+    if (std::isalnum(c) || allowedChars.find(c) != std::string::npos)
+        return true;
+    return false;
+}
 
 int HttpRequest::parseFiledLine(std::string &filedLine)
 {
@@ -373,7 +379,7 @@ int HttpRequest::parseFiledLine(std::string &filedLine)
 
   std::string filedLineName = filedLine.substr(0, pos);
   while (filedLineName[0] == ' ' || filedLineName[0]=='\t')
-    filedLineName.erase(filedLineName.begin());
+    filedLineName.erase(filedLineName.begin()); //remove spaces in the beginning
 
   if (filedLineName.find_first_of("()/\\<>@,;:\"{} \t\r\n") != std::string::npos)
     return 400;
@@ -381,6 +387,12 @@ int HttpRequest::parseFiledLine(std::string &filedLine)
   { filedLineName[i] = std::toupper(filedLineName[i]); if (filedLineName[i] == '-') filedLineName[i] = '_';}
 
   // std::cout << "filedLineName : " << filedLineName << std::endl;
+  if (mapheaders.find(filedLineName) != mapheaders.end())
+  {
+    std::vector<std::string> keys; keys.push_back("HOST"); keys.push_back("CONTENT_LENGTH"); keys.push_back("TRANSFER_ENCODING"); keys.push_back("AUTHORIZATION"); keys.push_back("CONNECTION"); keys.push_back("DATE"); keys.push_back("UPGRADE");
+    if (std::find(keys.begin(),keys.end(),filedLineName) != keys.end())
+      return 400; // std::cout << "I am duplicate\n";
+  }
   std::string filedLineValue = filedLine.substr(pos + 1, filedLine.length());
   trimSpaces(filedLineValue);
   // std::cout << "filedLineValue->>" << filedLineValue << "---------\n";
@@ -415,7 +427,8 @@ void HttpRequest ::parsePartRequest(string str_parse)
     if (mapheaders.find("HOST") == mapheaders.end())
       requestStatus = 400; 
     else
-      if (mapheaders["HOST"].empty())
+      if (mapheaders["HOST"].empty() ||
+        std::find_if(mapheaders["HOST"].begin(), mapheaders["HOST"].end(), isAllowedUriChar) == mapheaders["HOST"].end())
         requestStatus = 400;
   }
   // setMapHeaders();
