@@ -15,8 +15,23 @@ delete response
 \\
 
 
+<<<<<<< HEAD
 upload_store /goinfre/ataoufik/ss/uplo ad////; 
 
 cgi_extension .phep .py; parse
 log._allowed_methods.empty()===>set default
 http://localhost:8585/index.php
+=======
+location upload
+close and keep-alive
+
+
+
+
+ERROR
+localhost:8585 send request and disconnected client 
+localhost:8585/e  send request but location doesn't exist
+when send request using browser , cgi doesn't work because ,it send request has keep-alive
+browser send request for favorite icon but server exit 0 and display message `CGI not supported type file`
+
+>>>>>>> 219453107d79994e54efb9b1ebc18f070af79ed8

@@ -56,6 +56,7 @@ void headersSending(int client_socket, string serverName) {
 /*---------------------- Get method------------------------------------------*/
 void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
     std::string ContentType;
+    
     if (!this->file.is_open()) {
         this->file.open(data, std::ios::binary);
         if (!this->file.is_open()) {
@@ -351,8 +352,9 @@ void    sendResponse(HttpResponse &response)
     return;
   }
   if (response.request->checkCgi){
-     cout << response.request->filename << "\n";
+    //  cout << response.request->filename << "\n";
      response.cgiResponse();
+     
     return ;
   }
   if (method == GET) {
@@ -368,7 +370,8 @@ void    sendResponse(HttpResponse &response)
 }
 
 HttpResponse::HttpResponse(HttpRequest *re)
-    : request(re), firstTimeResponse(0), file_offset(0), complete(0) {
+    : request(re), firstTimeResponse(0), file_offset(0), complete(0),
+      totalSent(0) {
 
   // static int i =0;
   // if (i ==1)
@@ -380,7 +383,7 @@ HttpResponse::HttpResponse(HttpRequest *re)
 HttpResponse::~HttpResponse() {}
 
 int HttpResponse::writeData() {
-  
+
   int bytes_send = 0;
   sendResponse(*this);
   // cout << "complete ------>"<< this->complete << "\n";
@@ -470,6 +473,7 @@ void HttpResponse::cgiResponse() {
 
   // cout << "--->"<<this->request->filename << "\n";
   ServerConfig config;
+  
   // ifstream file(this->request->filename);
   // stringstream fileContent;
   // fileContent << request->getBodyCgi();
@@ -492,10 +496,62 @@ void HttpResponse::cgiResponse() {
             << "\r\n"
             << body;
   string responseStr = response1.str();
-  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+  
   this->complete = 1;
+  send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
 }
 
+/*--------------------------------------Post
+ * method------------------------------------------*/
+
+void HttpResponse::postResponse() {
+  string body;
+  ServerConfig config;
+  config = this->request->getServerConf();
+  // cout <<"URL = "<<words[1]<<endl;
+  ifstream file("./doc/html/Upload_/succ.html"); ///
+  stringstream fileContent;
+
+  if (file) {
+    fileContent << file.rdbuf();
+    body = fileContent.str();
+    file.close();
+  } else {
+    body = "<!DOCTYPE html>\n"
+           "<html lang=\"en\">\n"
+           "<head>\n"
+           "<meta charset=\"UTF-8\">\n"
+           "<meta name=\"viewport\" content=\"width=device-width, "
+           "initial-scale=1.0\">\n"
+           "<title>Upload Successful</title>\n"
+           "</head>\n"
+           "<body>\n"
+           "<h1>Upload Successful</h1>\n"
+           "<p>Your file has been uploaded successfully.</p>\n"
+           "<p><a href=\"/\">Return to Home</a></p>\n"
+           "</body>\n"
+           "</html>\n";
+  }
+  status_line(this->request->getfd(), 201);
+  headersSending(this->request->getfd(), config.getServerName());
+  stringstream response1;
+  response1 << "Content-Type: text/html\r\n"
+            << "Content-Length: " << body.size() << "\r\n"
+            << "Connection: close\r\n"
+            << "\r\n"
+            << body;
+  string responseStr = response1.str();
+
+  ssize_t bytesSent =
+      send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+  this->totalSent += bytesSent;
+  if (responseStr.size() == totalSent) {
+    complete = 1;
+    this->totalSent = 0;
+  }
+}
+
+/*--------------------------------------------------------------------------------------------*/
 
 string HttpResponse::getMimeType(string &extension)
 {
