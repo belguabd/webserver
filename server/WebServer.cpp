@@ -203,24 +203,24 @@ void WebServer::respond_to_client(int event_fd) {
   ssize_t bytes_written = response->writeData();
   if (response->complete == 1) {
 
-    if (request->typeConnection == "keep-alive") {
-      struct kevent changes[2];
-      EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-      if (kevent(kqueue_fd, &changes[0], 1, NULL, 0, NULL) == -1) {
-        std::cerr << "Error deleting write event: " << strerror(errno)
-                  << std::endl;
-      }
-      EV_SET(&changes[1], event_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
-             NULL);
-      if (kevent(kqueue_fd, &changes[1], 1, NULL, 0, NULL) == -1) {
-        std::cerr << "Error adding read event: " << strerror(errno)
-                  << std::endl;
-      }
-      responses_clients.erase(it);
-      delete response;
-      response = NULL;
+    // if (request->typeConnection == "keep-alive") {
+    //   struct kevent changes[2];
+    //   EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+    //   if (kevent(kqueue_fd, &changes[0], 1, NULL, 0, NULL) == -1) {
+    //     std::cerr << "Error deleting write event: " << strerror(errno)
+    //               << std::endl;
+    //   }
+    //   EV_SET(&changes[1], event_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
+    //          NULL);
+    //   if (kevent(kqueue_fd, &changes[1], 1, NULL, 0, NULL) == -1) {
+    //     std::cerr << "Error adding read event: " << strerror(errno)
+    //               << std::endl;
+    //   }
+    //   responses_clients.erase(it);
+    //   delete response;
+    //   response = NULL;
 
-    } else {
+    // } else {
       struct kevent changes[2];
       EV_SET(&changes[0], (*it)->request->getfd(), EVFILT_WRITE, EV_DELETE, 0,
              0, NULL);
@@ -239,7 +239,7 @@ void WebServer::respond_to_client(int event_fd) {
       delete response;
       response = NULL;
       request = NULL;
-    }
+    // }
   }
 }
 /*----------------------------------------------------*/

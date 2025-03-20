@@ -25,3 +25,6 @@ close and keep-alive
 ERROR
 localhost:8585 send request and disconnected client 
 localhost:8585/e  send request but location doesn't exist
+when send request using browser , cgi doesn't work because ,it send request has keep-alive
+browser send request for favorite icon but server exit 0 and display message `CGI not supported type file`
+
