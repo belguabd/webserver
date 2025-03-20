@@ -12,9 +12,11 @@ delete response
 
 
 
+\\
 
-.php .py 
-method_allowed delete; 
 
-location upload
-close and keep-alive
+upload_store /goinfre/ataoufik/ss/uplo ad////; 
+
+cgi_extension .phep .py; parse
+log._allowed_methods.empty()===>set default
+http://localhost:8585/index.php

@@ -9,7 +9,7 @@ header('Content-Type: text/html');
 // Print a simple HTML response
 echo "<html><body>";
 echo "<h1>Hello, $name!</h1>";
-echo "<p>You are $age hhhhhhhhhdhdhdhdhdhdhdh.</p>";
+echo "<p>You are $age years old.</p>";
 
 // Commenting out the infinite loop
 

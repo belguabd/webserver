@@ -5,7 +5,7 @@ RM = rm -f
 
 SRC = main.cpp ./server/ServerSocket.cpp  ./server/WebServer.cpp ./request/HttpRequest.cpp \
 	./request/Post/Post.cpp ./request/Post/Chunked.cpp ./request/Post/Boundary.cpp ./request/Post/BoundaryChunked.cpp  \
-	./response/HttpResponse.cpp ./conf/ServerConfig.cpp
+	 ./conf/ServerConfig.cpp ./response/HttpResponse.cpp
 
 OBJ = $(SRC:.cpp=.o)
 all:$(NAME)

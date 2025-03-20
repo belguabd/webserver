@@ -51,7 +51,7 @@ int Post::proseRequest(std::string &buffer)
 	if (_bodySize > _configUpload.client_max_body_size)
 	{
 		std::cout << "body limits\n";
-		_status = 404;
+		_status = 413;
 		return _status;
 	}
 	if (this->_bodyType == contentLength)

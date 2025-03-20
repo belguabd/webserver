@@ -19,7 +19,7 @@ string statusText(int status) {
   } else if (status == 405) {
     text = "405 Method Not Allowed\r\n";
   } else if (status==413){
-    text = "413 Request Entity Too Large\r\n";///
+    text = "413 Request Entity Too Large\r\n";
   } else if(status==500) {
     text = "500 Internal Server Error\r\n";///
   } else if(status==504) {
@@ -105,75 +105,54 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
     }
 }
 
-int HttpResponse::checkFileAndSendData(string &data, ServerConfig &config,
-                                       string &index) {
+int HttpResponse::checkFileAndSendData(string &data, ServerConfig &config, string &index) {
   string str;
   size_t i = 0;
+  if (data[data.length() - 1] != '/') {
+    data +="/";
+  }
   vector<string> words;
   words = splitstring(index);
-  bool exist = false;
   while (data[data.length() - 1] == '/' && i < words.size()) {
+    if (words[i].find(".php")!=string::npos || words[i].find(".py")!=string::npos) {
+      i++;
+      continue;
+    }
     str = data;
     str += words[i];
     if (ExistFile(str) == true) {
-      exist = true;
       this->fileDataSend(str, config);
-      break;
+     return 0;
     }
     i++;
   }
-  if (data[data.length() - 1] == '/' && exist == false) {
-    return 1;
-  }
-  return 0;
+  return 1;
 }
 
-void HttpResponse::dirDataSend(string &data, string &root,
-                               LocationUplaods &upload, ServerConfig &config) {
-  int checkExist;
-  if (!upload.index.empty()) {
-    checkExist = this->checkFileAndSendData(data, config, upload.index);
-  } else {
-    string index;
-    index = config.getIndex();
-    checkExist = this->checkFileAndSendData(data, config, index);
-  }
-  if (checkExist == 1) {
-    this->sendErrorPage(config, 404);
-    return;
-  }
-  this->sendErrorPage(config, 403);
-}
 
-void HttpResponse::dirDataSend(string &data, string &root,
-                               LocationConfig &normal, ServerConfig &config) {
-  int checkExist;
-  if (!normal.index.empty()) {
-    checkExist = this->checkFileAndSendData(data, config, normal.index);
-  } else {
-    string index;
-    index = config.getIndex();
-    checkExist = this->checkFileAndSendData(data, config, index);
-  }
-  if (checkExist == 1) {
-    this->sendErrorPage(config, 404);
-    return;
-  }
-  if (normal.autoindex == false) {
-    this->sendErrorPage(config, 403);
-  } else {
-      status_line(this->request->getfd(),200);
-      headersSending(this->request->getfd(),config.getServerName());
-      string body = dirAutoindex(data,root);
-      stringstream response1;
-            response1 << "Content-Type: text/html\r\n"
-            << "Content-Length: " << body.size() << "\r\n"
-            << "Connection: close\r\n"
-            << "\r\n"
-            << body;
-      string responseStr = response1.str();
-      send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+void HttpResponse::dirDataSend(string &data, string &root, LocationConfig &normal, ServerConfig &config) {
+  if (!normal._index.empty()) {
+    if (this->checkFileAndSendData(data, config, normal._index)==1) {
+      this->sendErrorPage(config, 404);
     }
+  } else {
+    if (normal._autoindex == false) {
+      this->sendErrorPage(config, 403);
+    } else {
+        status_line(this->request->getfd(),200);
+        headersSending(this->request->getfd(),config.getServerName());
+        string body = dirAutoindex(data,root);
+        stringstream response1;
+              response1 << "Content-Type: text/html\r\n"
+              << "Content-Length: " << body.size() << "\r\n"
+              << "Connection: close\r\n"
+              << "\r\n"
+              << body;
+        string responseStr = response1.str();
+        send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+        this->complete =1;
+      }
+  }
 }
 void HttpResponse::dirDataSend(string &data, ServerConfig &config) {
   int checkExist;
@@ -201,19 +180,16 @@ void HttpResponse::dirDataSend(string &data, ServerConfig &config) {
     send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
   }
 }
-void HttpResponse::getLocationResponse(LocationConfig &normal, string &str,
-                                       ServerConfig &config) {
+void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, ServerConfig &config) {
+
   string data;
   string root;
   int typePath;
-  int flag;
-  if (normal.root.empty()) {
+  if (normal._root.empty()) {
     root = config.getRoot();
     data = root;
-    flag = 1;
   } else {
-    data = normal.root;
-    flag = 2;
+    data = normal._root;
   }
   data += str;
   typePath = checkTypePath(data);
@@ -223,68 +199,45 @@ void HttpResponse::getLocationResponse(LocationConfig &normal, string &str,
     this->fileDataSend(data, config);
 
   } else if (checkTypePath(data) == 2) {
-    if (flag == 1)
-      this->dirDataSend(data, root, normal, config);
-    else
-      this->dirDataSend(data, normal.root, normal, config);
+      this->dirDataSend(data, normal._root, normal, config);
   }
 }
-void HttpResponse::getLocationResponse(LocationUplaods &upload, string &str,
-                                       ServerConfig &config) {
-  string data;
-  string root;
-  int flag;
-  if (upload.root.empty()) {
-    root = config.getRoot();
-    data = root;
-    flag = 1;
-  } else {
-    data = upload.root;
-    flag = 2;
-  }
-  data += str;
-  if (checkTypePath(data) == 0) {
-    this->sendErrorPage(config, 404);
-  } else if (checkTypePath(data) == 1) {
-    this->fileDataSend(data, config);
 
-  } else if (checkTypePath(data) == 2) {
-    if (flag == 1)
-      this->dirDataSend(data, root, upload, config);
-    else
-      this->dirDataSend(data, upload.root, upload, config);
-  }
-}
-void HttpResponse::redirectionResponse(string &str) {
-  ServerConfig config;
+void HttpResponse::redirectionResponse(string &str,ServerConfig &config) {
   string data;
   config = this->request->getServerConfig();
   if (config.typeUrl == 1) {
-    if (this->request->mapheaders.find("Host") !=
-        this->request->mapheaders.end()) {
-      string host = getValueFromMap(config.configRedirection,
-                                    config.configRedirection.find("Host"));
+    if (this->request->mapheaders.find("Host") != this->request->mapheaders.end()) { // Host HOST
+      string host = this->request->mapheaders["Host"];
       data = host;
       data += str;
     }
   } else {
     data = str;
   }
+  
+  cout <<"redirection  = >"<<data<<endl;
   status_line(this->request->getfd(), 301);
   headersSending(this->request->getfd(), config.getServerName());
   stringstream response1;
   response1 << "Location:" << data << "\r\n\r\n";
   string responseStr = response1.str();
   send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+  this->complete =1;
 }
 int indexValidPath(string str) {
-  int i = 0;
-  if (str.length() == 1)
-    return 0;
-  i++;
-  while (str[i] && str[i] != '/')
-    i++;
-  return (i);
+    int i = 0;
+    if (str[i] == '/') {
+        i++;
+    }
+
+    if (str[i] == '\0') {
+        return i;
+    }
+    while (str[i] && str[i] != '/') {
+        i++;
+    }
+    return i;
 }
 bool HttpResponse::methodIsValid(ServerConfig &config, string method) {
   size_t pos = method.find("GET");
@@ -306,38 +259,28 @@ void HttpResponse::getResponse() {
   if (words[1][i] != 0)
     data = words[1].substr(i);
   else
-    data += "/";
-  if (config.configRedirection.find(str) != config.configRedirection.end()) {
-    string urlRedirection = getValueFromMap(config.configRedirection,
-                                            config.configRedirection.find(str));
-    redirectionResponse(urlRedirection);
-    return;
+  {
+    if (words[1].find(".")==string::npos)
+      data += "/";
   }
-  if (config.configNormal.find(str) != config.configNormal.end()) {
-    LocationConfig log =
-        getValueFromMap(config.configNormal, config.configNormal.find(str));
-    if (!methodIsValid(config, log.allowed_methods)) {
+  
+  if (str.empty()) {
+    str = "/";
+  }
+  if (config.location.find(str) != config.location.end()) {
+    LocationConfig log = getValueMap(config.location, config.location.find(str));
+    if (!log._return.empty()) {
+      redirectionResponse(log._return,config);
       return;
     }
     getLocationResponse(log, data, config);
     return;
   }
-  if (config.configUpload.find(str) != config.configUpload.end()) {
-    LocationUplaods log =
-        getValueFromMap(config.configUpload, config.configUpload.find(str));
-    if (!methodIsValid(config, log.allowed_methods)) {
-      return;
-    }
-    getLocationResponse(log, data, config);
-    return;
-  }
+    // if (!methodIsValid(config, log._allowed_methods)) {
+    //   return;
+    // }
   path = config.getRoot();
-  if (words[1].length() == 1) {
-    defautlRoot(config);
-    return;
-  }
   path += words[1];
-  // cout <<"fd  =   "<<this->request->getfd()<<", path = "<<path<<endl;
   if (checkTypePath(path) == 0) {
     this->sendErrorPage(config, 404);
   } else if (checkTypePath(path) == 1) {
@@ -393,13 +336,16 @@ int HttpResponse::checkDataResev() {
   } else if (statuscode==504) {
     this->sendErrorPage(config,504);
     return 1;
+  } else if (statuscode == 413) {
+    this->sendErrorPage(config,413);
+    return 1;
   }
   return 0;
 }
 void    sendResponse(HttpResponse &response)
 {
   ServerConfig config = response.request->getServerConfig();
-  string data = "./doc/html/Upload_/succ.html";
+  string data = "doc/html/Upload_/succ.html";
   int method = response.request->_method;
   if (response.checkDataResev() != 0) {
     return;
@@ -659,6 +605,7 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
     this->file.open(data, std::ios::binary);
     if (val.empty()||!this->file.is_open()) {
       string body = errorPage(status);
+      // cout <<"              status :"<<status<<endl;
       status_line(this->request->getfd(), status);
       headersSending(this->request->getfd(), config.getServerName());
       stringstream response1;

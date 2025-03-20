@@ -68,6 +68,9 @@ public:
   int _method;
   HttpRequest(int client_fd, ServerConfig &server_config);
   ~HttpRequest();
+  /*    --------------*/
+int setDataCgi(string data,ServerConfig &config,LocationConfig &structConfig);
+  /*    --------------*/
   int getRequestStatus() { return this->requestStatus; }
   int readData();
   int getfd() const { return this->client_fd; }
@@ -105,8 +108,7 @@ public:
 vector<string> splitstring(const string &str);
 void checkHeaders(string &str, map<string, string> &headersMap);
 void printNonPrintableChars(const std::string &str);
-LocationCgi getValueMapcgi(map<string, LocationCgi> &configNormal,
-                           map<string, LocationCgi>::const_iterator it);
+LocationConfig getValueMap(map<string, LocationConfig> &configNormal, map<string, LocationConfig>::const_iterator it);
 // void    checkHeaders(string& str, map<string, string>& headersMap);
 void printNonPrintableChars(const std::string &str);
 char characterEncodeing(string &tmp);

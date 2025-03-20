@@ -9,11 +9,22 @@
 #include <unistd.h>
 using namespace std;
 
+// struct LocationConfig {
+//   string root;
+//   string index;
+//   string allowed_methods;
+//   bool autoindex;
+// };
 struct LocationConfig {
-  string root;
-  string index;
-  string allowed_methods;
-  bool autoindex;
+  string _root;
+  string _index;
+  bool _autoindex;
+  string _allowed_methods;
+  string _upload_store;
+  string _cgi_extension;
+  string _return;
+  size_t _client_max_body_size;
+  // string cgi_handler;
 };
 struct LocationUplaods {
   string root;
@@ -32,34 +43,30 @@ class ServerConfig
 {
     private:
         string data;
-        string host;
-        string root;
-        string index;
+        string host;//d
+        string root;//d
+        string index;//d
         bool autoindex;
-        string server_name;
+        string server_name; //op 
         size_t client_max_body_size;
         // map<string, string> globalConfig;
     public:
         map<string,string> errorpage;
-        map<string, LocationConfig> configNormal;
+        map<string, LocationConfig> location;
         map<string, LocationUplaods> configUpload;
         map<string, LocationCgi> configcgi;
-        map<string, string> configRedirection;
         int typeUrl;
-        vector<int> ports;
+        vector<int> ports; //d
         ServerConfig(){};
         ServerConfig(string &str);
         ~ServerConfig();
-        void setGlobaleData(string &strConfig,string &str);
         void parseServerConfig(string &strdata);
         void checkGlobalConfig(string strConfig);
         void locationData(string &strlocat);
         void locationNormal(string &location);
-        void locationUpload(string &location);
-        void locationCgi(string &location);
-        void locationRedirection(string &location);
         void nameBlocks(string &strdata);
         void setVal(string &str,string &val);
+        void setValLocation(string &str,string &val,LocationConfig &config);
         string getdata() const {return this->data;}
         string getHost(){return  host;}
         bool getAutoindex(){return  autoindex;}
@@ -80,6 +87,3 @@ void isNumber(string& str);
 vector<string> splitstring(const string &str);
 void chechAllowedMethodValid(string &str);
 size_t checkValidBadySise(string str);
-void    checkContentLocationUpload(string &str);
-void    checkContentLocationNormal(string &str);
-void    checkContentLocationCgi(string &str);
