@@ -76,6 +76,7 @@ string removeLocationBlocks(string& configData) {
 ServerConfig :: ServerConfig(string &str) {
     this->autoindex = false;
     this->data = str;
+    this->_allowed_methods = "GET POST DELETE";
 }
 
 ServerConfig :: ~ServerConfig() { }
@@ -202,17 +203,23 @@ void ServerConfig :: locationData(string &strlocat) {
         }
         size_t lastpos = strlocat.find("}",i);
         string location = strlocat.substr(firstpos,lastpos - firstpos);
+        // cout <<"location -------->"<<location<<endl;
         locationNormal(location);
         i = lastpos + 1;
     }
+    // exit(0);
 
 }
 void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &config)
 {
     if (str == "root") {
+        if (splitstring(val).size()>1) {
+            cout<<"error root not valid"<<endl;
+            exit(0);
+        }
         config._root = val;
     } else if (str== "index") {
-         config._index = val;
+        config._index = val;
     } else if (str== "autoindex") {
         if (val != "on" && val != "off") {
             cout <<"error autoindex"<<endl;
@@ -223,29 +230,51 @@ void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &conf
         else
             config._autoindex = false;
     } else if (str== "upload_store") {
-        config._upload_store= val;
+        if (splitstring(val).size()>1) {
+            cout<<"error upload store not valid"<<endl;
+            exit(0);
+        }
+        config._upload_store = val;
     } else if (str== "allowed_methods") {
+        int i = 0;
+        vector<string> words = splitstring(val);
+        while (i < words.size()) {
+            if (words[i]!="GET"&&words[i]!="POST"&&words[i]!="DELETE") {
+                cout <<"error allowed methods not valid "<<endl;
+                exit(0);
+            }
+            i++;
+        }
         config._allowed_methods = val;
     } else if (str== "cgi_extension") {
+        int i = 0;
+        vector<string> words = splitstring(val);
+        while (i < words.size()) {
+            if (words[i]!=".php"&&words[i]!=".py") {
+                cout <<"error cgi extension not valid"<<endl;
+                exit(0);
+            }
+            i++;
+        }
         config._cgi_extension = val;
     } else if (str== "return") {
-    string tmp;
-    vector<string> words = splitstring(val);
-    if (words.size()!=2) {
-        cout<<"error redirection size?? "<<endl;
-        exit(0);
-    }
-    if (words[1].length()>8)
-        tmp = words[1].substr(0,8);
-    if (words[1][0]=='/') {
-        this->typeUrl = 1;
-    } else if (tmp=="http://"||tmp=="https://") { //
-        this->typeUrl = 2;
-    } else {
-        cout<<"error url not valid"<<endl;
-        exit(0);
-    }
-        config._return = words[1];
+        string tmp;
+        vector<string> words = splitstring(val);
+        if (words.size()>1) {
+            cout<<"error redirection size?? "<<endl;
+            exit(0);
+        }
+        if (words[0].length()>8)
+            tmp = words[0].substr(0,8);
+        if (words[0][0]=='/') {
+            this->typeUrl = 1;
+        } else if (tmp=="http://"||tmp=="https://") { //
+            this->typeUrl = 2;
+        } else {
+            cout<<"error url not valid"<<endl;
+            exit(0);
+        }
+        config._return = words[0];
     } else if (str== "client_max_body_size") {
         config._client_max_body_size = checkValidBadySise(val);
     }
@@ -298,12 +327,12 @@ void ServerConfig :: setVal(string &str,string &val)
         this->host = val;
     } else if (str == "client_max_body_size") {
         this->client_max_body_size = checkValidBadySise(val);
-    } else if (str == "index") {
-        this->index = val;
     } else if (str == "root") {
+        if (splitstring(val).size()>1) {
+            cout<<"error root not valid"<<endl;
+            exit(0);
+        }
         this->root = val;
-    } else if (str == "server_name") {
-        this->server_name = val;
     }
 }
 void isNumber(string& str) {
@@ -320,11 +349,10 @@ void isNumber(string& str) {
 }
 
 void ServerConfig :: checkGlobalConfig(string strConfig) {
-    strConfig.pop_back();
-        // cout <<strConfig<<endl;
     string line;
     set <string> words;
     vector <string> valid;
+    strConfig.pop_back();
     istringstream stream(strConfig);
     while (getline(stream, line)) {
         istringstream linestream(line);
@@ -338,8 +366,8 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
             words.insert(firstWord);
         }
         if (firstWord == "listen" || firstWord == "host"
-            || firstWord == "server_name" || firstWord == "client_max_body_size"
-            || firstWord == "error_page" || firstWord == "root"|| firstWord == "index") {
+            || firstWord == "client_max_body_size"
+            || firstWord == "error_page" || firstWord == "root") {
             size_t pos = line.find(";");
             if (pos == string::npos) {
                 cout << "; not found" << endl;
@@ -361,10 +389,6 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
             checkcontent(line);
         }
     }
-   if (valid.size() < 5) {
-    cout <<"error default param not found"<<endl;
-    exit(0);
-   }
 }
 void validbrackets(string &str) {
     int sig = 0;

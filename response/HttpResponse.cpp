@@ -56,7 +56,6 @@ void headersSending(int client_socket, string serverName) {
 /*---------------------- Get method------------------------------------------*/
 void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
     std::string ContentType;
-    
     if (!this->file.is_open()) {
         this->file.open(data, std::ios::binary);
         if (!this->file.is_open()) {
@@ -197,7 +196,11 @@ void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, Serv
   if (typePath == 0) {
     this->sendErrorPage(config, 404);
   } else if (typePath == 1) {
-    this->fileDataSend(data, config);
+    if (data.find(".php") != string::npos|| data.find(".py") != string::npos ) {
+      this->sendErrorPage(config, 403);
+    }
+    else
+      this->fileDataSend(data, config);
 
   } else if (checkTypePath(data) == 2) {
       this->dirDataSend(data, normal._root, normal, config);
@@ -231,11 +234,16 @@ int indexValidPath(string str) {
     if (str[i] == '/') {
         i++;
     }
-
+    if (str.find("/..")!=string::npos) {
+      return -1;
+    }
     if (str[i] == '\0') {
         return i;
     }
     while (str[i] && str[i] != '/') {
+      if (str[i]=='.') {
+        return 0;
+      }
         i++;
     }
     return i;

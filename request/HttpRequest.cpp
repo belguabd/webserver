@@ -195,6 +195,11 @@ void HttpRequest::checkPathIscgi(string &path)
   config = this->getServerConfig();
   int i = 0 ;
   i = indexValidPath(path);
+  if (i == -1) {
+    this->requestStatus = 403;
+    this->endHeaders = 1;
+    return ;
+  }
   if (i==0)
     str ="/";
   else
@@ -202,8 +207,16 @@ void HttpRequest::checkPathIscgi(string &path)
   string data = path.substr(i);
    if (config.location.find(str) != config.location.end()) {
     log = getValueMap(config.location,config.location.find(str));
+    // checkMethodAllowed(log,config._allowed_methods);
     if (!log._return.empty()) {
       return;
+    }
+    if (!log._allowed_methods.empty()) {
+      if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
+        this->requestStatus = 405;
+        this->endHeaders = 1;
+        return ;
+      }
     }
     if (!log._cgi_extension.empty()) {
       this->checkCgi = setDataCgi(data,config,log);

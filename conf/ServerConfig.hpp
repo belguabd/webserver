@@ -24,7 +24,6 @@ struct LocationConfig {
   string _cgi_extension;
   string _return;
   size_t _client_max_body_size;
-  // string cgi_handler;
 };
 struct LocationUplaods {
   string root;
@@ -46,6 +45,7 @@ class ServerConfig
         string host;//d
         string root;//d
         string index;//d
+        string _allowed_methods;
         bool autoindex;
         string server_name; //op 
         size_t client_max_body_size;
