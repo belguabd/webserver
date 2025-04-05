@@ -258,7 +258,7 @@ void WebServer::separateServer() {
   string strserv = this->_data;
   validbrackets(strserv);
   if (strserv.empty()) {
-    cout << "error: file config is empty" << endl;
+    cout << "Error: configuration file is empty"<< endl;
     exit(0);
   }
   size_t pos = 0;
@@ -268,12 +268,12 @@ void WebServer::separateServer() {
          (pos = strserv.find("server", pos)) != string::npos) {
     sig = false;
     if (beforStart(strserv.substr(0, pos)) == 1) {
-      cout << "error : data befor server " << endl;
+      cout << "Error: unexpected data before server block" << endl;
       exit(0);
     }
     size_t start = strserv.find("{", pos);
     if (start == string::npos) {
-      cout << "error: server block missing opening '{'" << endl;
+      cout << "Error: missing opening '{' for server block" << endl;
       exit(0);
     }
     size_t end = start;
@@ -302,7 +302,7 @@ void WebServer::separateServer() {
   }
 
   if (!found) {
-    cout << "error: no server blocks found" << endl;
+    cout << "Error: no server blocks defined" << endl;
     exit(0);
   }
 }

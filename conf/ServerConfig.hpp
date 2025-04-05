@@ -2,12 +2,15 @@
 
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 #include <map>
 #include <regex>
 #include <sstream>
 #include <string>
 #include <unistd.h>
+#include <dirent.h>
 using namespace std;
+#define REDCOLORE "\033[31m"
 
 // struct LocationConfig {
 //   string root;
@@ -64,7 +67,6 @@ class ServerConfig
         void checkGlobalConfig(string strConfig);
         void locationData(string &strlocat);
         void locationNormal(string &location);
-        void nameBlocks(string &strdata);
         void setVal(string &str,string &val);
         void setValLocation(string &str,string &val,LocationConfig &config);
         string getdata() const {return this->data;}
@@ -84,6 +86,8 @@ string removeLocationBlocks(string &configData);
 string trim(string &str);
 void checkcontent(string substr);
 void isNumber(string& str);
+bool directoryExists(const std::string &path);
+void isNumberValid(string& str);
 vector<string> splitstring(const string &str);
 void chechAllowedMethodValid(string &str);
 size_t checkValidBadySise(string str);

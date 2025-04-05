@@ -222,19 +222,6 @@ void HttpRequest::checkPathIscgi(string &path)
       this->checkCgi = setDataCgi(data,config,log);
     }
   }
-  // allowedMethod = splitstring(log._allowed_methods);
-  // for(size_t i = 0;i < allowedMethod.size();i++)
-  // {
-  //     if (this->dataFirstLine[0]==allowedMethod[i]) {
-  //       method = allowedMethod[i];
-  //       break;
-  //     }
-  // }
-  // if (method.empty())   {
-  //   this->requestStatus = 405;
-  //   this->endHeaders = 1;
-  //   return ;
-  // }
 }
 int HttpRequest::defineTypeMethod(string firstline) {
   vector<string> words;
