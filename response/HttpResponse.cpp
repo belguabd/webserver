@@ -247,7 +247,7 @@ void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, Serv
         data += str;
     }
 
-    cout << "Final path being checked: " << data << endl;
+    // cout << "Final path being checked: " << data << endl;
     typePath = checkTypePath(data);
     if (typePath == 0) {
         this->sendErrorPage(config, 404);
@@ -435,6 +435,12 @@ void    sendResponse(HttpResponse &response)
     return;
   }
   if (response.request->checkCgi){
+    cout <<response.request->cgiExtension<<endl;
+    if (response.request->cgiExtension==1) {
+      cout <<"php"<<endl;
+    }else  {
+      cout <<"python"<<endl;
+    }
      response.cgiResponse();
     return ;
   }

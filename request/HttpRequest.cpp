@@ -85,7 +85,7 @@ void HttpRequest::handleRequest()
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) ,cgiExtension(0), isCGi(false) , checkCgi(0), cgi_for_test(0) , status_code(0){
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) , isCGi(false) , checkCgi(0), cgi_for_test(0) , status_code(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   _post = NULL;
@@ -130,7 +130,8 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   string s;
   string root;
   string index;
-  int checkcgi = 0;;
+  int checkcgi = 0;
+  this->cgiExtension = 0;
   vector <string >extension;
   extension = splitstring(structConfig._cgi_extension);
   cout <<data<<endl;
@@ -161,31 +162,34 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   if (!s.empty()) {
     size_t pos = root.find(s);
     this->rootcgi = root.substr(0,pos+s.length());
+    cout <<rootcgi<<endl;
+    if (rootcgi.find(".php")!=string::npos) 
+      this->cgiExtension = 1;
+    else
+      this->cgiExtension = 2;
     this->pathInfo =  root.substr(pos+s.length());
     checkcgi = 1;
   } else {
     while (i < words.size()) {
-      str = root;
-      str += words[i];
-      if (fileExists(str) == true) {
-        if (str.find(".php")!=string::npos ||str.find(".py")!=string::npos) {
-            for(size_t i = 0;i < extension.size();i++) {
-              if (str.find(extension[i])!=string::npos) {
-                if (str.find(".php")!=string::npos) {
-                  this->cgiExtension = 1;
+    str = root + words[i];
+    if (fileExists(str)) {
+        this->rootcgi = str;
+        if (str.find(".php") != string::npos || str.find(".py") != string::npos) {
+            for (size_t j = 0; j < extension.size(); j++) {
+                if (str.find(extension[j]) != string::npos) {
+                    if (str.find(".php")!=string::npos) 
+                      this->cgiExtension = 1;
+                    else
+                      this->cgiExtension = 2;
+                    checkcgi = 1;
+                    break;
                 }
-                else
-                  this->cgiExtension = 2;
-                this->rootcgi = str;
-                checkcgi = 1;
-                break;
-              }
-          }
+            }
         }
-        break;
-      }
-      i++;
+        break; 
     }
+    i++;
+  }
   }
   return checkcgi;
 }
@@ -225,6 +229,7 @@ void HttpRequest::checkPathIscgi(string &path)
     }
     if (!log._cgi_extension.empty()) {
       this->checkCgi = setDataCgi(data,config,log);
+      cout <<"this->cgiExtension    "<<this->cgiExtension<<endl;
     }
   }
 }
