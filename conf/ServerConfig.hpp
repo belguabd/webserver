@@ -80,12 +80,14 @@ class ServerConfig
 };
 
 void validbrackets(string &str);
+vector<string> splithost(string& input, char c);
 string removeComments(string &input);
 bool checkCharacter(string &substr, char c);
 string removeLocationBlocks(string &configData);
 string trim(string &str);
 void checkcontent(string substr);
 void isNumber(string& str);
+void numberHost(string& str);
 bool directoryExists(const std::string &path);
 void isNumberValid(string& str);
 vector<string> splitstring(const string &str);
