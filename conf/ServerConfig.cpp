@@ -290,7 +290,17 @@ void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &conf
         config._client_max_body_size = checkValidBadySise(val);
     }
 }
-
+vector<string> splithost(string& input, char c) {
+    vector<string> words;
+    input = trim(input);
+    stringstream ss(input);
+    string str;
+    
+    while (getline(ss, str, c)) {
+        words.push_back(str);
+    }
+    return words;
+}
 
 void ServerConfig :: setVal(string &str,string &val)
 {
@@ -335,6 +345,26 @@ void ServerConfig :: setVal(string &str,string &val)
         }
     }
     else if (str == "host") {
+        if (!isnumber(val[0])) {
+            if (val!="localhost") {
+                cout <<REDCOLORE<< "ERROR : unknown directive \"host\" "<< endl;
+                exit(0);
+            }
+        }
+        else {
+            vector<string> format;
+            int i = 0;
+            format = splithost(val,'.');
+            if (format.size() != 4 ) {
+                cout <<REDCOLORE<< "ERROR : unknown directive \"host\" "<< endl;
+                exit(0);
+            }
+            while (i<format.size())
+            {
+                numberHost(format[i]);
+                i++;
+            }
+        }
         this->host = val;
     } else if (str == "client_max_body_size") {
         this->client_max_body_size = checkValidBadySise(val);
@@ -354,6 +384,18 @@ void isNumber(string& str) {
     for (int i=0;i<str.length();i++) {
         if (!isdigit(str[i])) {
             cout <<REDCOLORE<<  "ERROR : invalid port in  " <<"\"" <<str <<"\""<<" of the " <<"\"listen\""<< endl;
+            exit(0);
+        }
+    }
+}
+void numberHost(string& str) {
+    if (str.empty()) {
+        cout <<REDCOLORE<< "ERROR : unknown directive \"host\" "<< endl;
+        exit(0);
+    }
+    for (int i=0;i<str.length();i++) {
+        if (!isdigit(str[i])) {
+            cout <<REDCOLORE<< "ERROR : unknown directive \"host\" "<< endl;
             exit(0);
         }
     }
