@@ -141,7 +141,7 @@ void HttpResponse::dirDataSend(string &data, string &root, LocationConfig &norma
     } else {
         status_line(this->request->getfd(),200);
         headersSending(this->request->getfd(),config.getServerName());
-        string body = dirAutoindex(data,root);
+        string body = dirAutoindex(this->strLocation,data,root);
         stringstream response1;
               response1 << "Content-Type: text/html\r\n"
               << "Content-Length: " << body.size() << "\r\n"
@@ -169,7 +169,7 @@ void HttpResponse::dirDataSend(string &data, ServerConfig &config) {
   } else {
     status_line(this->request->getfd(), 200);
     headersSending(this->request->getfd(), config.getServerName());
-    string body = dirAutoindex(data, root);
+    string body = dirAutoindex(this->strLocation,data, root);
     stringstream response1;
     response1 << "Content-Type: text/html\r\n"
               << "Content-Length: " << body.size() << "\r\n"
@@ -180,33 +180,99 @@ void HttpResponse::dirDataSend(string &data, ServerConfig &config) {
     send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
   }
 }
+// void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, ServerConfig &config) {
+
+//   string data;
+//   string root;
+//   int typePath;
+//   if (normal._root.empty()) {
+//     root = config.getRoot();
+//     data = root;
+//   } else {
+//     root = normal._root;
+//     data = root;
+//   }
+//   if(this->strLocation=="/") {
+//     data += "/";
+//      data += str;
+//     cout <<"----------------"<<data<<endl;
+//     cout <<"-------  str ---------"<<str<<endl;
+//       typePath = checkTypePath(data);
+//     if (typePath == 0) {
+//       this->sendErrorPage(config, 404);
+//     } else if (typePath == 1) {
+//       if (data.find(".php") != string::npos|| data.find(".py") != string::npos ) {
+//         this->sendErrorPage(config, 403);
+//       }
+//       else
+//         this->fileDataSend(data, config);
+//     } else if (checkTypePath(data) == 2) {
+//         this->dirDataSend(data, root, normal, config);
+//     }
+//     return ;
+//   }
+//   data += str;
+//   typePath = checkTypePath(data);
+//   if (typePath == 0) {
+//     this->sendErrorPage(config, 404);
+//   } else if (typePath == 1) {
+//     if (data.find(".php") != string::npos|| data.find(".py") != string::npos ) {
+//       this->sendErrorPage(config, 403);
+//     }
+//     else
+//       this->fileDataSend(data, config);
+//   } else if (checkTypePath(data) == 2) {
+//       this->dirDataSend(data, root, normal, config);
+//   }
+// }
 void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, ServerConfig &config) {
-
-  string data;
-  string root;
-  int typePath;
-  if (normal._root.empty()) {
-    root = config.getRoot();
-    data = root;
-  } else {
-    data = normal._root;
-  }
-  data += str;
-  typePath = checkTypePath(data);
-  if (typePath == 0) {
-    this->sendErrorPage(config, 404);
-  } else if (typePath == 1) {
-    if (data.find(".php") != string::npos|| data.find(".py") != string::npos ) {
-      this->sendErrorPage(config, 403);
+    string data;
+    string root;
+    int typePath;
+    if (normal._root.empty()) {
+        root = config.getRoot();
+        data = root;
+    } else {
+        root = normal._root;
+        data = root;
     }
-    else
-      this->fileDataSend(data, config);
+    if (!root.empty() && root.back() != '/') {
+        root += '/';
+    }
+    data = root;
+    if (!str.empty()) {
+        if (str[0] == '/') {
+            str.erase(0, 1);
+        }
+        data += str;
+    }
 
-  } else if (checkTypePath(data) == 2) {
-      this->dirDataSend(data, normal._root, normal, config);
-  }
+    cout << "Final path being checked: " << data << endl;
+    typePath = checkTypePath(data);
+    if (typePath == 0) {
+        this->sendErrorPage(config, 404);
+    } 
+    else if (typePath == 1) {
+        if (data.find(".php") != string::npos || data.find(".py") != string::npos) {
+            this->sendErrorPage(config, 403);
+        } else {
+            this->fileDataSend(data, config);
+        }
+    } 
+    else if (typePath == 2) {
+        if (data.back() != '/') {
+            data += '/';
+        }
+        if (!normal._index.empty()) {
+            string index_path = data + normal._index;
+            if (checkTypePath(index_path) == 1) {
+                this->fileDataSend(index_path, config);
+                return ;
+            }
+        }
+        this->dirDataSend(data, root, normal, config);
+    }
 }
-
 void HttpResponse::redirectionResponse(string &str,ServerConfig &config) {
   string data;
   config = this->request->getServerConfig();
@@ -220,7 +286,6 @@ void HttpResponse::redirectionResponse(string &str,ServerConfig &config) {
     data = str;
   }
   
-  cout <<"redirection  = >"<<data<<endl;
   status_line(this->request->getfd(), 301);
   headersSending(this->request->getfd(), config.getServerName());
   stringstream response1;
@@ -256,28 +321,38 @@ bool HttpResponse::methodIsValid(ServerConfig &config, string method) {
   }
   return true;
 }
+string findMatchingLocation(const string& uri, const map<string, LocationConfig>& locations) {
+    string matched = "";
+    size_t max_len = 0;
+    for (map<string, LocationConfig>::const_iterator it = locations.begin(); it != locations.end(); ++it) {
+        const string& loc = it->first;
+        if (uri.find(loc) == 0 && loc.length() > max_len) {
+            matched = loc;
+            max_len = loc.length();
+        }
+    }
+    // if (matched.empty() && locations.find("/") != locations.end())
+    //     matched = "/";
+    return matched;
+}
+
 void HttpResponse::getResponse() {
-  string data;
-  string path;
-  string str;
-  ServerConfig config;
-  config = this->request->getServerConf();
-  vector<string> words = this->request->getDataFirstLine();
-  int i = indexValidPath(words[1]);
-  str = words[1].substr(0, i);
-  if (words[1][i] != 0)
-    data = words[1].substr(i);
-  else
-  {
-    if (words[1].find(".")==string::npos)
-      data += "/";
-  }
-  
-  if (str.empty()) {
-    str = "/";
-  }
-  if (config.location.find(str) != config.location.end()) {
-    LocationConfig log = getValueMap(config.location, config.location.find(str));
+    string data;
+    string path;
+    ServerConfig config;
+    config = this->request->getServerConf();
+    vector<string> words = this->request->getDataFirstLine();
+    this->strLocation = findMatchingLocation(words[1], config.location);
+    if (!this->strLocation.empty())
+        data = words[1].substr(this->strLocation.length());
+    else
+        this->strLocation = "/";
+
+    if (data.empty() && words[1].back() == '/')
+        data = "/";
+  // cout <<"str ----------->"<<this->strLocation <<endl;
+  if (config.location.find(strLocation) != config.location.end()) {
+    LocationConfig log = getValueMap(config.location, config.location.find(this->strLocation));
     if (!log._return.empty()) {
       redirectionResponse(log._return,config);
       return;
@@ -360,9 +435,7 @@ void    sendResponse(HttpResponse &response)
     return;
   }
   if (response.request->checkCgi){
-    //  cout << response.request->filename << "\n";
      response.cgiResponse();
-     
     return ;
   }
   if (method == GET) {
@@ -418,8 +491,7 @@ bool ExistFile(string &filePath) {
   return false;
 }
 
-string dirAutoindex(string &dirPath, string &root) {
-
+string dirAutoindex(string &strlocation,string &dirPath, string &root) {
   string html = "<!DOCTYPE html>\n"
                 "<html>\n"
                 "<head>\n"
@@ -442,12 +514,17 @@ string dirAutoindex(string &dirPath, string &root) {
     cerr << "Error: Unable to open directory " << dirPath << "\n";
     return "<h1>Directory not found</h1>";
   }
-  size_t pos = dirPath.rfind("/");
-  string str = dirPath.substr(pos + 1);
+  // cout <<"strlocation   "<<strlocation<<endl;
+  // cout <<"dirPath    "<<dirPath<<endl;
+  // cout <<"root    "<<root<<endl;
+  string str = dirPath.substr(root.length());
+  strlocation += str;
+  while(strlocation[strlocation.length()-1]=='/')
+    strlocation.pop_back();
   struct dirent *entry;
   while ((entry = readdir(dir)) != nullptr) {
     if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-      html += "<li><a href=\"" + str + "/" + entry->d_name + "\">";
+      html += "<li><a href=\"" + strlocation + "/" + entry->d_name + "\">";
       html += entry->d_name;
       html += "</a></li>\n";
     }

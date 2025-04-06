@@ -85,7 +85,7 @@ void HttpRequest::handleRequest()
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) , isCGi(false) , checkCgi(0), cgi_for_test(0) , status_code(0){
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) ,cgiExtension(0), isCGi(false) , checkCgi(0), cgi_for_test(0) , status_code(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   _post = NULL;
@@ -171,6 +171,11 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
         if (str.find(".php")!=string::npos ||str.find(".py")!=string::npos) {
             for(size_t i = 0;i < extension.size();i++) {
               if (str.find(extension[i])!=string::npos) {
+                if (str.find(".php")!=string::npos) {
+                  this->cgiExtension = 1;
+                }
+                else
+                  this->cgiExtension = 2;
                 this->rootcgi = str;
                 checkcgi = 1;
                 break;
