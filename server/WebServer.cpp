@@ -37,7 +37,7 @@ void WebServer::initialize_kqueue() {
 }
 void WebServer::addServerSocket(ServerConfig &conf) {
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
-    ServerSocket *newSocket = new ServerSocket(conf.getPorts()[i]);
+    ServerSocket *newSocket = new ServerSocket(conf.getPorts()[i], conf);
     newSocket->bind_socket();
     newSocket->start_listen();
     struct kevent monitor_socket;
@@ -96,9 +96,6 @@ void WebServer::receive_from_client(int event_fd) {
     }
   }
   request->is_client_disconnected = false;
-  // if (!request)
-  //   return;
-
   request->setRequestStatus(0);
   ssize_t bytes_read = request->readData();
   if (bytes_read == -1) {
@@ -113,6 +110,7 @@ void WebServer::receive_from_client(int event_fd) {
   }
 
   if (request->is_client_disconnected) {
+
     struct kevent changes[2];
     EV_SET(&changes[0], event_fd, EVFILT_READ, EV_DELETE, 0, 0, request);
     EV_SET(&changes[1], event_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
@@ -202,25 +200,26 @@ void WebServer::respond_to_client(int event_fd) {
     request->setBodyCgi(response->extractBodyFromFile(request->filename));
   ssize_t bytes_written = response->writeData();
   if (response->complete == 1) {
+    if (request->typeConnection == "keep-alive") {
+      struct kevent changes[2];
+      EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+      if (kevent(kqueue_fd, &changes[0], 1, NULL, 0, NULL) == -1) {
+        std::cerr << "Error deleting write event: " << strerror(errno)
+                  << std::endl;
+      }
+      if (!request->checkCgi) {
+        EV_SET(&changes[1], event_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
+               NULL);
+        if (kevent(kqueue_fd, &changes[1], 1, NULL, 0, NULL) == -1) {
+          std::cerr << "Error adding read event: " << strerror(errno)
+                    << std::endl;
+        }
+      }
+      responses_clients.erase(it);
+      delete response;
+      response = NULL;
 
-    // if (request->typeConnection == "keep-alive") {
-    //   struct kevent changes[2];
-    //   EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-    //   if (kevent(kqueue_fd, &changes[0], 1, NULL, 0, NULL) == -1) {
-    //     std::cerr << "Error deleting write event: " << strerror(errno)
-    //               << std::endl;
-    //   }
-    //   EV_SET(&changes[1], event_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
-    //          NULL);
-    //   if (kevent(kqueue_fd, &changes[1], 1, NULL, 0, NULL) == -1) {
-    //     std::cerr << "Error adding read event: " << strerror(errno)
-    //               << std::endl;
-    //   }
-    //   responses_clients.erase(it);
-    //   delete response;
-    //   response = NULL;
-
-    // } else {
+    } else {
       struct kevent changes[2];
       EV_SET(&changes[0], (*it)->request->getfd(), EVFILT_WRITE, EV_DELETE, 0,
              0, NULL);
@@ -239,7 +238,7 @@ void WebServer::respond_to_client(int event_fd) {
       delete response;
       response = NULL;
       request = NULL;
-    // }
+    }
   }
 }
 /*----------------------------------------------------*/
@@ -447,6 +446,7 @@ void WebServer::handleCGIRequest(int client_fd) {
   }
   // env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"]; // Set content length
   // env["INTERPRETER"] = "/usr/bin/php";
+  cout << "extention-------->" << client->cgiExtension << "\n";
   env["INTERPRETER"] = "./cgi/php-cgi";
   env["QUERY_STRING"] = client->getQueryString();
   std::map<string, string>::iterator iter = env.begin();
@@ -500,6 +500,7 @@ void WebServer::run() {
                     << std::endl;
           return;
         }
+        puts("\033[1;34mCGI process finished\033[0m");
       } else if (filter == EVFILT_TIMER) {
         HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
         req->status_code = 504;
@@ -510,6 +511,7 @@ void WebServer::run() {
         int status;
         waitpid(pid, &status, 0);
       } else if (filter == EVFILT_READ) {
+        puts("\033[1;34mRead event\033[0m");
         receive_from_client(event_fd);
         if (isCGIRequest(event_fd)) {
           handleCGIRequest(event_fd);
