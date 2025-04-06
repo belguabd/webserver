@@ -38,3 +38,7 @@ browser send request for favorite icon but server exit 0 and display message `CG
 server_name--->response
 
 upload_store /goinfre/ataoufik/ss/upload; #if (upla.back != '/') up.pushBack('/')
+
+
+response :
+host parse 

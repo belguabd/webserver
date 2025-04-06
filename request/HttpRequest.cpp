@@ -130,7 +130,8 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   string s;
   string root;
   string index;
-  int checkcgi = 0;;
+  int checkcgi = 0;
+  this->cgiExtension = 0;
   vector <string >extension;
   extension = splitstring(structConfig._cgi_extension);
   cout <<data<<endl;
@@ -161,26 +162,34 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   if (!s.empty()) {
     size_t pos = root.find(s);
     this->rootcgi = root.substr(0,pos+s.length());
+    cout <<rootcgi<<endl;
+    if (rootcgi.find(".php")!=string::npos) 
+      this->cgiExtension = 1;
+    else
+      this->cgiExtension = 2;
     this->pathInfo =  root.substr(pos+s.length());
     checkcgi = 1;
   } else {
     while (i < words.size()) {
-      str = root;
-      str += words[i];
-      if (fileExists(str) == true) {
-        if (str.find(".php")!=string::npos ||str.find(".py")!=string::npos) {
-            for(size_t i = 0;i < extension.size();i++) {
-              if (str.find(extension[i])!=string::npos) {
-                this->rootcgi = str;
-                checkcgi = 1;
-                break;
-              }
-          }
+    str = root + words[i];
+    if (fileExists(str)) {
+        this->rootcgi = str;
+        if (str.find(".php") != string::npos || str.find(".py") != string::npos) {
+            for (size_t j = 0; j < extension.size(); j++) {
+                if (str.find(extension[j]) != string::npos) {
+                    if (str.find(".php")!=string::npos) 
+                      this->cgiExtension = 1;
+                    else
+                      this->cgiExtension = 2;
+                    checkcgi = 1;
+                    break;
+                }
+            }
         }
-        break;
-      }
-      i++;
+        break; 
     }
+    i++;
+  }
   }
   return checkcgi;
 }
@@ -220,21 +229,9 @@ void HttpRequest::checkPathIscgi(string &path)
     }
     if (!log._cgi_extension.empty()) {
       this->checkCgi = setDataCgi(data,config,log);
+      cout <<"this->cgiExtension    "<<this->cgiExtension<<endl;
     }
   }
-  // allowedMethod = splitstring(log._allowed_methods);
-  // for(size_t i = 0;i < allowedMethod.size();i++)
-  // {
-  //     if (this->dataFirstLine[0]==allowedMethod[i]) {
-  //       method = allowedMethod[i];
-  //       break;
-  //     }
-  // }
-  // if (method.empty())   {
-  //   this->requestStatus = 405;
-  //   this->endHeaders = 1;
-  //   return ;
-  // }
 }
 int HttpRequest::defineTypeMethod(string firstline) {
   vector<string> words;

@@ -27,6 +27,7 @@ public:
    int firstTimeResponse;
   int complete;
   ifstream file;
+  string strLocation;
   streampos file_offset;
   size_t file_size;
   std::map<std::string, std::string> mimeType;
@@ -37,7 +38,7 @@ public:
   int checkFileAndSendData(string &data ,ServerConfig &config,string &index);
   void getResponse();
   void postResponse();
-  void deleteResponse();
+  // void deleteResponse();
   string getMimeType(string &extension);
   void cgiResponse();
   void defautlRoot(ServerConfig &config);
@@ -50,12 +51,12 @@ public:
   void dirDataSend(string &data,string &root,LocationConfig &normal, ServerConfig &config);
   // void dirDataSend(string &data, string &root,LocationUplaods &upload, ServerConfig &config);
   void dirDataSend(string &data, ServerConfig &config);
-  void forbidden(int client_socket,ServerConfig &config);
+  // void forbidden(int client_socket,ServerConfig &config);
   std::string extractBodyFromFile(const std::string &filename);
 };
 
 int checkTypePath(string &path);
 bool ExistFile(string &filePath);
-string dirAutoindex(string &dirPath,string &root);
+string dirAutoindex(string &strlocation ,string &dirPath,string &root);
 string errorPage(int statusCode);
 void	status_line(int client_socket,int status);

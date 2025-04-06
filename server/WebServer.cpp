@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <utility>
 #include <vector>
+enum { PHP = 1, PYTHON = 2 };
 
 #define TIMEOUT_INTERVAL 5000
 void WebServer::initialize_kqueue() {
@@ -257,7 +258,7 @@ void WebServer::separateServer() {
   string strserv = this->_data;
   validbrackets(strserv);
   if (strserv.empty()) {
-    cout << "error: file config is empty" << endl;
+    cout << "Error: configuration file is empty" << endl;
     exit(0);
   }
   size_t pos = 0;
@@ -267,12 +268,12 @@ void WebServer::separateServer() {
          (pos = strserv.find("server", pos)) != string::npos) {
     sig = false;
     if (beforStart(strserv.substr(0, pos)) == 1) {
-      cout << "error : data befor server " << endl;
+      cout << "Error: unexpected data before server block" << endl;
       exit(0);
     }
     size_t start = strserv.find("{", pos);
     if (start == string::npos) {
-      cout << "error: server block missing opening '{'" << endl;
+      cout << "Error: missing opening '{' for server block" << endl;
       exit(0);
     }
     size_t end = start;
@@ -301,7 +302,7 @@ void WebServer::separateServer() {
   }
 
   if (!found) {
-    cout << "error: no server blocks found" << endl;
+    cout << "Error: no server blocks defined" << endl;
     exit(0);
   }
 }
@@ -446,8 +447,11 @@ void WebServer::handleCGIRequest(int client_fd) {
   }
   // env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"]; // Set content length
   // env["INTERPRETER"] = "/usr/bin/php";
-  cout << "extention-------->" << client->cgiExtension << "\n";
-  env["INTERPRETER"] = "./cgi/php-cgi";
+  // cout << "extention-------->" << client->cgiExtension << "\n";
+  if (client->cgiExtension == PHP)
+    env["INTERPRETER"] = "./cgi/php-cgi";
+  else if (client->cgiExtension == PYTHON)
+    env["INTERPRETER"] = "./cgi/python-cgi";
   env["QUERY_STRING"] = client->getQueryString();
   std::map<string, string>::iterator iter = env.begin();
   std::vector<std::string> envp_map;
@@ -500,10 +504,9 @@ void WebServer::run() {
                     << std::endl;
           return;
         }
-        puts("\033[1;34mCGI process finished\033[0m");
       } else if (filter == EVFILT_TIMER) {
         HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
-        req->status_code = 504;
+        req->setRequestStatus(504);
         pid_t pid = events[i].ident;
         std::cout << "[SERVER] CGI process " << pid << " timed out! Killing..."
                   << std::endl;
@@ -511,7 +514,6 @@ void WebServer::run() {
         int status;
         waitpid(pid, &status, 0);
       } else if (filter == EVFILT_READ) {
-        puts("\033[1;34mRead event\033[0m");
         receive_from_client(event_fd);
         if (isCGIRequest(event_fd)) {
           handleCGIRequest(event_fd);

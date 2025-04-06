@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +6,9 @@
     <title>Document</title>
 </head>
 <body>
-    
-    <h1>this is HOME page</h1>
+    <h1>This my HOME page</h1>
 </body>
-</html>
+</html>"""
+
+while True:
+    print(html_content)

@@ -10,7 +10,7 @@ void    checkcontent(string substr)
         if (substr[i]=='\t' ||  substr[i]==' '|| substr[i]=='\n')
             i++;
         else {
-            cout<<"content not valid"<<endl;
+            cout <<REDCOLORE<< "ERROR : invalid arguments "<<endl;
             exit(0);
         }
     }
@@ -95,43 +95,43 @@ size_t checkValidBadySise(string str)
         i++;
     }
     if (i== str.length()) {
-        cout<<"error client_max_body_size not valid"<<endl;
+        cout <<REDCOLORE<< "ERROR : invalid value " <<"\"" <<str<<"\""<<endl;
         exit(0);
     }
     if (i==0) {
-        cout<<"error client_max_body_size not valid"<<endl;
+        cout <<REDCOLORE<<  "ERROR : invalid value " <<"\"" <<str<<"\""<<endl;
         exit(0);
     }
     maxBadysize = static_cast<size_t>(stoll(number));
 
     typeStorage = str.substr(i);
     if (typeStorage !="GB"&&typeStorage !="G"&&typeStorage !="MB"&&typeStorage !="M"&&typeStorage !="KB"&&typeStorage !="K"&&typeStorage !="B") {
-        cout<<"error client_max_body_size not valid"<<endl;
+        cout <<REDCOLORE<<  "ERROR : invalid value " <<"\"" <<str<<"\""<<endl;
         exit(0);
     }
     if (typeStorage =="GB"||typeStorage =="G") {
          maxBadysize = maxBadysize * 1024 * 1024 * 1024;
         if(maxBadysize > 10737418240) {
-            cout<<"error client_max_body_size > valid size"<<endl;
+            cout <<REDCOLORE<< "Error: Invalid argument (the client_max_body_size exceeds the maximum size allowed by the server)"<<endl;
             exit(0);
         }
     }
     else if (typeStorage =="MB"||typeStorage =="M") {
         maxBadysize = maxBadysize * 1024 * 1024;
         if(maxBadysize > 10737418240) {
-            cout<<"error client_max_body_size > valid size"<<endl;
+            cout <<REDCOLORE<< "Error: Invalid argument (the client_max_body_size exceeds the maximum size allowed by the server)"<<endl;
             exit(0);
         }
     }
     else if (typeStorage =="KB"||typeStorage =="K") {
          maxBadysize *= 1024;
         if(maxBadysize > 10737418240) {
-            cout<<"error client_max_body_size > valid size"<<endl;
+            cout <<REDCOLORE<< "Error: Invalid argument (the client_max_body_size exceeds the maximum size allowed by the server)"<<endl;
             exit(0);
         }
     }
     if(maxBadysize > 10737418240) {
-        cout<<"error client_max_body_size > valid size"<<endl;
+        cout <<REDCOLORE<< "Error: Invalid argument (the client_max_body_size exceeds the maximum size allowed by the server)"<<endl;
        exit(0);
     }
     return maxBadysize;
@@ -146,12 +146,12 @@ void ServerConfig :: locationNormal(string &location) {
     string key = trim(tmp);
     words = splitstring(key);
     if (words.size()!=1) {
-        cout <<"error location path not valid "<<endl;
+        cout <<REDCOLORE<< "Error: invalid location parameter "<<"\""<<key<<"\""<<endl;
         exit(0);
     }
 
     if (key.empty() || key[0]!='/') {
-        cout <<"error location path not valid "<<endl;
+        cout <<REDCOLORE<< "Error: invalid location parameter "<<"\""<<key<<"\""<<endl;
         exit(0);
     }
     string str = location.substr(pos + 1);
@@ -165,8 +165,8 @@ void ServerConfig :: locationNormal(string &location) {
         line = trim(line);
         if (!firstWord.empty()) {
             if (word.find(firstWord) != word.end()) {
-                cout << "Error: Duplicate parameter found - " << firstWord << endl;
-                exit(1);
+                cout <<REDCOLORE<<  "Error: duplicate "<<firstWord<<"directive "<< endl;
+                exit(0);
             }
             word.insert(firstWord);
         }
@@ -176,7 +176,7 @@ void ServerConfig :: locationNormal(string &location) {
             || firstWord == "client_max_body_size") {
             size_t pos = line.find(";");
             if (pos == string::npos) {
-                cout << "; not found" << endl;
+                cout <<REDCOLORE<<  "ERROR : unexpected " <<"\"" <<firstWord <<"\""<< endl;
                 exit(0);
             }
             tmp = line.substr(pos + 1);
@@ -203,18 +203,25 @@ void ServerConfig :: locationData(string &strlocat) {
         }
         size_t lastpos = strlocat.find("}",i);
         string location = strlocat.substr(firstpos,lastpos - firstpos);
-        // cout <<"location -------->"<<location<<endl;
         locationNormal(location);
         i = lastpos + 1;
     }
-    // exit(0);
 
+}
+bool directoryExists(const std::string &path) {
+    DIR *dir = opendir(path.c_str());
+    if (dir) {
+        closedir(dir);
+        return true;
+    } else {
+        return false;
+    }
 }
 void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &config)
 {
     if (str == "root") {
-        if (splitstring(val).size()>1) {
-            cout<<"error root not valid"<<endl;
+        if (splitstring(val).size()!=1) {
+            cout <<REDCOLORE<< "ERROR : invalid \"root\" argument "<<endl;
             exit(0);
         }
         config._root = val;
@@ -222,7 +229,7 @@ void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &conf
         config._index = val;
     } else if (str== "autoindex") {
         if (val != "on" && val != "off") {
-            cout <<"error autoindex"<<endl;
+            cout <<REDCOLORE<< "ERROR : invalid value \""<<val<<"\""<<endl;
             exit(0);
         }
         else if (val=="on")
@@ -230,17 +237,21 @@ void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &conf
         else
             config._autoindex = false;
     } else if (str== "upload_store") {
-        if (splitstring(val).size()>1) {
-            cout<<"error upload store not valid"<<endl;
+        if (splitstring(val).size()!=1) {
+            cout <<REDCOLORE<< "ERROR : invalid \"upload_store\" argument"<<endl;
             exit(0);
         }
+        if (!directoryExists(val)) {
+            cout <<REDCOLORE<< "Error: Unable to access \""<<val<<"\" (Permission denied)"<<endl;
+            exit(0);
+        } 
         config._upload_store = val;
     } else if (str== "allowed_methods") {
         int i = 0;
         vector<string> words = splitstring(val);
         while (i < words.size()) {
-            if (words[i]!="GET"&&words[i]!="POST"&&words[i]!="DELETE") {
-                cout <<"error allowed methods not valid "<<endl;
+            if (words[i] != "GET" && words[i] != "POST" && words[i] != "DELETE") {
+                cout <<REDCOLORE<< "ERROR : unknown directive \"allowed_methods\" " << endl;
                 exit(0);
             }
             i++;
@@ -251,7 +262,7 @@ void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &conf
         vector<string> words = splitstring(val);
         while (i < words.size()) {
             if (words[i]!=".php"&&words[i]!=".py") {
-                cout <<"error cgi extension not valid"<<endl;
+                cout << "ERROR : unknown directive \"cgi_extension\" " << endl;
                 exit(0);
             }
             i++;
@@ -261,7 +272,7 @@ void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &conf
         string tmp;
         vector<string> words = splitstring(val);
         if (words.size()>1) {
-            cout<<"error redirection size?? "<<endl;
+            cout <<REDCOLORE<< "ERROR : invalid return "<<endl;
             exit(0);
         }
         if (words[0].length()>8)
@@ -271,7 +282,7 @@ void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &conf
         } else if (tmp=="http://"||tmp=="https://") { //
             this->typeUrl = 2;
         } else {
-            cout<<"error url not valid"<<endl;
+            cout <<REDCOLORE<< "ERROR : invalid return "<<endl;
             exit(0);
         }
         config._return = words[0];
@@ -287,13 +298,13 @@ void ServerConfig :: setVal(string &str,string &val)
         isNumber(val);
         int a = atoi(val.c_str());
         if (a==0) {
-            cout <<"error port or error_page number not valid "<<val<<endl;
+            cout <<REDCOLORE<< "ERROR : invalid port in  " <<"\"" <<a <<"\""<<" of the " <<"\"" <<str <<"\""<< endl;
             exit(0);
         }
         for(size_t i = 0;i<this->ports.size();i++)
         {
             if (this->ports[i]==a) {
-                cout << "error: duplicate port: " << val << endl;
+               cout <<REDCOLORE<< "ERROR : duplicate listen options for "<<a<<endl;
                 exit(0);
             }
         }
@@ -302,23 +313,23 @@ void ServerConfig :: setVal(string &str,string &val)
     }else if (str == "error_page") {
         vector <string > words;
         words = splitstring(val);
+        if (words.size()==0 || words.size()==1) {
+            cout <<REDCOLORE<< "ERROR : invalid number of arguments"<< endl;
+            exit(0);
+        }
         if (words.size()==2)
         {
-            isNumber(words[0]);
+            isNumberValid(words[0]);
             this->errorpage[words[0]] = words[1];
         }
         else {
             string key;
             size_t i = 0;
             while(i <(words.size() - 1)) {
-                isNumber(words[i]);
+                isNumberValid(words[i]);
                 key +=words[i];
                 key +=" ";
                 i++;
-            }
-            if (i==0) {
-                cout<<"error_page not valid"<<endl;
-                exit(0);
             }
             this->errorpage[key] = words[words.size() - 1];
         }
@@ -328,8 +339,8 @@ void ServerConfig :: setVal(string &str,string &val)
     } else if (str == "client_max_body_size") {
         this->client_max_body_size = checkValidBadySise(val);
     } else if (str == "root") {
-        if (splitstring(val).size()>1) {
-            cout<<"error root not valid"<<endl;
+        if (splitstring(val).size()!=1) {
+            cout <<REDCOLORE<< "ERROR : invalid \"root\" argument "<<endl;
             exit(0);
         }
         this->root = val;
@@ -337,12 +348,20 @@ void ServerConfig :: setVal(string &str,string &val)
 }
 void isNumber(string& str) {
     if (str.empty()) {
-        cout <<"error port or error_page number not valid "<<str<<endl;
+        cout <<REDCOLORE<< "ERROR : invalid port in  " <<"\"" <<str <<"\""<<" of the " <<"\"listen\""<< endl;
         exit(0);
     }
     for (int i=0;i<str.length();i++) {
         if (!isdigit(str[i])) {
-            cout <<"error port or error_page number not valid "<<str<<endl;
+            cout <<REDCOLORE<<  "ERROR : invalid port in  " <<"\"" <<str <<"\""<<" of the " <<"\"listen\""<< endl;
+            exit(0);
+        }
+    }
+}
+void isNumberValid(string& str) {
+    for (int i=0;i<str.length();i++) {
+        if (!isdigit(str[i])) {
+            cout <<REDCOLORE<<  "ERROR : invalid HTTP status code " <<"\""<<str<<"\""<< endl;
             exit(0);
         }
     }
@@ -360,7 +379,7 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
         linestream >> firstWord;
         if (firstWord != "listen" && firstWord != "error_page" && !firstWord.empty()) {
             if (words.find(firstWord) != words.end()) {
-                cout << "Error: Duplicate parameter found - " << firstWord << endl;
+                cout <<REDCOLORE<< "ERROR : unknown directive " <<"\"" <<firstWord <<"\""<< endl;
                 exit(1);
             }
             words.insert(firstWord);
@@ -370,7 +389,7 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
             || firstWord == "error_page" || firstWord == "root") {
             size_t pos = line.find(";");
             if (pos == string::npos) {
-                cout << "; not found" << endl;
+               cout <<REDCOLORE<< "ERROR : unexpected " <<"\"" <<firstWord <<"\""<< endl;
                 exit(0);
             }
             string tmp = line.substr(pos + 1);
@@ -393,46 +412,31 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
 void validbrackets(string &str) {
     int sig = 0;
     string tmp;
-    size_t firstpos =0;
-    size_t lastBra = str.rfind("}");
-    if (lastBra != string::npos && lastBra < str.length() - 1) {
-        tmp = str.substr(lastBra + 1);
-        if (checkCharacter(tmp,'}')) {
-            cout << "error data after last bracket " << endl;
-            exit(1);
-        }
-    }
+    size_t firstpos = 0;
     while (firstpos < str.length()) {
         size_t pos = str.find("{", firstpos);
-        size_t pos1 = str.find("}", firstpos);
-        if (pos==string::npos) {
-            break ;
+        if (pos == string::npos) {
+            break;
         }
-        // checkcontent(str.substr(pos + 1, pos1 - pos - 1));
-        tmp = str.substr(firstpos,pos - firstpos);
-        if (checkCharacter(tmp,'}'))
+        tmp = str.substr(firstpos, pos - firstpos);
+
+        if (str.find('}') != string::npos) {
             sig++;
-        else{
-            cout<<"error bracket whitout name"<<endl;
-            exit(1);
         }
-        firstpos = pos + 1;
-        
+        firstpos = pos + 1; 
     }
-    size_t lastpos =0;
+    size_t lastpos = 0;
     while (lastpos < str.length()) {
         size_t pos = str.find("}", lastpos);
-        if (pos==string::npos) {
-            break ;
+        if (pos == string::npos) {
+            break;
         }
-        else {
-            sig--;
-        }
+        sig--;
         lastpos = pos + 1;
     }
-    if (sig!=0) {
-        cout<<"error brackets"<<endl;
-        exit(1);
+    if (sig != 0) {
+        cout << "Error: mismatched brackets" << endl;
+        exit(0);
     }
 }
 void ServerConfig :: parseServerConfig(string &strdata) {
@@ -440,66 +444,20 @@ void ServerConfig :: parseServerConfig(string &strdata) {
 	size_t i = pos + 6;
 	while(i < strdata.length() && strdata[i]!='{') {
 		if (strdata[i]!='\t' &&  strdata[i]!=' '&& strdata[i]!='\n') {
-			cout << "error" << endl;
+            size_t pos = strdata.find_first_of(" \t\n{", i);
+			cout <<REDCOLORE<< "ERROR : unexpected "<<"\""<<strdata.substr(i,pos-i)<<"\""<< endl;
 			exit(0);
 		}
 		i++;
 	}
-    if (i==strdata.size()) {
-        cout <<"error server without brakets"<<endl;
-        exit(0);
-    }
 	i++;
-	
 	size_t  pos1 = strdata.rfind('}',i);
 	string data = strdata.substr(i,pos1 - i);
 	string strConfig = removeLocationBlocks(data);
-    // cout <<strConfig<<endl;
 	this->checkGlobalConfig(strConfig);
 	pos1 = strdata.find("location",i);
 	if (pos1 != string::npos) {
 		string loca  = strdata.substr(pos1);
 		locationData(loca);   
 	}
-}
-void findLocation(string &str)
-{
-    int i = 0;
-    bool sig = false;
-    size_t pos  = str.find("location");
-    while (i< str.length()) {
-        if (isspace(str[i])) {
-            sig = false;
-        } else {
-            sig = true;
-            break;
-        }
-        i++;
-    }
-    if (sig == true && pos ==string::npos) {
-        cout <<"error name of blocks not correct"<<endl;
-        exit(0);
-    }
-}
-void ServerConfig :: nameBlocks(string &strdata) {
-    size_t pos = strdata.size();
-    size_t i = 0;
-    while ((pos = strdata.rfind("{", pos)) != string::npos) {
-        if (pos == 0)
-            break;
-        i = pos -1;
-        while (i != 0) {
-            if (strdata[i] != '{' && strdata[i] != ';' && strdata[i] != '}') {
-                i--;
-            } else {
-                break;
-            }
-        }
-        if (i != 0)
-        {
-           string str = strdata.substr(i + 1, pos - i - 1);
-            findLocation(str);
-        }
-        pos--;
-    }
 }
