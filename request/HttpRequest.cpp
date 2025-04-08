@@ -134,7 +134,7 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   this->cgiExtension = 0;
   vector <string >extension;
   extension = splitstring(structConfig._cgi_extension);
-  cout <<data<<endl;
+  // cout <<data<<endl;
   if(structConfig._root.empty()) {
     root = config.getRoot();
   } else {
@@ -162,7 +162,7 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   if (!s.empty()) {
     size_t pos = root.find(s);
     this->rootcgi = root.substr(0,pos+s.length());
-    cout <<rootcgi<<endl;
+    // cout <<rootcgi<<endl;
     if (rootcgi.find(".php")!=string::npos) 
       this->cgiExtension = 1;
     else
@@ -229,7 +229,6 @@ void HttpRequest::checkPathIscgi(string &path)
     }
     if (!log._cgi_extension.empty()) {
       this->checkCgi = setDataCgi(data,config,log);
-      cout <<"this->cgiExtension    "<<this->cgiExtension<<endl;
     }
   }
 }
