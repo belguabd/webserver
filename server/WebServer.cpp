@@ -431,7 +431,7 @@ void WebServer::handleCGIRequest(int client_fd) {
     env["REQUEST_METHOD"] = "POST";
   }
 
-  cout << "method------->" << env["REQUEST_METHOD"] << "\n";
+  // cout << "method------->" << env["REQUEST_METHOD"] << "\n";
   env["SCRIPT_NAME"] = client->rootcgi;     // Path to script
   env["SCRIPT_FILENAME"] = client->rootcgi; // Path to script
   env["PATH_INFO"] = client->pathInfo;      // Path info from URL
