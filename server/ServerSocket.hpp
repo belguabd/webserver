@@ -8,7 +8,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#define BACKLOG 9
+#define BACKLOG 126
 class ServerSocket {
 private:
   int server_fd;

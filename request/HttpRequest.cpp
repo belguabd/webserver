@@ -229,7 +229,6 @@ void HttpRequest::checkPathIscgi(string &path)
     }
     if (!log._cgi_extension.empty()) {
       this->checkCgi = setDataCgi(data,config,log);
-      cout <<"this->cgiExtension    "<<this->cgiExtension<<endl;
     }
   }
 }
