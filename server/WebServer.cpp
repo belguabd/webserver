@@ -193,13 +193,6 @@ void WebServer::cleanupClientConnection(
     throw std::runtime_error("Error removing write event: " +
                              std::string(strerror(errno)));
   }
-  // Remove read event
-  // EV_SET(&changes[1], fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-  // if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-  //   cout << "Error removing write event---: " << strerror(errno) << endl;
-  //   throw std::runtime_error("Error removing read event: " +
-  //                            std::string(strerror(errno)));
-  // }
   if (request->_method == POST) {
     unlink(request->getFileName().c_str());
   }
