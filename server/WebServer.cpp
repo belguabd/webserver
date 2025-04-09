@@ -219,7 +219,6 @@ void WebServer::respond_to_client(int event_fd) {
       responses_clients.erase(it);
       delete response;
       response = NULL;
-
     } else {
       struct kevent changes[2];
       EV_SET(&changes[0], (*it)->request->getfd(), EVFILT_WRITE, EV_DELETE, 0,
@@ -437,17 +436,9 @@ void WebServer::handleCGIRequest(int client_fd) {
   env["PATH_INFO"] = client->pathInfo;      // Path info from URL
   env["REDIRECT_STATUS"] = "1";             // Security feature for CGI
   if (client->_method == POST) {
-    // Set CONTENT_TYPE for POST requests (required for file uploads)
-    env["CONTENT_TYPE"] = env["HTTP_CONTENT_TYPE"]; // Ensure this method exists
-                                                    // in your client class
-    // Set CONTENT_LENGTH for POST requests
-    env["CONTENT_LENGTH"] =
-        env["HTTP_CONTENT_LENGTH"]; // Ensure this method exists in your client
-                                    // class
+    env["CONTENT_TYPE"] = env["HTTP_CONTENT_TYPE"];
+    env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"];
   }
-  // env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"]; // Set content length
-  // env["INTERPRETER"] = "/usr/bin/php";
-  // cout << "extention-------->" << client->cgiExtension << "\n";
   if (client->cgiExtension == PHP)
     env["INTERPRETER"] = "./cgi/php-cgi";
   else if (client->cgiExtension == PYTHON)

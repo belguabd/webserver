@@ -1,6 +1,6 @@
 #include "HttpRequest.hpp"
 
-LocationUplaods &getMatchedLocationUpload(const std::string &path, map<string, LocationUplaods> &configUploads)
+LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, LocationConfig> &configUploads)
 {
 	size_t pos = path.find("/", 1);
 	string keyLocationUpload;
@@ -9,7 +9,7 @@ LocationUplaods &getMatchedLocationUpload(const std::string &path, map<string, L
       pos = path.size() + 1;
 	keyLocationUpload = path.substr(0, pos);
 	if (configUploads.find(keyLocationUpload) == configUploads.end())
-		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = UPLOAD_FOLDER, .client_max_body_size= 1000000000, .allowed_methods="POST GET"}; // 
+		configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
 	return (configUploads.find(keyLocationUpload))->second;
 }
 
@@ -17,7 +17,7 @@ void HttpRequest::handlePost()
 {
   if (_post == NULL)
   {
-    LocationUplaods &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.getConfigUpload());
+    LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
       mapheaders["isCgi"] = std::to_string(checkCgi);
       _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
