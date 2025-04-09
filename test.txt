@@ -12,7 +12,14 @@ delete response
 
 
 
+\\
+log._allowed_methods.empty()===>set default
 
+
+upload_store /goinfre/ataoufik/ss/uplo ad////; 
+
+cgi_extension .phep .py; parse
+ allowed_methods  POST DELETE;
 .php .py 
 
 headers parse
@@ -29,6 +36,24 @@ close and keep-alive
 
 
 
+ERROR
+localhost:8585 send request and disconnected client 
+localhost:8585/e  send request but location doesn't exist
+when send request using browser , cgi doesn't work because ,it send request has keep-alive
+browser send request for favorite icon but server exit 0 and display message `CGI not supported type file`
+
+
+
+server_name--->response
+
+upload_store /goinfre/ataoufik/ss/upload; #if (upla.back != '/') up.pushBack('/')
+# index index.phwp index.epy index.html; if index.empty()--->location/index.php
+
+http://localhost:8585/addother/index.html
+
+listen 8080; server socket
+
+http://localhost:8080/add/other/index.php
 
 emagueri:
     keyVal to cgi

@@ -1,4 +1,0 @@
-X-Powered-By: PHP/8.2.8
-Content-type: text/html; charset=UTF-8
-
-<h2>Welcome, you are login successfully !</h2><a href='?logout=true'>Logout</a>
