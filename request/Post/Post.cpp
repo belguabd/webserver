@@ -34,6 +34,12 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 		_status = 405; // 405
 		return;	
 	}
+	if (_contentLengthSize > _configUpload._client_max_body_size)
+	{
+		std::cout << "body limits\n";
+		_status = 413; // ?
+		return ;
+	}
 	// std::cout << "_bodySize: " << _bodySize << std::endl;
 	initializeMimeTypes();
 	_uploadStore = _configUpload._upload_store;
@@ -91,8 +97,10 @@ void Post::setHeaders(std::map<std::string, std::string> &headers)
 
 void Post::setContentLengthSize()
 {
+	// 10737418240
+	// 2147483648
 	if (_headers.find("Content-Length") != _headers.end())
-		_contentLengthSize = std::stoi(_headers["Content-Length"]);
+		_contentLengthSize = std::stoll(_headers["Content-Length"]);
 }
 
 void Post::setBodyType()
@@ -138,8 +146,8 @@ void printNonPrintableChars(const std::string &str)
 		if (!isprint(static_cast<unsigned char>(*it)))
 		{
 			std::cout << "(x" << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)(*it) << ")";
-			if (static_cast<unsigned char>(*it) == '\n')
-				std::cout << "\n";
+			// if (static_cast<unsigned char>(*it) == '\n')
+			// 	std::cout << "\n";
 		}
 		else
 		{

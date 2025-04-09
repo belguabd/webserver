@@ -213,13 +213,13 @@ void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, Serv
         if (data.back() != '/') {
             data += '/';
         }
-        if (!normal._index.empty()) {
-            string index_path = data + normal._index;
-            if (checkTypePath(index_path) == 1) {
-                this->fileDataSend(index_path, config);
-                return ;
-            }
-        }
+        // if (!normal._index.empty()) {
+        //     string index_path = data + normal._index;
+        //     if (checkTypePath(index_path) == 1) {
+        //         this->fileDataSend(index_path, config);
+        //         return ;
+        //     }
+        // }
         this->dirDataSend(data, root, normal, config);
     }
 }
@@ -334,16 +334,16 @@ int HttpResponse::checkDataResev() {
     this->sendErrorPage(config, 505);
     return 1;
   } else if (statuscode ==405) {
-    this->sendErrorPage(config,405);
+    this->sendErrorPage(config, 405);
     return 1;
   } else if (statuscode==404) {
-    this->sendErrorPage(config,404);
+    this->sendErrorPage(config, 404);
     return 1;
   } else if (statuscode==403) {
-    this->sendErrorPage(config,403);
+    this->sendErrorPage(config, 403);
     return 1;
   } else if (statuscode==500) {
-    this->sendErrorPage(config,500);
+    this->sendErrorPage(config, 500);
     return 1;
   } else if (statuscode==504) {
     this->sendErrorPage(config,504);

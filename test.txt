@@ -51,3 +51,15 @@ upload_store /goinfre/ataoufik/ss/upload; #if (upla.back != '/') up.pushBack('/'
 
 http://localhost:8585/addother/index.html
 
+listen 8080; server socket
+
+http://localhost:8080/add/other/index.php
+
+emagueri:
+    keyVal to cgi
+
+    HTTP/1.1 413 Request Entity Too Large
+    
+    check the value of each field line Name that will be used
+    parse HOST and every headers work on it
+    set the connection to keep-alive by default if doesn't exit

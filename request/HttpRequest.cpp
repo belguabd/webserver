@@ -1,4 +1,5 @@
 #include "HttpRequest.hpp"
+#define BUFFER_READ 5000
 
 LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, LocationConfig> &configUploads)
 {
@@ -93,7 +94,7 @@ HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
 
 int HttpRequest::readData()
 {
-  char buffer[5120];
+  char buffer[BUFFER_READ];
   ssize_t bytes_received;
   std::memset(buffer, 0, sizeof(buffer));
   bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
@@ -376,25 +377,115 @@ string convertToUpper(string str) {
   return result;
 }
 /*-----------------*/
+
+bool isNonASCII(char c) {
+    return static_cast<unsigned char>(c) > 127;
+}
+
+void trimSpaces(std::string& str) {
+    size_t start = 0;
+    while (start < str.length() && (str[start] == ' ' || str[start] == '\t')) {
+        ++start;
+    }
+
+    size_t end = str.length();
+    while (end > start && (str[start] == ' '|| str[end - 1] == '\t')) 
+        --end;
+
+    str = str.substr(start, end - start);
+}
+bool isAllowedUriChar(char c) {
+    
+    const std::string allowedChars = "-._~:/?#[]@!$&'()*+,;=";
+    if (std::isalnum(c) || allowedChars.find(c) != std::string::npos)
+        return true;
+    return false;
+}
+
+int HttpRequest::parseFiledLine(std::string &filedLine)
+{
+  size_t pos;
+  if (filedLine == "\r\n")
+    return 0;
+  filedLine.pop_back();
+  filedLine.pop_back();// to remove crlf
+  
+  if ( (pos = filedLine.find(":")) == std::string::npos || std::find_if(filedLine.begin(), filedLine.end(), isNonASCII) != filedLine.end())
+    return 400;
+
+  std::string filedLineName = filedLine.substr(0, pos);
+  while (filedLineName[0] == ' ' || filedLineName[0]=='\t')
+    filedLineName.erase(filedLineName.begin()); //remove spaces in the beginning
+
+  if (filedLineName.find_first_of("()/\\<>@,;:\"{} \t\r\n") != std::string::npos)
+    return 400;
+  for (size_t i = 0; i < filedLineName.size(); i++) 
+  { filedLineName[i] = std::toupper(filedLineName[i]); if (filedLineName[i] == '-') filedLineName[i] = '_';}
+
+  // std::cout << "filedLineName : " << filedLineName << std::endl;
+  if (mapheaders.find(filedLineName) != mapheaders.end())
+  {
+    std::vector<std::string> keys; keys.push_back("HOST"); keys.push_back("CONTENT_LENGTH"); keys.push_back("TRANSFER_ENCODING"); keys.push_back("AUTHORIZATION"); keys.push_back("CONNECTION"); keys.push_back("DATE"); keys.push_back("UPGRADE");
+    if (std::find(keys.begin(),keys.end(),filedLineName) != keys.end())
+      return 400; // std::cout << "I am duplicate\n";
+  }
+  std::string filedLineValue = filedLine.substr(pos + 1, filedLine.length());
+  trimSpaces(filedLineValue);
+  // std::cout << "filedLineValue->>" << filedLineValue << "---------\n";
+  mapheaders[filedLineName] = filedLineValue;
+  return 0;
+}
+
 void HttpRequest ::parsePartRequest(string str_parse)
 {
   if (this->endHeaders == 1)
     return;
-  while (!str_parse.empty())
+  // std::cout << "str_parse :"; printNonPrintableChars(str_parse);
+  std::cout << "\\\\\\\n";
+
+  size_t pos1 = 0;
+  size_t pos2 = str_parse.find("\r\n");
+  std::string filedLine;
+
+  // 
+  while (pos2 != std::string::npos && requestStatus == 0)
   {
-    size_t pos = str_parse.find("\r\n");
-    if (pos == string::npos)
-      break;
-    string str = str_parse.substr(0, pos + 2);
-    if (str == "\r\n")
-    {
-      this->endHeaders = 1;
-      break;
-    }
-    str_parse = str_parse.substr(pos + 2);
-    checkHeaders(str);
-    str.clear();
+    filedLine = str_parse.substr(pos1, pos2 - pos1 + 2);
+    requestStatus =  parseFiledLine(filedLine);
+    pos1 = pos2 + 2;
+    pos2 = str_parse.find("\r\n", pos1);
   }
+
+  if (str_parse.find("\r\n\r\n") != std::string::npos)
+  {
+    this->endHeaders = 1;
+    if (mapheaders.find("HOST") == mapheaders.end())
+      requestStatus = 400; 
+    else
+      if (mapheaders["HOST"].empty() ||
+        std::find_if(mapheaders["HOST"].begin(), mapheaders["HOST"].end(), isAllowedUriChar) == mapheaders["HOST"].end())
+        requestStatus = 400;
+    if (mapheaders.find("CONNECTION") == mapheaders.end())
+      mapheaders["CONNECTION"] = "keep-alive";
+  }
+  std::cout << "request status " << requestStatus << std::endl;
+  // setMapHeaders();
+  // while (!str_parse.empty())
+  // {
+  //   // ********
+  //   size_t pos = str_parse.find("\r\n");
+  //   if (pos == string::npos)
+  //     break;
+  //   string str = str_parse.substr(0, pos + 2);
+  //   if (str == "\r\n")
+  //   {
+  //     this->endHeaders = 1;
+  //     break;
+  //   }
+  //   str_parse = str_parse.substr(pos + 2);
+  //   checkHeaders(str);
+  //   str.clear();
+  // }
 }
 
 void HttpRequest ::requestLine() {
