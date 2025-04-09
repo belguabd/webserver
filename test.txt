@@ -52,3 +52,5 @@ upload_store /goinfre/ataoufik/ss/upload; #if (upla.back != '/') up.pushBack('/'
 http://localhost:8585/addother/index.html
 
 listen 8080; server socket
+
+http://localhost:8080/add/other/index.php

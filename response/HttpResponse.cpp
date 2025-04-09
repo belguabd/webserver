@@ -213,13 +213,13 @@ void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, Serv
         if (data.back() != '/') {
             data += '/';
         }
-        if (!normal._index.empty()) {
-            string index_path = data + normal._index;
-            if (checkTypePath(index_path) == 1) {
-                this->fileDataSend(index_path, config);
-                return ;
-            }
-        }
+        // if (!normal._index.empty()) {
+        //     string index_path = data + normal._index;
+        //     if (checkTypePath(index_path) == 1) {
+        //         this->fileDataSend(index_path, config);
+        //         return ;
+        //     }
+        // }
         this->dirDataSend(data, root, normal, config);
     }
 }
