@@ -28,19 +28,7 @@ struct LocationConfig {
   string _return;
   size_t _client_max_body_size;
 };
-struct LocationUplaods {
-  string root;
-  string index;
-  string upload_store;
-  size_t client_max_body_size;
-  string allowed_methods; 
-};
-struct LocationCgi {
-  string root;
-  string allowed_methods;
-  string cgi_extension;
-  string cgi_handler;
-};
+
 class ServerConfig
 {
     private:
@@ -56,8 +44,6 @@ class ServerConfig
     public:
         map<string,string> errorpage;
         map<string, LocationConfig> location;
-        map<string, LocationUplaods> configUpload;
-        map<string, LocationCgi> configcgi;
         int typeUrl;
         vector<int> ports; //d
         ServerConfig(){};
@@ -76,7 +62,7 @@ class ServerConfig
         string getIndex() const {return this->index;}
         string getServerName(){return  server_name;}
       std::vector<int> getPorts(){return ports;}
-      map <string ,LocationUplaods> &getConfigUpload() {return configUpload;}
+      // map <string ,LocationConfig> &getConfigUpload() {return configUpload;}
 };
 
 void validbrackets(string &str);

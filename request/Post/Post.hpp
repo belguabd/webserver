@@ -43,14 +43,14 @@ private:
     void initializeMimeTypes();
     size_t manipulateBuffer(std::string &buffer);
     void setContentLengthSize();
-    LocationUplaods &_configUpload;
+    LocationConfig &_configUpload;
     void createBodyTypeObject(std::string& buffer);
 public:
     // Post();
     // Post(std::map<std::string, std::string> &headers, std::map<std::string, \
     //     std::string> &queryParam, std::string &buffer);
     Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, 
-    std::string &buffer, LocationUplaods &configUpload);
+    std::string &buffer, LocationConfig &configUpload);
     std::string &getFileName();
     int getStatus() {return _status;}
     int handleKeyVal(std::string &buffer);

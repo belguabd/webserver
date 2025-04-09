@@ -547,7 +547,7 @@ void WebServer::run() {
     }
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
-    
+
     // for (size_t i = 0; i < connected_clients.size(); i++) {
     //   close(connected_clients[i]->getfd());
     //   delete connected_clients[i];

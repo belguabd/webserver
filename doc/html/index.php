@@ -1,26 +1,162 @@
-<?php
-// Get the query string from the URL
-$name = isset($_GET['name']) ? $_GET['name'] : 'World';
-$age = isset($_GET['age']) ? $_GET['age'] : 'unknown';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>File Upload</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+    }
 
-// Print the content type (this is required for CGI)
-header('Content-Type: text/html');
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      padding: 20px;
+    }
 
-// Print a simple HTML response
-echo "<html><body>";
-echo "<h1>Hello, $name!</h1>";
-echo "<p>You are $age hhhhhhhhhdhdhdhdhdhdhdh.</p>";
+    .form-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      width: 400px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 0.6s ease;
+      text-align: center;
+    }
 
-// Commenting out the infinite loop
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-// while (true) {
-//     echo "<p>This is an infinite loop!</p>";
-//     // Add a sleep to prevent excessive CPU usage
-//     sleep(1); // Sleep for 1 second
-// }
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
 
+    .drop-zone {
+      border: 2px dashed #aaa;
+      border-radius: 10px;
+      padding: 40px 20px;
+      background: #f8f8f8;
+      cursor: pointer;
+      transition: 0.3s;
+      position: relative;
+    }
 
-// End HTML
-echo "</body></html>";
-// echo "Done\n";
-?>
+    .drop-zone.dragover {
+      background: #eef2ff;
+      border-color: #667eea;
+    }
+
+    .drop-zone i {
+      font-size: 40px;
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+
+    .drop-zone p {
+      font-size: 16px;
+      color: #444;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .file-name {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .submit-btn {
+      margin-top: 25px;
+      background: #667eea;
+      color: #fff;
+      border: none;
+      padding: 14px;
+      width: 100%;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .submit-btn:hover {
+      background: #5a67d8;
+      transform: translateY(-2px);
+    }
+
+    .submit-btn i {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <form action="upload.php" method="POST" enctype="multipart/form-data" class="form-container" id="uploadForm">
+    <h2><i class="fas fa-upload"></i> Upload File</h2>
+
+    <div class="drop-zone" id="dropZone">
+      <i class="fas fa-cloud-upload-alt"></i>
+      <p>Click or drag your file here</p>
+      <input type="file" class="file-input" name="file" id="fileInput" required>
+    </div>
+
+    <p class="file-name" id="fileName">No file selected</p>
+
+    <button type="submit" class="submit-btn">
+      <i class="fas fa-paper-plane"></i> Submit
+    </button>
+  </form>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+
+    // Click to trigger file input
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    // File selected manually
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        fileName.textContent = `📂 ${fileInput.files[0].name}`;
+      }
+    });
+
+    // Drag & Drop Events
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        fileName.textContent = `📂 ${files[0].name}`;
+      }
+    });
+  </script>
+
+</body>
+</html>
