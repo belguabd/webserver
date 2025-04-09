@@ -1,6 +1,6 @@
 #include "HttpRequest.hpp"
 
-LocationUplaods &getMatchedLocationUpload(const std::string &path, map<string, LocationUplaods> &configUploads)
+LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, LocationConfig> &configUploads)
 {
 	size_t pos = path.find("/", 1);
 	string keyLocationUpload;
@@ -9,7 +9,7 @@ LocationUplaods &getMatchedLocationUpload(const std::string &path, map<string, L
       pos = path.size() + 1;
 	keyLocationUpload = path.substr(0, pos);
 	if (configUploads.find(keyLocationUpload) == configUploads.end())
-		configUploads[keyLocationUpload] = (LocationUplaods){.upload_store = UPLOAD_FOLDER, .client_max_body_size= 1000000000, .allowed_methods="POST GET"}; // 
+		configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
 	return (configUploads.find(keyLocationUpload))->second;
 }
 
@@ -17,7 +17,7 @@ void HttpRequest::handlePost()
 {
   if (_post == NULL)
   {
-    LocationUplaods &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.getConfigUpload());
+    LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
       mapheaders["isCgi"] = std::to_string(checkCgi);
       _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
@@ -69,7 +69,6 @@ void HttpRequest::handleRequest()
     if (pos != string::npos) {
       setFirstTimeFlag(1);
       _method = defineTypeMethod(str_parse.substr(0, pos + 2));
-      requestLine();
       str_parse = str_parse.substr(pos + 2);
       if (_method == DELETE)
         std::cout << "handle request number: " << handleDeleteRequest(dataFirstLine[1]) << std::endl;
@@ -101,7 +100,9 @@ int HttpRequest::readData()
   if (bytes_received > 0)
   {
     readBuffer.assign(buffer, bytes_received);
+    // puts("=========================");
     // std::cout << readBuffer << "\n";
+    // puts("=========================");
     handleRequest();
 
   }
@@ -116,116 +117,152 @@ std::string trimNewline(std::string str)
   }
   return str;
 }
-LocationCgi getValueMapcgi(map<string, LocationCgi> & configNormal,map<string, LocationCgi> ::const_iterator it) {
-  LocationCgi config;
+LocationConfig getValueMap(map<string, LocationConfig> & configNormal,map<string, LocationConfig> ::const_iterator it) {
+  LocationConfig config;
     if (it != configNormal.end()) {
         config= it->second;
     }
     return config;
 }
 HttpRequest::~HttpRequest() {}
-void HttpRequest::checkPathIscgi(string &path)
+int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &structConfig)
 {
-  ServerConfig config;
   string s;
-  string method;
-  vector <string >allowedMethod;
+  string root;
+  string index;
+  int checkcgi = 0;
+  this->cgiExtension = 0;
   vector <string >extension;
-  LocationCgi log;
-  config = this->getServerConfig();
-  int i = 0 ;
-  i = indexValidPath(path);
-  string str = path.substr(0,i);
-  string data = path.substr(i);
-   if (config.configcgi.find(str) != config.configcgi.end()) {
-    log = getValueMapcgi(config.configcgi,config.configcgi.find(str));
-    allowedMethod = splitstring(log.allowed_methods);
-    extension = splitstring(log.cgi_extension);
-    this->checkCgi = 1;
+  extension = splitstring(structConfig._cgi_extension);
+  // cout <<data<<endl;
+  if(structConfig._root.empty()) {
+    root = config.getRoot();
+  } else {
+    root = structConfig._root;
   }
-  else
-    return ;
-    this->rootcgi = log.root + data;
-  for(size_t i = 0;i < extension.size();i++)
-  {
-      if (this->rootcgi.find(extension[i])!=string::npos) {
+  if(structConfig._index.empty()) {
+    index = config.getIndex();
+  } else {
+    index = structConfig._index;
+  }
+  root += data;
+  if (root[root.length() - 1]!='/') {
+    root.push_back('/');
+  }
+  string str;
+  size_t i = 0;
+  vector<string> words;
+  words = splitstring(index);
+  for(size_t i = 0;i < extension.size();i++) {
+      if (data.find(extension[i])!=string::npos) {
         s = extension[i];
         break;
       }
   }
-  for(size_t i = 0;i < allowedMethod.size();i++)
-  {
-      if (this->dataFirstLine[0]==allowedMethod[i]) {
-        method = allowedMethod[i];
-        break;
-      }
-  }
-    if (method.empty()) {
-      cout <<"method not allowed"<<endl;
-      exit(0);
-    }
-      if (s.empty()) {
-      cout <<"CGI not supported type file"<<endl;
-      exit(0);
-    }
-    size_t startPathInfo;
-    size_t endPathInfo;
-    startPathInfo =  this->rootcgi.find(s);
-
-    endPathInfo = this->rootcgi.find("?");
-    if (startPathInfo!=string::npos)
-    {
-      if (endPathInfo!=string::npos) {
-        this->pathInfo = this->rootcgi.substr(startPathInfo + s.length(),endPathInfo - startPathInfo - s.length());
-      }
-      else
-        this->pathInfo = this->rootcgi.substr(startPathInfo + s.length());
-    }
-    this->rootcgi = this->rootcgi.substr(0,startPathInfo+s.length());
-    bool f = fileExists(this->rootcgi);
-    if (f==false)
-      this->rootcgi = "";
-    if (s == ".php")
+  if (!s.empty()) {
+    size_t pos = root.find(s);
+    this->rootcgi = root.substr(0,pos+s.length());
+    // cout <<rootcgi<<endl;
+    if (rootcgi.find(".php")!=string::npos) 
       this->cgiExtension = 1;
     else
       this->cgiExtension = 2;
+    this->pathInfo =  root.substr(pos+s.length());
+    checkcgi = 1;
+  } else {
+    while (i < words.size()) {
+    str = root + words[i];
+    if (fileExists(str)) {
+        this->rootcgi = str;
+        if (str.find(".php") != string::npos || str.find(".py") != string::npos) {
+            for (size_t j = 0; j < extension.size(); j++) {
+                if (str.find(extension[j]) != string::npos) {
+                    if (str.find(".php")!=string::npos) 
+                      this->cgiExtension = 1;
+                    else
+                      this->cgiExtension = 2;
+                    checkcgi = 1;
+                    break;
+                }
+            }
+        }
+        break; 
+    }
+    i++;
+  }
+  }
+  return checkcgi;
+}
+void HttpRequest::checkPathIscgi(string &path)
+{
+  ServerConfig config;
+  string method;
+   string str;
+  vector <string >allowedMethod;
+  vector <string >extension;
+  LocationConfig log;
+  config = this->getServerConfig();
+  int i = 0 ;
+  i = indexValidPath(path);
+  if (i == -1) {
+    this->requestStatus = 403;
+    this->endHeaders = 1;
+    return ;
+  }
+  if (i==0)
+    str ="/";
+  else
+   str = path.substr(0,i);
+  string data = path.substr(i);
+   if (config.location.find(str) != config.location.end()) {
+    log = getValueMap(config.location,config.location.find(str));
+    // checkMethodAllowed(log,config._allowed_methods);
+    if (!log._return.empty()) {
+      return;
+    }
+    if (!log._allowed_methods.empty()) {
+      if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
+        this->requestStatus = 405;
+        this->endHeaders = 1;
+        return ;
+      }
+    }
+    if (!log._cgi_extension.empty()) {
+      this->checkCgi = setDataCgi(data,config,log);
+    }
+  }
 }
 int HttpRequest::defineTypeMethod(string firstline) {
-  firstline = trimNewline(firstline);
   vector<string> words;
-  size_t i = 0;
-  while (i < firstline.length())
-  {
-    while (i < firstline.length() &&
-           (firstline[i] == ' ' || firstline[i] == '\t'))
-      i++;
-    if (i >= firstline.length())
-      break;
-    size_t pos = firstline.find_first_of(" \t", i);
-    if (pos == std::string::npos)
-      pos = firstline.length();
-    words.push_back(firstline.substr(i, pos - i));
-    i = pos + 1;
+  stringstream word(firstline);
+  string str;
+  for (size_t i =0 ;i<firstline.length();i++) {
+    if (firstline[0]==' '||firstline[i]=='\t'
+      ||(firstline[i] ==' '&&firstline[i+1]==' ')
+      ||(firstline[i] ==' '&&(firstline[i+1]=='\0'||firstline[i+1]=='\r'||firstline[i+1]=='\n')) ) {
+      this->requestStatus = 400;
+      this->endHeaders = 1;
+      return 0;
+    }
   }
-  if (words.size() != 3 || words[1][0] != '/')
-  {
+  while(word>>str)
+    words.push_back(str);
+  if (words.size() != 3 || words[1][0] != '/') {
     this->requestStatus = 400;
     this->endHeaders = 1;
     return 0;
   }
   this->dataFirstLine = words;
-  checkPathIscgi(words[1]);
-  if (this->checkCgi == 0 && (words[1].find(".php")!=string::npos||words[1].find(".py")!=string::npos)) {
-    this->requestStatus = 500;
-    this->endHeaders = 1;
-    return 0;
-  }
+  requestLine();
+  checkPathIscgi(this->dataFirstLine[1]);
   if (words[0] == "GET")
     return (1);
   else if (words[0] == "POST")
     return (2);
   else if (words[0] == "DELETE")
     return (3);
+  this->requestStatus = 400;// method notValid
+  this->endHeaders = 1;
   return (0);
 }
 
@@ -254,7 +291,7 @@ void HttpRequest::checkHeaders(string &str)
   str = trimNewline(str);
   size_t pos = str.find(':');
   string result;
-  string host;
+  string key;
   int i = 0;
   vector<string> words;
   vector<string> hostsize;
@@ -275,8 +312,13 @@ void HttpRequest::checkHeaders(string &str)
   string headerName = str.substr(0, pos);
   result.erase(0, result.find_first_not_of(" "));
   hostsize = splitstring(result);
-  host = convertToUpper(headerName);
-  if (host == "HOST") {
+  key = convertToUpper(headerName);
+  if (key == "CONNECTION") {
+    this->typeConnection = result;
+  }
+  // cout <<"key --->"<<key;
+  // cout <<"     val --->"<<result<<endl;
+  if (key == "HOST") {
     if (hostsize.size() != 1 || this->mapheaders.find(headerName) != this->mapheaders.end()) {
       cout <<"bad request "<<endl;
       this->requestStatus = 400;
@@ -381,11 +423,7 @@ void HttpRequest ::requestLine() {
   if (pos != string::npos) {
     this->queryString = this->dataFirstLine[1].substr(pos);
     this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
-
   }
-  // cout <<"querydata = "<<this->queryString<<endl;
-  // cout <<"root cgi = "<<this->rootcgi<<endl;
-  // cout <<"path_nfo = "<<this->pathInfo<<endl;
 }
 
 string encodeUrl(string &str)

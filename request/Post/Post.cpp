@@ -22,21 +22,21 @@ std::string &Post::getFileName()
 		return chunk->_fileName;
 	return _fileName;
 }
-Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer, LocationUplaods &configUpload)
+Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer, LocationConfig &configUpload)
 :_headers(headers), _queryParam(queryParam)
 , _configUpload(configUpload)
 {
 	// setHeaders(headers);
 	_status = 0;
 	_bodySize = 0;
-	if (configUpload.allowed_methods.find("POST") == std::string::npos)
+	if (configUpload._allowed_methods.find("POST") == std::string::npos)
 	{
 		_status = 405; // 405
 		return;	
 	}
 	// std::cout << "_bodySize: " << _bodySize << std::endl;
 	initializeMimeTypes();
-	_uploadStore = _configUpload.upload_store;
+	_uploadStore = _configUpload._upload_store;
 	buffer = "\r\n" + buffer;
 	setBodyType();
 	createBodyTypeObject(buffer);
@@ -48,10 +48,10 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 int Post::proseRequest(std::string &buffer)
 {
 	_bodySize += buffer.size(); // attention of pre added \r\n in buffer;
-	if (_bodySize > _configUpload.client_max_body_size)
+	if (_bodySize > _configUpload._client_max_body_size)
 	{
 		std::cout << "body limits\n";
-		_status = 404;
+		_status = 413;
 		return _status;
 	}
 	if (this->_bodyType == contentLength)
@@ -158,7 +158,7 @@ bool fileExists(std::string &filePath)
 void Post::setFileName(std::string extention)
 {
 	struct stat b;
-	std::string name = _configUpload.upload_store + "/" + std::string("filePost");
+	std::string name = _configUpload._upload_store + "/" + std::string("filePost");
 	int n = 0;
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");

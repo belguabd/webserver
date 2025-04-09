@@ -25,6 +25,9 @@
 #include <unistd.h>
 #include <utility>
 #include <vector>
+enum { PHP = 1, PYTHON = 2 };
+
+#define TIMEOUT_INTERVAL 5000
 void WebServer::initialize_kqueue() {
   kqueue_fd = kqueue();
   if (kqueue_fd < 0) {
@@ -35,7 +38,7 @@ void WebServer::initialize_kqueue() {
 }
 void WebServer::addServerSocket(ServerConfig &conf) {
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
-    ServerSocket *newSocket = new ServerSocket(conf.getPorts()[i]);
+    ServerSocket *newSocket = new ServerSocket(conf.getPorts()[i], conf);
     newSocket->bind_socket();
     newSocket->start_listen();
     struct kevent monitor_socket;
@@ -84,124 +87,158 @@ void WebServer::handle_new_connection(int server_fd) {
       new HttpRequest(client_fd, map_configs[server_fd]));
 }
 
-void WebServer::receive_from_client(int client_fd) {
-  bool already_handled = false;
-  HttpRequest *client = NULL;
+void WebServer::receive_from_client(int event_fd) {
+  HttpRequest *request = NULL;
   std::vector<HttpRequest *>::iterator it;
   for (it = connected_clients.begin(); it != connected_clients.end(); ++it) {
-    if ((*it)->getfd() == client_fd) {
-      client = *it;
+    if ((*it)->getfd() == event_fd) {
+      request = *it;
       break;
     }
   }
-  if (!client)
-    return;
-
-  client->setRequestStatus(0);
-  ssize_t bytes_read = client->readData();
+  request->is_client_disconnected = false;
+  request->setRequestStatus(0);
+  ssize_t bytes_read = request->readData();
   if (bytes_read == -1) {
-    std::cerr << "Error receiving data from client " << client_fd << ": "
+    std::cerr << "Error receiving data from request " << event_fd << ": "
               << strerror(errno) << std::endl;
-    already_handled = true;
+    request->is_client_disconnected = true;
   } else if (bytes_read == 0) {
-    std::cout << "Client disconnected (client_fd: " << client_fd << ")"
-              << std::endl;
-    already_handled = true;
+    std::cout
+        << "\033[1;34mConnection closed gracefully by request (client_fd: "
+        << event_fd << ")\033[0m" << std::endl;
+    request->is_client_disconnected = true;
   }
-  if (already_handled) {
-    struct kevent changes[1];
-    EV_SET(&changes[0], client_fd, EVFILT_READ, EV_DELETE, 0, 0, client);
-    if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-      std::cerr << "Error deleting read event for client " << client_fd << ": "
-                << strerror(errno) << std::endl;
-    }
 
-    close(client_fd);
-    connected_clients.erase(it);
-    delete client;
-    return;
-  }
-  if (client->getRequestStatus()) {
-    HttpResponse *responseclient = new HttpResponse(client);
-    responses_clients.push_back(responseclient);
-    client->cgi_for_test = client->checkCgi;
-    struct kevent changes[1];
-    EV_SET(&changes[0], client_fd, EVFILT_READ, EV_DELETE, 0, 0, client);
-    if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-      std::cerr << "Error deleting read event: " << strerror(errno)
-                << std::endl;
-      close(client_fd);
+  if (request->is_client_disconnected) {
+
+    struct kevent changes[2];
+    EV_SET(&changes[0], event_fd, EVFILT_READ, EV_DELETE, 0, 0, request);
+    EV_SET(&changes[1], event_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
+           request);
+    if (kevent(kqueue_fd, changes, 2, NULL, 0, NULL) == -1) {
+      std::cerr << "Error modifying events: " << strerror(errno) << std::endl;
+      close(event_fd);
       connected_clients.erase(it);
       return;
     }
-    EV_SET(&changes[0], client_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
-           client);
+    close(event_fd);
+    connected_clients.erase(it);
+    delete request;
+    request = NULL;
+    return;
+  }
+  if (request->getRequestStatus()) {
+    HttpResponse *responseclient = new HttpResponse(request);
+    responses_clients.push_back(responseclient);
+    request->cgi_for_test = request->checkCgi;
+    struct kevent changes[1];
+    EV_SET(&changes[0], event_fd, EVFILT_READ, EV_DELETE, 0, 0, request);
+    if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+      std::cerr << "Error deleting read event: " << strerror(errno)
+                << std::endl;
+      close(event_fd);
+      connected_clients.erase(it);
+      return;
+    }
+    EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
+           request);
     if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
       std::cerr << "Error setting write event: " << strerror(errno)
                 << std::endl;
-      close(client_fd);
+      close(event_fd);
       connected_clients.erase(it);
       return;
     }
   }
 }
-std::string readFileAndRemoveHeaders(const std::string &filename) {
+std::string HttpResponse::extractBodyFromFile(const std::string &filename) {
   std::ifstream file(filename);
-  if (!file.is_open()) {
+  if (!file.is_open())
     throw std::runtime_error("Failed to open file: " + filename);
-  }
-
   std::stringstream buffer;
   buffer << file.rdbuf();
   file.close();
-
   std::string fileContent = buffer.str();
   size_t header_end = fileContent.find("\r\n\r\n");
 
   if (header_end != std::string::npos) {
+    std::string headers = fileContent.substr(0, header_end);
+    size_t start = 0;
+    size_t end = 0;
+    while ((end = headers.find("\r\n", start)) != std::string::npos) {
+      string header_line = headers.substr(start, end - start);
+      size_t n = header_line.find(":");
+      if (n != std::string::npos)
+        parseCgiHeaders[header_line.substr(0, n)] = header_line.substr(n + 1);
+      start = end + 2;
+    }
     return fileContent.substr(header_end + 4);
   }
-
   return fileContent;
 }
-void WebServer::respond_to_client(int client_fd) {
+void WebServer::respond_to_client(int event_fd) {
   HttpResponse *response = NULL;
   HttpRequest *request = NULL;
   std::vector<HttpResponse *>::iterator it;
   std::vector<HttpRequest *>::iterator iter_req;
 
   for (it = responses_clients.begin(); it != responses_clients.end(); ++it) {
-    if ((*it)->request->getfd() == client_fd) {
+    if ((*it)->request->getfd() == event_fd) {
       response = *it;
       break;
     }
   }
   for (iter_req = connected_clients.begin();
        iter_req != connected_clients.end(); ++iter_req) {
-    if ((*iter_req)->getfd() == client_fd) {
+    if ((*iter_req)->getfd() == event_fd) {
       request = *iter_req;
       break;
     }
   }
+
   if (request->checkCgi)
-    request->setBodyCgi(readFileAndRemoveHeaders(request->filename));
+    request->setBodyCgi(response->extractBodyFromFile(request->filename));
   ssize_t bytes_written = response->writeData();
   if (response->complete == 1) {
-    struct kevent changes[2];
-    EV_SET(&changes[0], (*it)->request->getfd(), EVFILT_WRITE, EV_DELETE, 0, 0,
-           NULL);
-    kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
-    EV_SET(&changes[1], (*it)->request->getfd(), EVFILT_READ, EV_DELETE, 0, 0,
-           NULL);
-    kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
-    // unlink(request->getFileName().c_str());
-    unlink(request->filename.c_str());
-    responses_clients.erase(it);
-    connected_clients.erase(iter_req);
-    delete request;
-    delete response;
-    response = NULL;
-    request = NULL;
+    if (request->typeConnection == "keep-alive") {
+      struct kevent changes[2];
+      EV_SET(&changes[0], event_fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+      if (kevent(kqueue_fd, &changes[0], 1, NULL, 0, NULL) == -1) {
+        std::cerr << "Error deleting write event: " << strerror(errno)
+                  << std::endl;
+      }
+      if (!request->checkCgi) {
+        EV_SET(&changes[1], event_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
+               NULL);
+        if (kevent(kqueue_fd, &changes[1], 1, NULL, 0, NULL) == -1) {
+          std::cerr << "Error adding read event: " << strerror(errno)
+                    << std::endl;
+        }
+      }
+      responses_clients.erase(it);
+      delete response;
+      response = NULL;
+    } else {
+      struct kevent changes[2];
+      EV_SET(&changes[0], (*it)->request->getfd(), EVFILT_WRITE, EV_DELETE, 0,
+             0, NULL);
+      kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+      EV_SET(&changes[1], (*it)->request->getfd(), EVFILT_READ, EV_DELETE, 0, 0,
+             NULL);
+      kevent(kqueue_fd, changes, 1, NULL, 0, NULL);
+      if (request->_method == POST) {
+        unlink(request->getFileName().c_str());
+      }
+      unlink(request->filename.c_str());
+      close(event_fd);
+      responses_clients.erase(it);
+      connected_clients.erase(iter_req);
+      delete request;
+      delete response;
+      response = NULL;
+      request = NULL;
+    }
   }
 }
 /*----------------------------------------------------*/
@@ -220,7 +257,7 @@ void WebServer::separateServer() {
   string strserv = this->_data;
   validbrackets(strserv);
   if (strserv.empty()) {
-    cout << "error: file config is empty" << endl;
+    cout << "Error: configuration file is empty" << endl;
     exit(0);
   }
   size_t pos = 0;
@@ -230,12 +267,12 @@ void WebServer::separateServer() {
          (pos = strserv.find("server", pos)) != string::npos) {
     sig = false;
     if (beforStart(strserv.substr(0, pos)) == 1) {
-      cout << "error : data befor server " << endl;
+      cout << "Error: unexpected data before server block" << endl;
       exit(0);
     }
     size_t start = strserv.find("{", pos);
     if (start == string::npos) {
-      cout << "error: server block missing opening '{'" << endl;
+      cout << "Error: missing opening '{' for server block" << endl;
       exit(0);
     }
     size_t end = start;
@@ -264,7 +301,7 @@ void WebServer::separateServer() {
   }
 
   if (!found) {
-    cout << "error: no server blocks found" << endl;
+    cout << "Error: no server blocks defined" << endl;
     exit(0);
   }
 }
@@ -289,8 +326,6 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
     std::cerr << "Failed to open file: " << strerror(errno) << std::endl;
     return;
   }
-  // cout << request->_method << "\n";
-  // int fd_body = open("")
   request->setCgi(fd);
   pid_t pid = fork();
   if (pid < 0) {
@@ -311,7 +346,8 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
       }
       dup2(fd_body, STDIN_FILENO);
       close(fd_body);
-    }
+    } else
+      close(STDIN_FILENO);
     if (execve(args[0], &args[0], &envp[0]) == -1) {
       perror("execve failed");
       _exit(EXIT_FAILURE);
@@ -333,8 +369,8 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
            request);
 
     // Add a timeout event (EVFILT_TIMER)
-    EV_SET(&changes[0], pid, EVFILT_TIMER, EV_ADD | EV_ENABLE, 0, 10000 / 2,
-           request);
+    EV_SET(&changes[0], pid, EVFILT_TIMER, EV_ADD | EV_ENABLE, 0,
+           TIMEOUT_INTERVAL, request);
 
     // Register both events with kevent
     if (kevent(kqueue_fd, changes, 2, NULL, 0, NULL) == -1) {
@@ -393,14 +429,21 @@ void WebServer::handleCGIRequest(int client_fd) {
   } else if (client->_method == POST) {
     env["REQUEST_METHOD"] = "POST";
   }
-  cout << "method------->" << env["REQUEST_METHOD"] << "\n";
+
+  // cout << "method------->" << env["REQUEST_METHOD"] << "\n";
   env["SCRIPT_NAME"] = client->rootcgi;     // Path to script
   env["SCRIPT_FILENAME"] = client->rootcgi; // Path to script
   env["PATH_INFO"] = client->pathInfo;      // Path info from URL
   env["REDIRECT_STATUS"] = "1";             // Security feature for CGI
-  env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"]; // Set content length
-  env["INTERPRETER"] = "./cgi/php-cgi";
-  env["QUERY_STRING"] = "name=GitHub+Copilot&language=cpp";
+  if (client->_method == POST) {
+    env["CONTENT_TYPE"] = env["HTTP_CONTENT_TYPE"];
+    env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"];
+  }
+  if (client->cgiExtension == PHP)
+    env["INTERPRETER"] = "./cgi/php-cgi";
+  else if (client->cgiExtension == PYTHON)
+    env["INTERPRETER"] = "./cgi/python-cgi";
+  env["QUERY_STRING"] = client->getQueryString();
   std::map<string, string>::iterator iter = env.begin();
   std::vector<std::string> envp_map;
   std::vector<char *> envp;
@@ -454,7 +497,7 @@ void WebServer::run() {
         }
       } else if (filter == EVFILT_TIMER) {
         HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
-        req->status_code = 504;
+        req->setRequestStatus(504);
         pid_t pid = events[i].ident;
         std::cout << "[SERVER] CGI process " << pid << " timed out! Killing..."
                   << std::endl;
@@ -463,8 +506,9 @@ void WebServer::run() {
         waitpid(pid, &status, 0);
       } else if (filter == EVFILT_READ) {
         receive_from_client(event_fd);
-        if (isCGIRequest(event_fd))
+        if (isCGIRequest(event_fd)) {
           handleCGIRequest(event_fd);
+        }
       } else if (filter == EVFILT_WRITE) {
         respond_to_client(event_fd);
       }
