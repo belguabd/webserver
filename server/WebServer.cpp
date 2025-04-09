@@ -35,6 +35,15 @@ void WebServer::initialize_kqueue() {
     std::exit(EXIT_FAILURE);
   }
 }
+bool is_fd_open(int fd) {
+  // Try using fcntl to get the file descriptor flags
+  if (fcntl(fd, F_GETFD) == -1) {
+    if (errno == EBADF) {
+      return false; // The file descriptor is closed
+    }
+  }
+  return true; // The file descriptor is open
+}
 void WebServer::addServerSocket(ServerConfig &conf) {
 
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
@@ -173,22 +182,24 @@ void WebServer::receive_from_client(int event_fd) {
 }
 
 void WebServer::cleanupClientConnection(
+
     HttpRequest *request, HttpResponse *response,
     std::vector<HttpRequest *>::iterator iter_req,
     std::vector<HttpResponse *>::iterator it) {
-  struct kevent changes[2];
-  EV_SET(&changes[0], (*it)->request->getfd(), EVFILT_WRITE, EV_DELETE, 0, 0,
-         NULL);
+  struct kevent changes[1];
+  int fd = (*it)->request->getfd();
+  EV_SET(&changes[0], fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
   if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
     throw std::runtime_error("Error removing write event: " +
                              std::string(strerror(errno)));
   }
-  EV_SET(&changes[1], (*it)->request->getfd(), EVFILT_READ, EV_DELETE, 0, 0,
-         NULL);
-  if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-    throw std::runtime_error("Error removing read event: " +
-                             std::string(strerror(errno)));
-  }
+  // Remove read event
+  // EV_SET(&changes[1], fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+  // if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+  //   cout << "Error removing write event---: " << strerror(errno) << endl;
+  //   throw std::runtime_error("Error removing read event: " +
+  //                            std::string(strerror(errno)));
+  // }
   if (request->_method == POST) {
     unlink(request->getFileName().c_str());
   }
@@ -225,7 +236,9 @@ std::string HttpResponse::extractBodyFromFile(const std::string &filename) {
   }
   return fileContent;
 }
+
 void WebServer::respond_to_client(int event_fd) {
+
   HttpResponse *response = NULL;
   HttpRequest *request = NULL;
   std::vector<HttpResponse *>::iterator it;
@@ -253,8 +266,8 @@ void WebServer::respond_to_client(int event_fd) {
       if (request->typeConnection == "keep-alive") {
         cleanupClientConnection(request, response, iter_req, it);
       } else {
-        close(event_fd);
         cleanupClientConnection(request, response, iter_req, it);
+        close(event_fd);
       }
     } catch (std::exception &e) {
       throw std::runtime_error(e.what());
@@ -557,6 +570,7 @@ void WebServer::run() {
       }
     }
   } catch (const std::exception &e) {
+    puts("here");
     std::cerr << "Error: " << e.what() << std::endl;
     closeAllSockets();
     for (size_t i = 0; i < connected_clients.size(); i++) {
