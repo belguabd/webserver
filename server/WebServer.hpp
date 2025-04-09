@@ -22,7 +22,7 @@ class WebServer {
 private:
   int kqueue_fd;
   string _data;
-  std::vector<ServerSocket *> serverSockets;
+  std::vector<ServerSocket> serverSockets;
   std::vector<ServerConfig> config;
   std::map<int, ServerConfig> map_configs;
   std::unordered_map<pid_t, HttpRequest *> cgi_requests;
@@ -35,6 +35,7 @@ private:
   void initialize_kqueue();
 
 public:
+  void closeAllSockets();
   bool checkPid(pid_t pid);
   WebServer(string &str);
   std::vector<HttpRequest *> connected_clients;
