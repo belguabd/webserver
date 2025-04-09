@@ -22,18 +22,21 @@ class WebServer {
 private:
   int kqueue_fd;
   string _data;
-  std::vector<ServerSocket *> serverSockets;
+  std::vector<ServerSocket> serverSockets;
   std::vector<ServerConfig> config;
   std::map<int, ServerConfig> map_configs;
-  std::unordered_map<pid_t, HttpRequest*> cgi_requests;
+  std::unordered_map<pid_t, HttpRequest *> cgi_requests;
+  std::vector<pid_t> pids_cgi;
 
-  std::map<int, HttpRequest*> pipe_fds;
+  std::map<int, HttpRequest *> pipe_fds;
   std::map<int, pid_t> pid_processes;
-  struct kevent *events;
+  struct kevent events[MAX_EVENTS];
   int max_events;
   void initialize_kqueue();
 
 public:
+  void closeAllSockets();
+  bool checkPid(pid_t pid);
   WebServer(string &str);
   std::vector<HttpRequest *> connected_clients;
   std::vector<HttpResponse *> responses_clients;
@@ -44,15 +47,13 @@ public:
   void handleCGIRequest(int client_fd);
   void set_non_blocking(int fd);
   bool isRequest(int fd);
- bool  isCGIRequest(int client_fd);
+  bool isCGIRequest(int client_fd);
   void pipe_read(int fd);
+  void cleanupClientConnection(HttpRequest *request, HttpResponse *response,
+                               std::vector<HttpRequest *>::iterator iter_req,
+                               std::vector<HttpResponse *>::iterator it);
   void run_script(HttpRequest *request, std::vector<char *> args,
                   std::vector<char *> envp);
-  // void displayAllClients() {
-  //   for (HttpRequest *client : connected_clients) {
-  //       client->display();
-  //   }
-  // }
   void run();
   void dataConfigFile();
   void separateServer();

@@ -125,6 +125,7 @@ int HttpResponse::checkFileAndSendData(string &data, ServerConfig &config, strin
 
 
 void HttpResponse::dirDataSend(string &data, string &root, LocationConfig &normal, ServerConfig &config) {
+    
   if (!normal._index.empty()) {
     if (this->checkFileAndSendData(data, config, normal._index)==1) {
       this->sendErrorPage(config, 404);
@@ -196,7 +197,6 @@ void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, Serv
         }
         data += str;
     }
-
     // cout << "Final path being checked: " << data << endl;
     typePath = checkTypePath(data);
     if (typePath == 0) {
@@ -305,6 +305,7 @@ void HttpResponse::getResponse() {
       redirectionResponse(log._return,config);
       return;
     }
+ 
     getLocationResponse(log, data, config);
     return;
   }
