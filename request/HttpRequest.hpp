@@ -118,3 +118,12 @@ string encodeUrl(string &str);
 int indexValidPath(string str);
 bool fileExists(std::string &filePath);
 string convertToUpper(string str);
+
+template <typename K, typename V>
+  V getValueFromMap(std::map<K, V>& map, typename std::map<K, V>::iterator it) {
+      V val;
+      if (it != map.end()) { 
+          val= it->second;
+      }
+      return val;
+  }

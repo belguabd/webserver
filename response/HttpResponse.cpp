@@ -103,37 +103,40 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
     if (bytes_read == 0) {
         this->file.close();
         complete = 1;
+       cout <<"----- END file --------"<<endl;
     }
+    std::ostringstream response_headers;
+    status_line(this->request->getfd(), 200);
+    headersSending(this->request->getfd(), config.getServerName());
+    response_headers << "Content-Type: " << ContentType << "\r\n"
+                     << "Content-Length: " << file_size << "\r\n"
+                     << "Set-Cookie: qwerty=219ffwef9w0f\r\n"
+                     << "Connection: close\r\n"
+                     << "\r\n";
+
+    send(this->request->getfd(), response_headers.str().c_str(),
+         response_headers.str().size(), 0);
+    firstTimeResponse = 1;
+  }
+
+  this->file.seekg(this->file_offset, std::ios::beg);
+  const size_t buffer_size = 1024;
+  char buffer[buffer_size];
+  this->file.read(buffer, buffer_size);
+  std::streamsize bytes_read = this->file.gcount();
+  if (bytes_read > 0) {
+    send(this->request->getfd(), buffer, bytes_read, 0);
+    this->file_offset += bytes_read;
+    //  cout <<"fd client = "<<this->request->getfd()<<"   file_offset = " <<
+    //  round((double)this->file_offset / (1024*1024) * 10) / 10 << " MB" <<
+    //  endl;
+  }
+  if (bytes_read == 0) {
+    this->file.close();
+    complete = 1;
+    cout << "----- END file --------" << endl;
+  }
 }
-
-// void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
-//     std::string html_content = "<!DOCTYPE html>\n"
-//                                "<html lang=\"en\">\n"
-//                                "<head>\n"
-//                                "    <meta charset=\"UTF-8\">\n"
-//                                "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-//                                "    <title>Static HTML Page</title>\n"
-//                                "</head>\n"
-//                                "<body>\n"
-//                                "    <h1>Welcome to My Static HTML Page</h1>\n"
-//                                "    <p>This is a simple HTML page served without reading from a file.</p>\n"
-//                                "</body>\n"
-//                                "</html>\n";
-//     std::string ContentType = "text/html";
-//     size_t file_size = html_content.size();
-//     std::ostringstream response_headers;
-//     status_line(this->request->getfd(), this->request->getRequestStatus());
-//     headersSending(this->request->getfd(), config.getServerName());
-//     response_headers << "Content-Type: " << ContentType << "\r\n"
-//                      << "Content-Length: " << file_size << "\r\n"
-//                      << "Connection: " << this->request->typeConnection << "\r\n"
-//                      << "\r\n";
-//     send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
-//     send(this->request->getfd(), html_content.c_str(), html_content.size(), 0);
-//     complete = 1;  
-// }
-
-
 
 int HttpResponse::checkFileAndSendData(string &data, ServerConfig &config,
                                        string &index) {
@@ -576,6 +579,7 @@ void HttpResponse::cgiResponse() {
             // response1 << "Content-Type: image/jpeg\r\n"
             << "Content-Length: " << body.size() << "\r\n"
             << "Connection: close\r\n"
+            << "Set-Cookie: username=login\r\n"
             << "\r\n"
             << body;
   string responseStr = response1.str();
