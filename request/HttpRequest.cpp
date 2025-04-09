@@ -416,7 +416,6 @@ void HttpRequest ::parsePartRequest(string str_parse)
   {
     filedLine = str_parse.substr(pos1, pos2 - pos1 + 2);
     requestStatus =  parseFiledLine(filedLine);
-    std::cout << "request status " << requestStatus << std::endl;
     pos1 = pos2 + 2;
     pos2 = str_parse.find("\r\n", pos1);
   }
@@ -430,7 +429,10 @@ void HttpRequest ::parsePartRequest(string str_parse)
       if (mapheaders["HOST"].empty() ||
         std::find_if(mapheaders["HOST"].begin(), mapheaders["HOST"].end(), isAllowedUriChar) == mapheaders["HOST"].end())
         requestStatus = 400;
+    if (mapheaders.find("CONNECTION") == mapheaders.end())
+      mapheaders["CONNECTION"] = "keep-alive";
   }
+  std::cout << "request status " << requestStatus << std::endl;
   // setMapHeaders();
   // while (!str_parse.empty())
   // {
