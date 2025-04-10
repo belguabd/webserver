@@ -77,7 +77,7 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
                              << "Content-Length: " << file_size << "\r\n"
                              << "Connection: " << this->request->typeConnection << "\r\n"
                              << "\r\n";
-            cout <<"              path : " << strLocation<<"                                                 status code :"<<this->request->getRequestStatus()<<endl;
+            // cout <<"              path : " << strLocation<<"                                                 status code :"<<this->request->getRequestStatus()<<endl;
             this->bytesSend = send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
             firstTimeResponse = 1;
         }
@@ -134,6 +134,7 @@ void HttpResponse::dirDataSend(string &data, string &root, LocationConfig &norma
     if (normal._autoindex == false) {
       this->sendErrorPage(config, 403);
     } else {
+      // cout << "------------>"<<this->strLocation<<endl;
         string body = dirAutoindex(this->strLocation,data,root);
         stringstream response1;
         response1 <<status_line(this->request->getfd(),200);
@@ -281,7 +282,7 @@ string findMatchingLocation(const string& uri, const map<string, LocationConfig>
             max_len = loc.length();
         }
     }
-    return matched;
+    return matched; 
 }
 
 void HttpResponse::getResponse() {
@@ -403,7 +404,18 @@ bool ExistFile(string &filePath) {
   }
   return false;
 }
-
+std::string replaceDoubleSlash(const std::string& input) {
+    std::string result;
+    for (std::string::size_type i = 0; i < input.length(); ++i) {
+        if (input[i] == '/' && i + 1 < input.length() && input[i + 1] == '/') {
+            result += '/'; // add one slash
+            ++i; // skip the next slash
+        } else {
+            result += input[i];
+        }
+    }
+    return result;
+}
 string dirAutoindex(string &strlocation,string &dirPath, string &root) {
   string html = "<!DOCTYPE html>\n"
                 "<html>\n"
@@ -428,7 +440,10 @@ string dirAutoindex(string &strlocation,string &dirPath, string &root) {
     return "<h1>Directory not found</h1>";
   }
   string str = dirPath.substr(root.length());
-  strlocation += str;
+
+  strlocation += '/'+str;
+  strlocation = replaceDoubleSlash(strlocation);
+  //  cout << "strloction after add path " << strlocation << endl; 
   while(strlocation[strlocation.length()-1]=='/')
     strlocation.pop_back();
   struct dirent *entry;
@@ -670,7 +685,7 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
                 << "\r\n"
                 << body;
       string responseStr = response1.str();
-      cout <<"              path : " << strLocation<<"                                                 status code :"<<status<<endl;
+      // cout <<"              path : " << strLocation<<"                                                 status code :"<<status<<endl;
       this->bytesSend = send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
       complete = 1;
       return ;

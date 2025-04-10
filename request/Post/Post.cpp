@@ -122,7 +122,7 @@ void Post::setBodyType()
 	}
 	else
 		_bodyType = contentLength;
-
+    std::cout << "headers[\"isCgi\"]" << _headers["isCgi"] << std::endl;
 	if (_bodyType == boundary && _headers["isCgi"] == "1")
 	{
 		std::cout << "I am boundary and cgi\n";

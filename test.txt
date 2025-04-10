@@ -49,7 +49,6 @@ server_name--->response
 upload_store /goinfre/ataoufik/ss/upload; #if (upla.back != '/') up.pushBack('/')
 # index index.phwp index.epy index.html; if index.empty()--->location/index.php
 
-http://localhost:8585/addother/index.html
 
 listen 8080; server socket
 
