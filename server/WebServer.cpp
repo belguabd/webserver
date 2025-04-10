@@ -314,8 +314,7 @@ void WebServer::separateServer() {
     ServerConfig conf(server);
     conf.parseServerConfig(server);
     for (size_t i = 0; i < config.size(); i++) {
-      if ((config[i].getHost() == conf.getHost()) &&
-          (config[i].getServerName() == conf.getServerName())) {
+      if (config[i].getHost() == conf.getHost()) {
         sig = true;
       }
     }
@@ -529,6 +528,7 @@ void WebServer::run() {
             throw std::runtime_error(error_message);
           }
         } else if (filter == EVFILT_TIMER) {
+          puts("here");
           pid_t pid = events[i].ident;
           if (checkPid(pid)) {
             HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
@@ -553,6 +553,7 @@ void WebServer::run() {
             close(events[i].ident);
           }
         } else if (filter == EVFILT_READ) {
+          puts("---here---");
           receive_from_client(event_fd);
           if (isCGIRequest(event_fd)) {
             handleCGIRequest(event_fd);

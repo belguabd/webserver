@@ -11,13 +11,8 @@
 #include <dirent.h>
 using namespace std;
 #define REDCOLORE "\033[31m"
+#define DEFAULTUPLOAD "doc/html"
 
-// struct LocationConfig {
-//   string root;
-//   string index;
-//   string allowed_methods;
-//   bool autoindex;
-// };
 struct LocationConfig {
   string _root;
   string _index;
@@ -35,12 +30,7 @@ class ServerConfig
         string data;
         string host;//d
         string root;//d
-        string index;//d
-        string _allowed_methods;
-        bool autoindex;
-        string server_name; //op 
         size_t client_max_body_size;
-        // map<string, string> globalConfig;
     public:
         map<string,string> errorpage;
         map<string, LocationConfig> location;
@@ -57,10 +47,9 @@ class ServerConfig
         void setValLocation(string &str,string &val,LocationConfig &config);
         string getdata() const {return this->data;}
         string getHost(){return  host;}
-        bool getAutoindex(){return  autoindex;}
+        // bool getAutoindex(){return  autoindex;}
         string getRoot() const {return this->root;}
-        string getIndex() const {return this->index;}
-        string getServerName(){return  server_name;}
+        // string getServerName(){return  server_name;}
       std::vector<int> getPorts(){return ports;}
       // map <string ,LocationConfig> &getConfigUpload() {return configUpload;}
 };
