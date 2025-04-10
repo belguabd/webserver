@@ -9,7 +9,6 @@ LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, Lo
   if (pos == std::string::npos)
     pos = path.size() + 1;
 	keyLocationUpload = path.substr(0, pos);
-  std::cout << "keyLocationUpload : " << keyLocationUpload << std::endl;
 	if (configUploads.find(keyLocationUpload) == configUploads.end())
 		configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
 	return (configUploads.find(keyLocationUpload))->second;
@@ -19,10 +18,7 @@ void HttpRequest::handlePost()
 {
   if (_post == NULL)
   {
-    std::cout << "checkCgi :: " << checkCgi << std::endl;
     LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
-      mapheaders["isCgi"] = std::to_string(checkCgi);
-      std::cout << "mapheaders[\"isCgi\"]" << mapheaders["isCgi"] << std::endl;
       _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
   else
@@ -64,7 +60,7 @@ int HttpRequest::handleDeleteRequest(std::string filePath)
 void HttpRequest::handleRequest()
 {
   string str_parse;
-  pasteInFile("currentRequest", readBuffer);
+  // pasteInFile("currentRequest", readBuffer);
   joinBuffer();
   str_parse = partRquest();
   if (getFirstTimeFlag() == 0)
@@ -85,7 +81,19 @@ void HttpRequest::handleRequest()
   else if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
     setRequestStatus(200);
   else if (_method == POST && getendHeaders() == 1)
-    handlePost();
+  {
+    try
+    {
+      handlePost();
+
+    }
+    catch(const std::exception& e)
+    {
+      std::cerr << "POST ERROR: " << e.what() << '\n';
+    }
+    
+
+  }
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
@@ -476,7 +484,6 @@ void HttpRequest ::parsePartRequest(string str_parse)
     if (mapheaders.find("CONNECTION") == mapheaders.end())
       mapheaders["CONNECTION"] = "keep-alive";
   }
-  std::cout << "request status " << requestStatus << std::endl;
   std::cout << "mapheaders[\"CONTENT_TYPE\"]" << mapheaders["CONTENT_TYPE"] << std::endl;
   // setMapHeaders();
   // while (!str_parse.empty())

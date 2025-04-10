@@ -82,7 +82,6 @@ size_t pasteInFile(std::string name, std::string &data)
 		return 0;
 	}
 	file << d;
-
 	fileSize = static_cast<size_t>(file.tellp());
 	file.close();
 	return fileSize;
