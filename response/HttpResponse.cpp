@@ -37,7 +37,7 @@ string status_line(int client_socket, int status) {
   return firstline;
 }
 
-string headersSending(int client_socket, string serverName) {
+string headersSending(int client_socket) {
   std::string header;
   time_t now = time(0);
   struct tm tstruct = *localtime(&now);
@@ -72,7 +72,7 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
             }
             ostringstream response_headers;
             response_headers << status_line(this->request->getfd(), this->request->getRequestStatus());
-            response_headers << headersSending(this->request->getfd(), config.getServerName());
+            response_headers << headersSending(this->request->getfd());
             response_headers << "Content-Type: " << ContentType << "\r\n"
                              << "Content-Length: " << file_size << "\r\n"
                              << "Connection: " << this->request->typeConnection << "\r\n"
@@ -138,7 +138,7 @@ void HttpResponse::dirDataSend(string &data, string &root, LocationConfig &norma
         string body = dirAutoindex(this->strLocation,data,root);
         stringstream response1;
         response1 <<status_line(this->request->getfd(),200);
-        response1 <<headersSending(this->request->getfd(),config.getServerName());
+        response1 <<headersSending(this->request->getfd());
         response1 << "Content-Type: text/html\r\n"
               << "Content-Length: " << body.size() << "\r\n"
               << "Connection: close\r\n"
@@ -150,32 +150,32 @@ void HttpResponse::dirDataSend(string &data, string &root, LocationConfig &norma
       }
   }
 }
-void HttpResponse::dirDataSend(string &data, ServerConfig &config) {
-  int checkExist;
-  string index;
-  string root = config.getRoot();
-  index = config.getIndex();
-  checkExist = this->checkFileAndSendData(data, config, index);
-  if (checkExist == 1) {
-    this->sendErrorPage(config, 404);
-    return;
-  }
-  if (config.getAutoindex() == false) {
-    this->sendErrorPage(config, 403);
-  } else {
-    string body = dirAutoindex(this->strLocation,data, root);
-    stringstream response1;
-    response1 << status_line(this->request->getfd(), 200);
-    response1 << headersSending(this->request->getfd(), config.getServerName());
-    response1 << "Content-Type: text/html\r\n"
-              << "Content-Length: " << body.size() << "\r\n"
-              << "Connection: close\r\n"
-              << "\r\n"
-              << body;
-    string responseStr = response1.str();
-    this->bytesSend = send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
-  }
-}
+// void HttpResponse::dirDataSend(string &data, ServerConfig &config) {
+//   int checkExist;
+//   string index;
+//   string root = config.getRoot();
+//   // index = config.getIndex();
+//   checkExist = this->checkFileAndSendData(data, config, index);
+//   if (checkExist == 1) {
+//     this->sendErrorPage(config, 404);
+//     return;
+//   }
+//   if (config.getAutoindex() == false) {
+//     this->sendErrorPage(config, 403);
+//   } else {
+//     string body = dirAutoindex(this->strLocation,data, root);
+//     stringstream response1;
+//     response1 << status_line(this->request->getfd(), 200);
+//     response1 << headersSending(this->request->getfd(), config.getServerName());
+//     response1 << "Content-Type: text/html\r\n"
+//               << "Content-Length: " << body.size() << "\r\n"
+//               << "Connection: close\r\n"
+//               << "\r\n"
+//               << body;
+//     string responseStr = response1.str();
+//     this->bytesSend = send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
+//   }
+// }
 
 void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, ServerConfig &config) {
     string data;
@@ -239,7 +239,7 @@ void HttpResponse::redirectionResponse(string &str,ServerConfig &config) {
   
   stringstream response1;
   response1 << status_line(this->request->getfd(), 301);
-  response1 << headersSending(this->request->getfd(), config.getServerName());
+  response1 << headersSending(this->request->getfd());
   response1 << "Location:" << data << "\r\n\r\n";
   string responseStr = response1.str();
   this->bytesSend = send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
@@ -313,15 +313,15 @@ void HttpResponse::getResponse() {
     // if (!methodIsValid(config, log._allowed_methods)) {
     //   return;
     // }
-  path = config.getRoot();
-  path += words[1];
-  if (checkTypePath(path) == 0) {
-    this->sendErrorPage(config, 404);
-  } else if (checkTypePath(path) == 1) {
-    this->fileDataSend(path, config);
-  } else if (checkTypePath(path) == 2) {
-    this->dirDataSend(path, config);
-  }
+  // path = config.getRoot();
+  // path += words[1];
+  // if (checkTypePath(path) == 0) {
+  //   this->sendErrorPage(config, 404);
+  // } else if (checkTypePath(path) == 1) {
+  //   this->fileDataSend(path, config);
+  // } else if (checkTypePath(path) == 2) {
+  //   this->dirDataSend(path, config);
+  // }
 }
 
 
@@ -486,7 +486,7 @@ void HttpResponse::cgiResponse() {
             file_size = 0;
             std::ostringstream response_headers;
             response_headers << status_line(this->request->getfd(), this->request->getRequestStatus());
-            response_headers << headersSending(this->request->getfd(), this->request->getServerConf().getServerName());
+            response_headers << headersSending(this->request->getfd());
             response_headers <<"Access-Control-Allow-Headers: *\r\n"
                              << "Access-Control-Allow-Origin: *\r\n"
                              << "Content-Type: text/html\r\n"
@@ -548,7 +548,7 @@ void HttpResponse::postResponse() {
   }
   stringstream response1;
   response1 << status_line(this->request->getfd(), 201);
-  response1 << headersSending(this->request->getfd(), config.getServerName());
+  response1 << headersSending(this->request->getfd());
   response1 << "Content-Type: text/html\r\n"
             << "Content-Length: " << body.size() << "\r\n"
             << "Connection: close\r\n"
@@ -678,7 +678,7 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
       string body = errorPage(status);
       stringstream response1;
       response1 << status_line(this->request->getfd(), status);
-      response1 << headersSending(this->request->getfd(), config.getServerName());
+      response1 << headersSending(this->request->getfd());
       response1 << "Content-Type: text/html\r\n"
                 << "Content-Length: " << body.size() << "\r\n"
                 << "Connection: close\r\n"
@@ -705,7 +705,7 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
     }
     std::ostringstream response_headers;
     response_headers << status_line(this->request->getfd(), status);
-    response_headers << headersSending(this->request->getfd(), config.getServerName());
+    response_headers << headersSending(this->request->getfd());
     response_headers << "Content-Type: " << ContentType << "\r\n"
                      << "Content-Length: " << file_size << "\r\n"
                      << "Connection: close\r\n"

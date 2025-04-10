@@ -133,7 +133,6 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
 {
   string s;
   string root;
-  string index;
   int checkcgi = 0;
   this->cgiExtension = 0;
   vector <string >extension;
@@ -144,11 +143,6 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   } else {
     root = structConfig._root;
   }
-  if(structConfig._index.empty()) {
-    index = config.getIndex();
-  } else {
-    index = structConfig._index;
-  }
   root += data;
   if (root[root.length() - 1]!='/') {
     root.push_back('/');
@@ -156,7 +150,7 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   string str;
   size_t i = 0;
   vector<string> words;
-  words = splitstring(index);
+  words = splitstring(structConfig._index);
   for(size_t i = 0;i < extension.size();i++) {
       if (data.find(extension[i])!=string::npos) {
         s = extension[i];
