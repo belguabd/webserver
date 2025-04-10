@@ -6,9 +6,10 @@ LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, Lo
 	size_t pos = path.find("/", 1);
 	string keyLocationUpload;
 
-    if (pos == std::string::npos)
-      pos = path.size() + 1;
+  if (pos == std::string::npos)
+    pos = path.size() + 1;
 	keyLocationUpload = path.substr(0, pos);
+  std::cout << "keyLocationUpload : " << keyLocationUpload << std::endl;
 	if (configUploads.find(keyLocationUpload) == configUploads.end())
 		configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
 	return (configUploads.find(keyLocationUpload))->second;
@@ -469,6 +470,7 @@ void HttpRequest ::parsePartRequest(string str_parse)
       mapheaders["CONNECTION"] = "keep-alive";
   }
   std::cout << "request status " << requestStatus << std::endl;
+  std::cout << "mapheaders[\"CONTENT_TYPE\"]" << mapheaders["CONTENT_TYPE"] << std::endl;
   // setMapHeaders();
   // while (!str_parse.empty())
   // {

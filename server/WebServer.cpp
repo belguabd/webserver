@@ -563,7 +563,6 @@ void WebServer::run() {
       }
     }
   } catch (const std::exception &e) {
-    puts("here");
     std::cerr << "Error: " << e.what() << std::endl;
     closeAllSockets();
     for (size_t i = 0; i < connected_clients.size(); i++) {

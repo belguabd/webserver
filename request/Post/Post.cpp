@@ -12,7 +12,8 @@ void Post::createBodyTypeObject(std::string& buffer) {
 	}
 	else if (_bodyType == contentLength) {
 		buffer.erase(0, 2); // to remove \r\n
-		setFileName(_mimeToExtension[_headers["Content-Type"]]);
+		setFileName(_mimeToExtension[_headers["CONTENT_TYPE"]]);
+		// setFileName(_mimeToExtension[_headers["Content-Type"]]);
 	}
 }
 
@@ -27,6 +28,7 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 , _configUpload(configUpload)
 {
 	// setHeaders(headers);
+	setContentLengthSize();
 	_status = 0;
 	_bodySize = 0;
 	if (configUpload._allowed_methods.find("POST") == std::string::npos)
@@ -45,21 +47,15 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 	_uploadStore = _configUpload._upload_store;
 	buffer = "\r\n" + buffer;
 	setBodyType();
+	std::cout << "body type : " << this->_bodyType << std::endl;
 	createBodyTypeObject(buffer);
 
-	setContentLengthSize();
 	proseRequest(buffer);
 }
 
 int Post::proseRequest(std::string &buffer)
 {
 	_bodySize += buffer.size(); // attention of pre added \r\n in buffer;
-	if (_bodySize > _configUpload._client_max_body_size)
-	{
-		std::cout << "body limits\n";
-		_status = 413;
-		return _status;
-	}
 	if (this->_bodyType == contentLength)
 		return handleContentLength(buffer);
 	if (this->_bodyType == keyVal)
@@ -99,16 +95,17 @@ void Post::setContentLengthSize()
 {
 	// 10737418240
 	// 2147483648
-	if (_headers.find("Content-Length") != _headers.end())
-		_contentLengthSize = std::stoll(_headers["Content-Length"]);
+	if (_headers.find("CONTENT_LENGTH") != _headers.end())
+		_contentLengthSize = std::stoll(_headers["CONTENT_LENGTH"]);
 }
 
 void Post::setBodyType()
 {
 	// std::cout << "_headers[\"Content-Type\"] :";printNonPrintableChars(_headers["Content-Type"]);
-	if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("; boundary=") != std::string::npos)
+	// if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("; boundary=") != std::string::npos)
+	if (_headers.find("CONTENT_TYPE") != _headers.end() && _headers["CONTENT_TYPE"].find("; boundary=") != std::string::npos)
 	{
-		if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"] == "chunked")
+		if (_headers.find("TRANSFER_ENCODING") != _headers.end() && _headers["TRANSFER_ENCODING"] == "chunked")
 			_bodyType = boundaryChunked;
 		else
 		{
@@ -116,9 +113,9 @@ void Post::setBodyType()
 			std::cout << "This is boundary\n";
 		}
 	}
-	else if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("x-www-form-urlencoded") != std::string::npos)
+	else if (_headers.find("CONTENT_TYPE") != _headers.end() && _headers["CONTENT_TYPE"].find("x-www-form-urlencoded") != std::string::npos)
 		_bodyType = keyVal;
-	else if (_headers.find("Transfer-Encoding") != _headers.end() && _headers["Transfer-Encoding"].find("chunked") != std::string::npos)
+	else if (_headers.find("TRANSFER_ENCODING") != _headers.end() && _headers["TRANSFER_ENCODING"].find("chunked") != std::string::npos)
 	{
 		std::cout << "This is chunked\n";
 		_bodyType = chunked;
@@ -171,7 +168,7 @@ void Post::setFileName(std::string extention)
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	_fileName = (name + extention);
-	std::cout << "content-length fileName : " << _fileName << std::endl;
+	std::cout << "fileName : " << _fileName << std::endl;
 }
 
 int Post::handleContentLength(std::string &buffer)

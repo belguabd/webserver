@@ -20,7 +20,8 @@ Chunked::Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map
 {
 	_chunkSize = 0;
 	initializeMimeTypes();
-	setFileName(_mimeToExtension[_headers["Content-Type"]]);
+	// setFileName(_mimeToExtension[_headers["Content-Type"]]);
+	setFileName(_mimeToExtension[_headers["CONTENT_TYPE"]]);
 }
 
 void Chunked::setFileName(std::string extention)
