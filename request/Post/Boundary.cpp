@@ -20,9 +20,12 @@ Boundary::Boundary(std::map<std::string, std::string> &queryParam, std::string &
 void Boundary::setBoundaryString()
 {
     // std::string str = _headers["Content-Type"];
-    std::string str = _headers["CONTENT-TYPE"];
+    std::string str = _headers["CONTENT_TYPE"];
+    std::cout << "str: " << str << std::endl;
     size_t pos = str.find("; boundary=") + 11;
+    std::cout << "*******************1\n";
     _boundaryString = std::string("\r\n--").append(str.substr(pos) + "\r\n");
+    std::cout << "*******************2\n";
     _boundaryStringEnd = std::string("\r\n--").append(str.substr(pos) + "--\r\n");           
 }
 

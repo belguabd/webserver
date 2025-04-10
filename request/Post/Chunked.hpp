@@ -7,6 +7,8 @@
 #include <iostream>
 #include <algorithm>
 #include <sys/stat.h> 
+#include <fcntl.h>
+#include <unistd.h>
 
 class Chunked
 {
