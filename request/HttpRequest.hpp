@@ -89,7 +89,7 @@ int setDataCgi(string data,ServerConfig &config,LocationConfig &structConfig);
   void setRequestStatus(int i) { this->requestStatus = i; }
   const string &getbuffer() const { return this->_buffer; }
   string getreadbuffer() const { return this->readBuffer; }
-  string &getFileName() { return _post->getFileName(); }
+  string getFileName();
   void checkHeaders(string &str);
   void checkPathIscgi(string &path);
   void requestLine();

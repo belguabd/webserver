@@ -62,3 +62,39 @@ emagueri:
     check the value of each field line Name that will be used
     parse HOST and every headers work on it
     set the connection to keep-alive by default if doesn't exit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==85404==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x000100a6dde3 bp 0x7ffeef229190 sp 0x7ffeef229160 T0)
+==85404==The signal is caused by a READ memory access.
+==85404==Hint: address points to the zero page
+    #0 0x100a6dde3 in Post::getFileName()+0x63 (webserver:x86_64+0x1000a0de3)
+    #1 0x1009ec33d in HttpRequest::getFileName()+0x4d (webserver:x86_64+0x10001f33d)
+    #2 0x1009ebed0 in WebServer::cleanupClientConnection(HttpRequest*, HttpResponse*, std::__1::__wrap_iter<HttpRequest**>, std::__1::__wrap_iter<HttpResponse**>)+0xa10 (webserver:x86_64+0x10001eed0)
+    #3 0x1009ee464 in WebServer::respond_to_client(int)+0xaf4 (webserver:x86_64+0x100021464)
+    #4 0x1009fa4da in WebServer::run()+0x24aa (webserver:x86_64+0x10002d4da)
+    #5 0x1009cf6f7 in main+0x297 (webserver:x86_64+0x1000026f7)
+    #6 0x7fff6eec2cc8 in start+0x0 (libdyld.dylib:x86_64+0x1acc8)
