@@ -132,7 +132,11 @@ size_t checkValidBadySise(string str)
     }
     if(maxBadysize > 10737418240) {
         cout <<REDCOLORE<< "Error: Invalid argument (the client_max_body_size exceeds the maximum size allowed by the server)"<<endl;
-       exit(0);
+        exit(0);
+    }
+    if (maxBadysize==0) {
+        cout <<REDCOLORE<< "Error: Invalid argument (client_max_body_size=0)"<<endl;
+        exit(0);
     }
     return maxBadysize;
 }
@@ -219,6 +223,9 @@ bool directoryExists(const std::string &path) {
 }
 void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &config)
 {
+    if (config._client_max_body_size==0) {
+            config._client_max_body_size = this->client_max_body_size;
+    }
     if (str == "root") {
         if (splitstring(val).size()!=1) {
             cout <<REDCOLORE<< "ERROR : invalid \"root\" argument "<<endl;
@@ -419,6 +426,11 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
         istringstream linestream(line);
         string firstWord;
         linestream >> firstWord;
+        if (firstWord == "listen") {
+            if (words.find(firstWord) == words.end()) {
+                words.insert(firstWord);
+            }
+        }
         if (firstWord != "listen" && firstWord != "error_page" && !firstWord.empty()) {
             if (words.find(firstWord) != words.end()) {
                 cout <<REDCOLORE<< "ERROR : unknown directive " <<"\"" <<firstWord <<"\""<< endl;
@@ -450,6 +462,11 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
             checkcontent(line);
         }
     }
+    if (words.size() != 4) {
+        cout <<REDCOLORE<< "ERROR : invalid number of arguments"<< endl;
+        exit(0);
+    }
+
 }
 void validbrackets(string &str) {
     int sig = 0;
