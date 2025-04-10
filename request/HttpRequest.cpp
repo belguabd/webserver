@@ -198,6 +198,7 @@ void HttpRequest::checkPathIscgi(string &path)
 {
   ServerConfig config;
   string method;
+  string data;
    string str;
   vector <string >allowedMethod;
   vector <string >extension;
@@ -210,14 +211,18 @@ void HttpRequest::checkPathIscgi(string &path)
     this->endHeaders = 1;
     return ;
   }
-  if (i==0)
-    str ="/";
-  else
-   str = path.substr(0,i);
-  string data = path.substr(i);
+    str = findMatchingLocation(path, config.location);
+    if (!str.empty())
+    {
+      if (str.length()==1)
+        data = path.substr(str.length()-1);
+      else
+        data = path.substr(str.length());
+    }
+    else
+        str = "/";
    if (config.location.find(str) != config.location.end()) {
     log = getValueMap(config.location,config.location.find(str));
-    // checkMethodAllowed(log,config._allowed_methods);
     if (!log._return.empty()) {
       return;
     }
@@ -441,7 +446,7 @@ void HttpRequest ::parsePartRequest(string str_parse)
   if (this->endHeaders == 1)
     return;
   // std::cout << "str_parse :"; printNonPrintableChars(str_parse);
-  std::cout << "\\\\\\\n";
+  // std::cout << "\\\\\\\n";
 
   size_t pos1 = 0;
   size_t pos2 = str_parse.find("\r\n");
@@ -468,7 +473,7 @@ void HttpRequest ::parsePartRequest(string str_parse)
     if (mapheaders.find("CONNECTION") == mapheaders.end())
       mapheaders["CONNECTION"] = "keep-alive";
   }
-  std::cout << "request status " << requestStatus << std::endl;
+  // std::cout << "request status " << requestStatus << std::endl;
   // setMapHeaders();
   // while (!str_parse.empty())
   // {

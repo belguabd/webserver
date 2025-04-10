@@ -120,7 +120,7 @@ string encodeUrl(string &str);
 int indexValidPath(string str);
 bool fileExists(std::string &filePath);
 string convertToUpper(string str);
-
+string findMatchingLocation(const string& uri, const map<string, LocationConfig>& locations);
 template <typename K, typename V>
   V getValueFromMap(std::map<K, V>& map, typename std::map<K, V>::iterator it) {
       V val;

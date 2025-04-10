@@ -52,7 +52,7 @@ public:
   void dirDataSend(string &data, ServerConfig &config);
   std::string extractBodyFromFile(const std::string &filename);
 };
-
+string findMatchingLocation(const string& uri, const map<string, LocationConfig>& locations);
 int checkTypePath(string &path);
 bool ExistFile(string &filePath);
 string dirAutoindex(string &strlocation ,string &dirPath,string &root);
