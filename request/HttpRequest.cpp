@@ -8,9 +8,11 @@ LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, Lo
 
   if (pos == std::string::npos)
     pos = path.size() + 1;
-	keyLocationUpload = path.substr(0, pos);
-	if (configUploads.find(keyLocationUpload) == configUploads.end())
-		configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
+	// keyLocationUpload = path.substr(0, pos);
+  keyLocationUpload = findMatchingLocation(path, configUploads);
+  std::cout << "keyLocationUpload " << keyLocationUpload << std::endl;
+	// if (configUploads.find(keyLocationUpload) == configUploads.end())
+	// 	configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
 	return (configUploads.find(keyLocationUpload))->second;
 }
 
@@ -37,15 +39,17 @@ void HttpRequest::handlePost()
 int HttpRequest::handleDeleteRequest(std::string filePath)
 {
   struct stat meteData;
-  filePath.insert(0, ".");
+  // filePath.insert(0, ".");
   LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
   // std::cout << "filePath: " << filePath << std::endl;
   // lc.
+  std::string location =  findMatchingLocation(dataFirstLine[1], server_config.location);
   size_t pos = filePath.find("/", 2);
-  if (filePath.substr(0, pos + 1) != "./upload/")
-  {
-    return 405;
-  }
+  std::cout << "filePath: " << filePath << std::endl;
+  filePath.replace(0, location.length(), lc._root);
+  std::cout << "filePath: " << filePath << std::endl;
+  // if (filePath.substr(0, pos + 1) != "./upload/")
+  //   return 405;
   // Check if the file exists
   if (stat(filePath.c_str(), &meteData) != 0)
       return 404;
