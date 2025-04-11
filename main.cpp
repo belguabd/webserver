@@ -21,7 +21,7 @@ void makeFileEmpty(const std::string filename) {
 int main(int arc, char **arv) {
   if (!arv[1])
     return 0;
-//   atexit(f);
+  // atexit(f);
   signal(SIGPIPE, SIG_IGN);
   string str = arv[1];
   WebServer server(str);
