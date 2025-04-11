@@ -490,6 +490,7 @@ void HttpResponse::cgiResponse() {
             response_headers <<"Access-Control-Allow-Headers: *\r\n"
                              << "Access-Control-Allow-Origin: *\r\n"
                              << "Content-Type: text/html\r\n"
+                            //  << "Set-Cookie: username=login\r\n"
                              << "Content-Length: " << bodycgi.length() << "\r\n"
                              << "Connection: " << this->request->typeConnection << "\r\n"
                              << "\r\n";

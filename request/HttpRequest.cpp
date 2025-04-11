@@ -29,10 +29,7 @@ void HttpRequest::handlePost()
       _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
   else
-  {
     _post->proseRequest(readBuffer);
-    // std::cout << "abcd\n";
-  }
   setRequestStatus(_post->getStatus());
 	this->readBuffer.clear();
 }
@@ -485,7 +482,6 @@ void HttpRequest ::parsePartRequest(string str_parse)
     if (mapheaders.find("CONNECTION") == mapheaders.end())
       mapheaders["CONNECTION"] = "keep-alive";
   }
-  std::cout << "mapheaders[\"CONTENT_TYPE\"]" << mapheaders["CONTENT_TYPE"] << std::endl;
   // setMapHeaders();
   // while (!str_parse.empty())
   // {
