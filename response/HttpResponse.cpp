@@ -227,14 +227,7 @@ int indexValidPath(string str) {
     }
     return i;
 }
-bool HttpResponse::methodIsValid(ServerConfig &config, string method) {
-  size_t pos = method.find("GET");
-  if (pos == string::npos) {
-    this->sendErrorPage(config, 405);
-    return false;
-  }
-  return true;
-}
+
 string findMatchingLocation(const string& uri, const map<string, LocationConfig>& locations) {
     string matched = "";
     size_t max_len = 0;
@@ -257,8 +250,6 @@ void HttpResponse::getResponse() {
     this->strLocation = findMatchingLocation(words[1], config.location);
     if (!this->strLocation.empty())
         data = words[1].substr(this->strLocation.length());
-    else
-        this->strLocation = "/";
 
     if (data.empty() && words[1].back() == '/')
         data = "/";
@@ -271,9 +262,6 @@ void HttpResponse::getResponse() {
     getLocationResponse(log, data, config);
     return;
   }
-    // if (!methodIsValid(config, log._allowed_methods)) {
-    //   return;
-    // }
   path = config.getRoot();
   if (words[1]=="/") {
     path += DEFAULTINDEX;

@@ -37,7 +37,6 @@ public:
   HttpResponse(HttpRequest *re);
   ~HttpResponse();
   int writeData();
-  bool methodIsValid(ServerConfig &config,string method);
   int checkFileAndSendData(string &data ,ServerConfig &config,string &index);
   void getResponse();
   string getMimeType(string &extension);

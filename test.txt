@@ -49,8 +49,5 @@ emagueri:
     set the connection to keep-alive by default if doesn't exit
 
 
-
-
-sendErrorPage 
-cgiResponse
 autoindex 
+string data = "doc/html/Upload_/succ.html";
