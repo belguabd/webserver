@@ -26,7 +26,7 @@ void HttpRequest::handlePost()
   if (_post == NULL)
   {
     LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
-      _post = new Post(mapheaders, queryParam, _buffer, lc);
+    _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
   else
     _post->proseRequest(readBuffer);
@@ -38,8 +38,9 @@ int HttpRequest::handleDeleteRequest(std::string filePath)
 {
   struct stat meteData;
   filePath.insert(0, ".");
+  LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
   // std::cout << "filePath: " << filePath << std::endl;
-
+  // lc.
   size_t pos = filePath.find("/", 2);
   if (filePath.substr(0, pos + 1) != "./upload/")
   {
@@ -85,19 +86,7 @@ void HttpRequest::handleRequest()
   else if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
     setRequestStatus(200);
   else if (_method == POST && getendHeaders() == 1)
-  {
-    try
-    {
-      handlePost();
-
-    }
-    catch(const std::exception& e)
-    {
-      std::cerr << "POST ERROR: " << e.what() << '\n';
-    }
-    
-
-  }
+    handlePost();
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)

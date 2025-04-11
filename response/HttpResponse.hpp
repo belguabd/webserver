@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <vector>
 #include <unordered_map>
+#define DEFAULTINDEX "/indexServer.html"
 using namespace std;
 class HttpResponse {
 private:

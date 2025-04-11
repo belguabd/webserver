@@ -313,15 +313,18 @@ void HttpResponse::getResponse() {
     // if (!methodIsValid(config, log._allowed_methods)) {
     //   return;
     // }
-  // path = config.getRoot();
-  // path += words[1];
-  // if (checkTypePath(path) == 0) {
-  //   this->sendErrorPage(config, 404);
-  // } else if (checkTypePath(path) == 1) {
-  //   this->fileDataSend(path, config);
-  // } else if (checkTypePath(path) == 2) {
-  //   this->dirDataSend(path, config);
-  // }
+  path = config.getRoot();
+  if (words[1]=="/") {
+    path += DEFAULTINDEX;
+    if (checkTypePath(path) == 0) {
+      this->sendErrorPage(config, 404);
+    } else if (checkTypePath(path) == 1) {
+      this->fileDataSend(path, config);
+    }
+    return ;
+  }
+  path += words[1];
+  this->sendErrorPage(config, 404);
 }
 
 
