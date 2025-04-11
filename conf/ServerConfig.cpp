@@ -502,7 +502,7 @@ void validbrackets(string &str) {
         lastpos = pos + 1;
     }
     if (sig != 0) {
-        cout << "Error: mismatched brackets" << endl;
+        cout << REDCOLORE<<"Error: mismatched brackets" << endl;
         exit(0);
     }
 }

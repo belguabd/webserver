@@ -282,7 +282,7 @@ void WebServer::separateServer() {
   string strserv = this->_data;
   validbrackets(strserv);
   if (strserv.empty()) {
-    cout << "Error: configuration file is empty" << endl;
+    cout << REDCOLORE << "Error: configuration file is empty" << endl;
     exit(0);
   }
   size_t pos = 0;
@@ -292,12 +292,12 @@ void WebServer::separateServer() {
          (pos = strserv.find("server", pos)) != string::npos) {
     sig = false;
     if (beforStart(strserv.substr(0, pos)) == 1) {
-      cout << "Error: unexpected data before server block" << endl;
+      cout << REDCOLORE << "Error: unexpected data before server block" << endl;
       exit(0);
     }
     size_t start = strserv.find("{", pos);
     if (start == string::npos) {
-      cout << "Error: missing opening '{' for server block" << endl;
+      cout << REDCOLORE << "Error: missing opening '{' for server block" << endl;
       exit(0);
     }
     size_t end = start;
@@ -325,7 +325,7 @@ void WebServer::separateServer() {
   }
 
   if (!found) {
-    cout << "Error: no server blocks defined" << endl;
+    cout << REDCOLORE << "Error: no server blocks defined" << endl;
     exit(0);
   }
 }
@@ -528,7 +528,7 @@ void WebServer::run() {
             throw std::runtime_error(error_message);
           }
         } else if (filter == EVFILT_TIMER) {
-          puts("here");
+          // puts("here");
           pid_t pid = events[i].ident;
           if (checkPid(pid)) {
             HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
@@ -553,7 +553,7 @@ void WebServer::run() {
             close(events[i].ident);
           }
         } else if (filter == EVFILT_READ) {
-          puts("---here---");
+          // puts("---here---");
           receive_from_client(event_fd);
           if (isCGIRequest(event_fd)) {
             handleCGIRequest(event_fd);

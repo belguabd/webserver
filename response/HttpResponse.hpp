@@ -40,8 +40,6 @@ public:
   bool methodIsValid(ServerConfig &config,string method);
   int checkFileAndSendData(string &data ,ServerConfig &config,string &index);
   void getResponse();
-  void postResponse();
-  // void deleteResponse();
   string getMimeType(string &extension);
   void cgiResponse();
   void redirectionResponse(string &str,ServerConfig &config);
@@ -50,7 +48,6 @@ public:
   void getLocationResponse(LocationConfig &normal,string &str,ServerConfig &config);
   void fileDataSend(string &data,ServerConfig &config);
   void dirDataSend(string &data,string &root,LocationConfig &normal, ServerConfig &config);
-  void dirDataSend(string &data, ServerConfig &config);
   std::string extractBodyFromFile(const std::string &filename);
 };
 string findMatchingLocation(const string& uri, const map<string, LocationConfig>& locations);

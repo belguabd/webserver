@@ -485,7 +485,7 @@ void HttpRequest ::parsePartRequest(string str_parse)
     if (mapheaders.find("CONNECTION") == mapheaders.end())
       mapheaders["CONNECTION"] = "keep-alive";
   }
-  std::cout << "mapheaders[\"CONTENT_TYPE\"]" << mapheaders["CONTENT_TYPE"] << std::endl;
+  // std::cout << "mapheaders[\"CONTENT_TYPE\"]" << mapheaders["CONTENT_TYPE"] << std::endl;
   // setMapHeaders();
   // while (!str_parse.empty())
   // {
