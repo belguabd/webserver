@@ -1,7 +1,6 @@
 #include "HttpResponse.hpp"
 #include <cstddef>
 #include <sys/_types/_ssize_t.h>
-
 string statusText(int status) {
   string text;
   if (status == 200) {
@@ -50,6 +49,7 @@ string headersSending(int client_socket) {
 /*---------------------- Get method------------------------------------------*/
 void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
     string ContentType;
+
     if (!this->file.is_open()) {
         this->file.open(data, ios::binary);
         if (!this->file.is_open()) {
@@ -317,10 +317,7 @@ HttpResponse::HttpResponse(HttpRequest *re)
 HttpResponse::~HttpResponse() {}
 
 int HttpResponse::writeData() {
-
   ServerConfig config = this->request->getServerConfig();
-  string data = "doc/html/Upload_/succ.html";
-  int method = this->request->_method;
   if (this->checkDataResev() != 0) {
     return this->bytesSend;
   }
@@ -328,23 +325,9 @@ int HttpResponse::writeData() {
      this->cgiResponse();
     return this->bytesSend;
   }
-  if (method == GET) {
-    this->getResponse();
-  }
-  else if (method == POST) {
-    this->fileDataSend(data,config);
-  }
-  else if (method == DELETE)
-  {
-    this->fileDataSend(data,config);
-  }
+  this->getResponse();
   return this->bytesSend;
 }
-
-/*--------------------------------------------------------------------------------------------*/
-
-/*---------------------- fanction extern class
- * used------------------------------------------*/
 
 bool ExistFile(string &filePath) {
   struct stat infoFile;

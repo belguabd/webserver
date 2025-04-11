@@ -143,7 +143,7 @@ int Boundary::handleBoundaryRec()
 {
     if (_bufferBody.size() <= 2)
     {
-        std::cout << "is not completed\n";
+        // std::cout << "is not completed\n";
         _remainingBuffer = _bufferBody + _remainingBuffer;
         return _status;
     }

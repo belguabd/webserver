@@ -24,7 +24,7 @@ public:
   HttpRequest *request;
   std::unordered_map<std::string, std::string> parseCgiHeaders;
 
-  ssize_t totalSent ;
+  ssize_t totalSent;
   ssize_t bytesSend;
   string bodycgi;
    int firstTimeResponse;
