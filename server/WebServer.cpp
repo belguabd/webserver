@@ -35,15 +35,6 @@ void WebServer::initialize_kqueue() {
     std::exit(EXIT_FAILURE);
   }
 }
-bool is_fd_open(int fd) {
-  // Try using fcntl to get the file descriptor flags
-  if (fcntl(fd, F_GETFD) == -1) {
-    if (errno == EBADF) {
-      return false; // The file descriptor is closed
-    }
-  }
-  return true; // The file descriptor is open
-}
 void WebServer::addServerSocket(ServerConfig &conf) {
 
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
@@ -112,7 +103,7 @@ void WebServer::closeAllSockets() {
   for (size_t i = 0; i < serverSockets.size(); i++) {
     close(serverSockets[i].getServer_fd());
   }
-  close(kqueue_fd);
+  
 }
 void WebServer::receive_from_client(int event_fd) {
   HttpRequest *request = NULL;
@@ -206,8 +197,10 @@ void WebServer::cleanupClientConnection(
 }
 std::string HttpResponse::extractBodyFromFile(const std::string &filename) {
   std::ifstream file(filename);
-  if (!file.is_open())
+  if (!file.is_open()) {
+    puts("file not opened----");
     throw std::runtime_error("Failed to open file: " + filename);
+  }
   std::stringstream buffer;
   buffer << file.rdbuf();
   file.close();
@@ -348,6 +341,7 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
   int fd = open(request->filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
 
   if (fd < 0) {
+    puts("look at this");
     throw std::runtime_error("Failed to open file: " +
                              std::string(strerror(errno)));
   }
@@ -505,21 +499,18 @@ void WebServer::run() {
         handle_new_connection(event_fd);
       } else {
         if (events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT)) {
+          puts("exit");
           pid_t pid = events[i].ident;
           HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
-          struct kevent changes[2];
+          if (!req) {
+            throw std::runtime_error("Null request pointer");
+          }
+          struct kevent changes[1];
           EV_SET(&changes[0], req->getfd(), EVFILT_WRITE, EV_ADD | EV_ENABLE, 0,
                  0, NULL);
           if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
             std::string error_message =
                 "Error setting write event: " + std::string(strerror(errno));
-            throw std::runtime_error(error_message);
-          }
-          int status;
-          if (waitpid(pid, &status, 0) == -1) {
-            std::string error_message = "Error waiting for process " +
-                                        std::to_string(pid) + ": " +
-                                        strerror(errno);
             throw std::runtime_error(error_message);
           }
           EV_SET(&changes[0], pid, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
@@ -542,7 +533,6 @@ void WebServer::run() {
               throw std::runtime_error(error_message);
             }
             int status;
-
             if (waitpid(pid, &status, 0) == -1) {
               std::string error_message = "Error waiting for process " +
                                           std::to_string(pid) + ": " +
@@ -550,20 +540,30 @@ void WebServer::run() {
               throw std::runtime_error(error_message);
             }
           } else {
+            struct kevent changes[1];
             close(events[i].ident);
+            EV_SET(&changes[0], events[i].ident, EVFILT_TIMER, EV_DELETE, 0, 0,
+                   NULL);
+            if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+              close(events[i].ident);
+              throw std::runtime_error(
+                  "Error removing timer event for client socket: " +
+                  std::string(strerror(errno)));
+            }
           }
         } else if (filter == EVFILT_READ) {
+          
           receive_from_client(event_fd);
           if (isCGIRequest(event_fd)) {
             handleCGIRequest(event_fd);
           }
         } else if (filter == EVFILT_WRITE) {
+           
           respond_to_client(event_fd);
         }
       }
     }
   } catch (const std::exception &e) {
-    puts("here");
     std::cerr << "Error: " << e.what() << std::endl;
     closeAllSockets();
     for (size_t i = 0; i < connected_clients.size(); i++) {
@@ -574,7 +574,7 @@ void WebServer::run() {
       if (responses_clients[i] != NULL)
         delete responses_clients[i];
     }
-    close(kqueue_fd);
-    exit(EXIT_FAILURE);
+    // close(kqueue_fd);
+    // exit(EXIT_FAILURE);
   }
 }

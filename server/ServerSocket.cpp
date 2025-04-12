@@ -32,6 +32,7 @@ void ServerSocket::bind_socket() {
     close(server_fd);
     throw std::runtime_error("Bind failed: " + std::string(strerror(errno)));
   }
+  freeaddrinfo(res);
 }
 
 void ServerSocket::start_listen() {
