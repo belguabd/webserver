@@ -61,6 +61,7 @@ bool checkCharacter(string &substr, char c);
 string removeLocationBlocks(string &configData);
 string trim(string &str);
 void checkcontent(string substr);
+void checkContentServer(string substr);
 void isNumber(string& str);
 void numberHost(string& str);
 bool directoryExists(const std::string &path);

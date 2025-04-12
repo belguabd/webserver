@@ -321,6 +321,7 @@ void WebServer::separateServer() {
     cout << REDCOLORE << "Error: no server blocks defined" << endl;
     exit(0);
   }
+  checkContentServer(strserv);
 }
 
 void WebServer ::dataConfigFile() {
