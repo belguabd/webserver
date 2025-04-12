@@ -433,7 +433,6 @@ void HttpResponse::cgiResponse() {
                              << "Content-Length: " << bodycgi.length() << "\r\n"
                              << "Connection: close\r\n" 
                              << "\r\n";
-            cout <<"=========>>" <<response_headers.str().c_str()<<endl;
             this->bytesSend = send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
             firstTimeResponse = 1;
         }
