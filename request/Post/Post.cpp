@@ -59,8 +59,8 @@ int Post::proseRequest(std::string &buffer)
 	_bodySize += buffer.size(); // attention of pre added \r\n in buffer;
 	if (this->_bodyType == contentLength)
 		return handleContentLength(buffer);
-	if (this->_bodyType == keyVal)
-		std::cout << "keyVal\n";
+	// if (this->_bodyType == keyVal)
+	// 	std::cout << "keyVal\n";
 	// std::cout << "=========buffer befor: =========";  printNonPrintableChars(buffer);
 	if (manipulateBuffer(buffer) == std::string::npos)
 		return _status;
@@ -114,8 +114,8 @@ void Post::setBodyType()
 			std::cout << "This is boundary\n";
 		}
 	}
-	else if (_headers.find("CONTENT_TYPE") != _headers.end() && _headers["CONTENT_TYPE"].find("x-www-form-urlencoded") != std::string::npos)
-		_bodyType = keyVal;
+	// else if (_headers.find("CONTENT_TYPE") != _headers.end() && _headers["CONTENT_TYPE"].find("x-www-form-urlencoded") != std::string::npos)
+	// 	_bodyType = contentLength;
 	else if (_headers.find("TRANSFER_ENCODING") != _headers.end() && _headers["TRANSFER_ENCODING"].find("chunked") != std::string::npos)
 	{
 		std::cout << "This is chunked\n";
