@@ -1,0 +1,53 @@
+ranges
+// Use set instead of vector
+
+
+delete status code 
+delete response 
+
+
+
+upload_store /goinfre/ataoufik/ss/uplo ad////; 
+
+headers parse
+    host
+    connection : close
+    POS4 / HTTP/1.1
+    Connection: keep-alive
+    content-length  
+method_allowed delete; 
+
+location upload
+close and keep-alive
+
+
+
+
+ERROR
+localhost:8585 send request and disconnected client 
+localhost:8585/e  send request but location doesn't exist
+when send request using browser , cgi doesn't work because ,it send request has keep-alive
+browser send request for favorite icon but server exit 0 and display message `CGI not supported type file`
+
+
+
+server_name--->response
+
+upload_store /goinfre/ataoufik/ss/upload; #if (upla.back != '/') up.pushBack('/')
+# index index.phwp index.epy index.html; if index.empty()--->location/index.php
+
+
+http://localhost:8080/add/other/index.php
+
+emagueri:
+    keyVal to cgi
+
+    HTTP/1.1 413 Request Entity Too Large
+    
+    check the value of each field line Name that will be used
+    parse HOST and every headers work on it
+    set the connection to keep-alive by default if doesn't exit
+
+
+autoindex 
+string data = "doc/html/Upload_/succ.html";

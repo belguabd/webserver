@@ -103,7 +103,6 @@ void WebServer::closeAllSockets() {
   for (size_t i = 0; i < serverSockets.size(); i++) {
     close(serverSockets[i].getServer_fd());
   }
-  
 }
 void WebServer::receive_from_client(int event_fd) {
   HttpRequest *request = NULL;
@@ -147,6 +146,7 @@ void WebServer::receive_from_client(int event_fd) {
     return;
   }
   if (request->getRequestStatus()) {
+    request->Is_open = request->checkCgi;
     HttpResponse *responseclient = NULL;
     try {
       responseclient = new HttpResponse(request);
@@ -198,8 +198,7 @@ void WebServer::cleanupClientConnection(
 std::string HttpResponse::extractBodyFromFile(const std::string &filename) {
   std::ifstream file(filename);
   if (!file.is_open()) {
-    puts("file not opened----");
-    throw std::runtime_error("Failed to open file: " + filename);
+    throw std::runtime_error("Failed to open file----->: " + filename);
   }
   std::stringstream buffer;
   buffer << file.rdbuf();
@@ -224,7 +223,6 @@ std::string HttpResponse::extractBodyFromFile(const std::string &filename) {
 }
 
 void WebServer::respond_to_client(int event_fd) {
-
   HttpResponse *response = NULL;
   HttpRequest *request = NULL;
   std::vector<HttpResponse *>::iterator it;
@@ -244,8 +242,10 @@ void WebServer::respond_to_client(int event_fd) {
     }
   }
 
-  if (request->checkCgi)
+  if (request->checkCgi && request->Is_open) {
     request->setBodyCgi(response->extractBodyFromFile(request->filename));
+    request->Is_open = 0;
+  }
   ssize_t bytes_written = response->writeData();
   if (response->complete == 1) {
     try {
@@ -290,7 +290,8 @@ void WebServer::separateServer() {
     }
     size_t start = strserv.find("{", pos);
     if (start == string::npos) {
-      cout << REDCOLORE << "Error: missing opening '{' for server block" << endl;
+      cout << REDCOLORE << "Error: missing opening '{' for server block"
+           << endl;
       exit(0);
     }
     size_t end = start;
@@ -340,7 +341,7 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
   int fd = open(request->filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
 
   if (fd < 0) {
-    puts("look at this");
+    // puts("look at this");
     throw std::runtime_error("Failed to open file: " +
                              std::string(strerror(errno)));
   }
@@ -446,6 +447,7 @@ void WebServer::handleCGIRequest(int client_fd) {
     env["CONTENT_TYPE"] = env["HTTP_CONTENT_TYPE"];
     env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"];
   }
+    
   if (client->cgiExtension == PHP)
     env["INTERPRETER"] = "./cgi/php-cgi";
   else if (client->cgiExtension == PYTHON)
@@ -498,7 +500,7 @@ void WebServer::run() {
         handle_new_connection(event_fd);
       } else {
         if (events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT)) {
-          puts("exit");
+          // puts("exit");
           pid_t pid = events[i].ident;
           HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
           if (!req) {
@@ -552,13 +554,14 @@ void WebServer::run() {
             }
           }
         } else if (filter == EVFILT_READ) {
-          
+
           receive_from_client(event_fd);
+          // puts("read");
           if (isCGIRequest(event_fd)) {
             handleCGIRequest(event_fd);
           }
         } else if (filter == EVFILT_WRITE) {
-           
+          // puts("write");
           respond_to_client(event_fd);
         }
       }

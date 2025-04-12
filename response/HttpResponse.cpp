@@ -1,5 +1,6 @@
 #include "HttpResponse.hpp"
 #include <cstddef>
+#include <iostream>
 #include <sys/_types/_ssize_t.h>
 string statusText(int status) {
   string text;
@@ -170,11 +171,9 @@ void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, Serv
         }
         data += str;
     }
+    cout << "data : " << data << endl;
     typePath = checkTypePath(data);
-    if (typePath == 0) {
-        this->sendErrorPage(config, 404);
-    } 
-    else if (typePath == 1) {
+    if (typePath == 1) {
         if (data.find(".php") != string::npos || data.find(".py") != string::npos) {
             this->sendErrorPage(config, 403);
         } else {
@@ -431,7 +430,7 @@ void HttpResponse::cgiResponse() {
                              << "Content-Length: " << bodycgi.length() << "\r\n"
                              << "Connection: close\r\n" 
                              << "\r\n";
-            cout <<"=========>>" <<response_headers.str().c_str()<<endl;
+            // cout <<"=========>>" <<response_headers.str().c_str()<<endl;
             this->bytesSend = send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
             firstTimeResponse = 1;
         }
