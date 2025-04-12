@@ -420,13 +420,22 @@ void HttpResponse::cgiResponse() {
   // cout <<"bodycgi  =>" <<bodycgi<<endl;
     if (firstTimeResponse == 0) {
             file_size = 0;
+            std::string cookie;
+            std::string location;
+              // std::cout << it->first << " -=-=-=-=-= " << it->second << std::endl;
+
             std::ostringstream response_headers;
             response_headers << status_line(this->request->getfd(), this->request->getRequestStatus());
             response_headers << headersSending(this->request->getfd());
-            for (unordered_map<string, string>::iterator it = parseCgiHeaders.begin(); it != parseCgiHeaders.end(); ++it) {
-                response_headers << it->first <<": "<< it->second <<"\r\n";
+            for (std::unordered_map<std::string, std::string>::iterator it = parseCgiHeaders.begin(); it != parseCgiHeaders.end(); ++it) {
+                response_headers << it->first << ": " << it->second << "\r\n";
+                cout  << it->first << ": " << it->second << "\r\n";
+
             }
-            response_headers << "Content-Type: text/html\r\n"
+
+            response_headers <<"Access-Control-Allow-Headers: *\r\n"
+                             << "Access-Control-Allow-Origin: *\r\n"
+                             << "Content-Type: text/html\r\n"
                             //  << "Set-Cookie: username=login\r\n"
                              << "Content-Length: " << bodycgi.length() << "\r\n"
                              << "Connection: close\r\n" 
