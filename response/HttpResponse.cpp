@@ -417,19 +417,21 @@ int checkTypePath(string &path) {
 void HttpResponse::cgiResponse() {
 
   bodycgi = request->getBodyCgi();
+  // cout <<"bodycgi  =>" <<bodycgi<<endl;
     if (firstTimeResponse == 0) {
             file_size = 0;
             std::ostringstream response_headers;
             response_headers << status_line(this->request->getfd(), this->request->getRequestStatus());
             response_headers << headersSending(this->request->getfd());
-            response_headers <<"Access-Control-Allow-Headers: *\r\n"
-                             << "Access-Control-Allow-Origin: *\r\n"
-                             << "Content-Type: text/html\r\n"
+            for (unordered_map<string, string>::iterator it = parseCgiHeaders.begin(); it != parseCgiHeaders.end(); ++it) {
+                response_headers << it->first <<": "<< it->second <<"\r\n";
+            }
+            response_headers << "Content-Type: text/html\r\n"
                             //  << "Set-Cookie: username=login\r\n"
                              << "Content-Length: " << bodycgi.length() << "\r\n"
-                             << "Connection: " << this->request->typeConnection << "\r\n"
+                             << "Connection: close\r\n" 
                              << "\r\n";
-
+            cout <<"=========>>" <<response_headers.str().c_str()<<endl;
             this->bytesSend = send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
             firstTimeResponse = 1;
         }

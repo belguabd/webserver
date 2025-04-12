@@ -201,12 +201,12 @@ void HttpRequest::checkPathIscgi(string &path)
   ServerConfig config;
   string method;
   string data;
-   string str;
+  string str;
   vector <string >allowedMethod;
   vector <string >extension;
   LocationConfig log;
   config = this->getServerConfig();
-  int i = 0 ;
+  int i = 0;
   i = indexValidPath(path);
   if (i == -1) {
     this->requestStatus = 403;
@@ -228,12 +228,10 @@ void HttpRequest::checkPathIscgi(string &path)
     if (!log._return.empty()) {
       return;
     }
-    if (!log._allowed_methods.empty()) {
-      if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
-        this->requestStatus = 405;
-        this->endHeaders = 1;
-        return ;
-      }
+    if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
+      this->requestStatus = 405;
+      this->endHeaders = 1;
+      return ;
     }
     if (!log._cgi_extension.empty()) {
       this->checkCgi = setDataCgi(data,config,log);
