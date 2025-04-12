@@ -417,6 +417,7 @@ int checkTypePath(string &path) {
 void HttpResponse::cgiResponse() {
 
   bodycgi = request->getBodyCgi();
+  // cout <<"bodycgi  =>" <<bodycgi<<endl;
     if (firstTimeResponse == 0) {
             file_size = 0;
             std::string cookie;
@@ -437,9 +438,9 @@ void HttpResponse::cgiResponse() {
                              << "Content-Type: text/html\r\n"
                             //  << "Set-Cookie: username=login\r\n"
                              << "Content-Length: " << bodycgi.length() << "\r\n"
-                             << "Connection: " << this->request->typeConnection << "\r\n"
+                             << "Connection: close\r\n" 
                              << "\r\n";
-
+            cout <<"=========>>" <<response_headers.str().c_str()<<endl;
             this->bytesSend = send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
             firstTimeResponse = 1;
         }
