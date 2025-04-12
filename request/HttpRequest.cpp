@@ -6,12 +6,21 @@ LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, Lo
 	size_t pos = path.find("/", 1);
 	string keyLocationUpload;
 
-    if (pos == std::string::npos)
-      pos = path.size() + 1;
-	keyLocationUpload = path.substr(0, pos);
-	if (configUploads.find(keyLocationUpload) == configUploads.end())
-		configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
+  if (pos == std::string::npos)
+    pos = path.size() + 1;
+	// keyLocationUpload = path.substr(0, pos);
+  keyLocationUpload = findMatchingLocation(path, configUploads);
+  std::cout << "keyLocationUpload " << keyLocationUpload << std::endl;
+	// if (configUploads.find(keyLocationUpload) == configUploads.end())
+	// 	configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
 	return (configUploads.find(keyLocationUpload))->second;
+}
+
+string HttpRequest::getFileName()
+{
+  if (checkCgi)
+    return _post->getFileName();
+  return "";
 }
 
 void HttpRequest::handlePost()
@@ -19,14 +28,10 @@ void HttpRequest::handlePost()
   if (_post == NULL)
   {
     LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
-      mapheaders["isCgi"] = std::to_string(checkCgi);
-      _post = new Post(mapheaders, queryParam, _buffer, lc);
+    _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
   else
-  {
     _post->proseRequest(readBuffer);
-    // std::cout << "abcd\n";
-  }
   setRequestStatus(_post->getStatus());
 	this->readBuffer.clear();
 }
@@ -34,14 +39,17 @@ void HttpRequest::handlePost()
 int HttpRequest::handleDeleteRequest(std::string filePath)
 {
   struct stat meteData;
-  filePath.insert(0, ".");
+  // filePath.insert(0, ".");
+  LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
   // std::cout << "filePath: " << filePath << std::endl;
-
+  // lc.
+  std::string location =  findMatchingLocation(dataFirstLine[1], server_config.location);
   size_t pos = filePath.find("/", 2);
-  if (filePath.substr(0, pos + 1) != "./upload/")
-  {
-    return 405;
-  }
+  std::cout << "filePath: " << filePath << std::endl;
+  filePath.replace(0, location.length(), lc._root);
+  std::cout << "filePath: " << filePath << std::endl;
+  // if (filePath.substr(0, pos + 1) != "./upload/")
+  //   return 405;
   // Check if the file exists
   if (stat(filePath.c_str(), &meteData) != 0)
       return 404;
@@ -61,7 +69,7 @@ int HttpRequest::handleDeleteRequest(std::string filePath)
 void HttpRequest::handleRequest()
 {
   string str_parse;
-  pasteInFile("currentRequest", readBuffer);
+  // pasteInFile("currentRequest", readBuffer);
   joinBuffer();
   str_parse = partRquest();
   if (getFirstTimeFlag() == 0)
@@ -130,7 +138,6 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
 {
   string s;
   string root;
-  string index;
   int checkcgi = 0;
   this->cgiExtension = 0;
   vector <string >extension;
@@ -141,11 +148,6 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   } else {
     root = structConfig._root;
   }
-  if(structConfig._index.empty()) {
-    index = config.getIndex();
-  } else {
-    index = structConfig._index;
-  }
   root += data;
   if (root[root.length() - 1]!='/') {
     root.push_back('/');
@@ -153,7 +155,7 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   string str;
   size_t i = 0;
   vector<string> words;
-  words = splitstring(index);
+  words = splitstring(structConfig._index);
   for(size_t i = 0;i < extension.size();i++) {
       if (data.find(extension[i])!=string::npos) {
         s = extension[i];
@@ -199,12 +201,12 @@ void HttpRequest::checkPathIscgi(string &path)
   ServerConfig config;
   string method;
   string data;
-   string str;
+  string str;
   vector <string >allowedMethod;
   vector <string >extension;
   LocationConfig log;
   config = this->getServerConfig();
-  int i = 0 ;
+  int i = 0;
   i = indexValidPath(path);
   if (i == -1) {
     this->requestStatus = 403;
@@ -226,12 +228,10 @@ void HttpRequest::checkPathIscgi(string &path)
     if (!log._return.empty()) {
       return;
     }
-    if (!log._allowed_methods.empty()) {
-      if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
-        this->requestStatus = 405;
-        this->endHeaders = 1;
-        return ;
-      }
+    if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
+      this->requestStatus = 405;
+      this->endHeaders = 1;
+      return ;
     }
     if (!log._cgi_extension.empty()) {
       this->checkCgi = setDataCgi(data,config,log);
@@ -473,7 +473,6 @@ void HttpRequest ::parsePartRequest(string str_parse)
     if (mapheaders.find("CONNECTION") == mapheaders.end())
       mapheaders["CONNECTION"] = "keep-alive";
   }
-  // std::cout << "request status " << requestStatus << std::endl;
   // setMapHeaders();
   // while (!str_parse.empty())
   // {

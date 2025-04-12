@@ -19,7 +19,7 @@ Boundary::Boundary(std::map<std::string, std::string> &queryParam, std::string &
 
 void Boundary::setBoundaryString()
 {
-    std::string str = _headers["Content-Type"];
+    std::string str = _headers["CONTENT_TYPE"];
     size_t pos = str.find("; boundary=") + 11;
     _boundaryString = std::string("\r\n--").append(str.substr(pos) + "\r\n");
     _boundaryStringEnd = std::string("\r\n--").append(str.substr(pos) + "--\r\n");           
@@ -88,7 +88,7 @@ int Boundary::setBoundaryHeadAndEraseBuffer()
 
     if (_bufferBody.find(_boundaryString) == 0)
     {
-        // std::cout << "filename: " << _metadata["filename"] << std::endl;
+        std::cout << "filename: " << _metadata["filename"] << std::endl;
         // std::cout << "is valid boundary\n";
     }
 
@@ -139,7 +139,7 @@ int Boundary::handleBoundaryRec()
 {
     if (_bufferBody.size() <= 2)
     {
-        std::cout << "is not completed\n";
+        // std::cout << "is not completed\n";
         _remainingBuffer = _bufferBody + _remainingBuffer;
         return _status;
     }

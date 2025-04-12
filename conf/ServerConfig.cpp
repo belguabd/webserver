@@ -74,9 +74,7 @@ string removeLocationBlocks(string& configData) {
 }
 
 ServerConfig :: ServerConfig(string &str) {
-    this->autoindex = false;
     this->data = str;
-    this->_allowed_methods = "GET POST DELETE";
 }
 
 ServerConfig :: ~ServerConfig() { }
@@ -224,7 +222,17 @@ bool directoryExists(const std::string &path) {
 void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &config)
 {
     if (config._client_max_body_size==0) {
-            config._client_max_body_size = this->client_max_body_size;
+        config._client_max_body_size = this->client_max_body_size;
+    }
+    if (config._allowed_methods.empty()) {
+        config._allowed_methods = "GET POST DELETE";
+    }
+    if (config._upload_store.empty()) {
+    if (!directoryExists(DEFAULTUPLOAD)) {
+        cout <<REDCOLORE<< "Error: Unable to access default upload (Permission denied)"<<endl;
+        exit(0);
+    } 
+        config._upload_store = DEFAULTUPLOAD;
     }
     if (str == "root") {
         if (splitstring(val).size()!=1) {
@@ -494,7 +502,7 @@ void validbrackets(string &str) {
         lastpos = pos + 1;
     }
     if (sig != 0) {
-        cout << "Error: mismatched brackets" << endl;
+        cout << REDCOLORE<<"Error: mismatched brackets" << endl;
         exit(0);
     }
 }

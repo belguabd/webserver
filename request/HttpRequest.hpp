@@ -89,7 +89,7 @@ int setDataCgi(string data,ServerConfig &config,LocationConfig &structConfig);
   void setRequestStatus(int i) { this->requestStatus = i; }
   const string &getbuffer() const { return this->_buffer; }
   string getreadbuffer() const { return this->readBuffer; }
-  string &getFileName() { return _post->getFileName(); }
+  string getFileName();
   void checkHeaders(string &str);
   void checkPathIscgi(string &path);
   void requestLine();
@@ -121,11 +121,3 @@ int indexValidPath(string str);
 bool fileExists(std::string &filePath);
 string convertToUpper(string str);
 string findMatchingLocation(const string& uri, const map<string, LocationConfig>& locations);
-template <typename K, typename V>
-  V getValueFromMap(std::map<K, V>& map, typename std::map<K, V>::iterator it) {
-      V val;
-      if (it != map.end()) { 
-          val= it->second;
-      }
-      return val;
-  }

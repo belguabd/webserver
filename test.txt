@@ -1,10 +1,5 @@
 ranges
-
 // Use set instead of vector
-
-cgi 
-
-headers
 
 
 delete status code 
@@ -12,15 +7,7 @@ delete response
 
 
 
-\\
-log._allowed_methods.empty()===>set default
-
-
 upload_store /goinfre/ataoufik/ss/uplo ad////; 
-
-cgi_extension .phep .py; parse
- allowed_methods  POST DELETE;
-.php .py 
 
 headers parse
     host
@@ -50,8 +37,6 @@ upload_store /goinfre/ataoufik/ss/upload; #if (upla.back != '/') up.pushBack('/'
 # index index.phwp index.epy index.html; if index.empty()--->location/index.php
 
 
-listen 8080; server socket
-
 http://localhost:8080/add/other/index.php
 
 emagueri:
@@ -62,3 +47,7 @@ emagueri:
     check the value of each field line Name that will be used
     parse HOST and every headers work on it
     set the connection to keep-alive by default if doesn't exit
+
+
+autoindex 
+string data = "doc/html/Upload_/succ.html";
