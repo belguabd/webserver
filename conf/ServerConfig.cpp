@@ -143,6 +143,7 @@ void ServerConfig :: locationNormal(string &location) {
     string tmp;
     vector <string> words;
     LocationConfig config;
+    config._autoindex =false;
     size_t pos = location.find("{");
     tmp = location.substr(8, pos - 8);
     string key = trim(tmp);

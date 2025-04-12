@@ -41,13 +41,9 @@ int HttpRequest::handleDeleteRequest(std::string filePath)
   struct stat meteData;
   // filePath.insert(0, ".");
   LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
-  // std::cout << "filePath: " << filePath << std::endl;
-  // lc.
   std::string location =  findMatchingLocation(dataFirstLine[1], server_config.location);
   size_t pos = filePath.find("/", 2);
-  std::cout << "filePath: " << filePath << std::endl;
   filePath.replace(0, location.length(), lc._root);
-  std::cout << "filePath: " << filePath << std::endl;
   // if (filePath.substr(0, pos + 1) != "./upload/")
   //   return 405;
   // Check if the file exists

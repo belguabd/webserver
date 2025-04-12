@@ -6,6 +6,6 @@
     <title>Document</title>
 </head>
 <body>
-    <h1>Hello World</h1>
+    this index.php
 </body>
 </html>

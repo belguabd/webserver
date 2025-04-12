@@ -568,10 +568,12 @@ void WebServer::run() {
     }
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
-    closeAllSockets();
+    // closeAllSockets();
     for (size_t i = 0; i < connected_clients.size(); i++) {
-      if (connected_clients[i] != NULL)
+      if (connected_clients[i] != NULL){
+        close(connected_clients[i]->getfd());
         delete connected_clients[i];
+      }
     }
     for (size_t i = 0; i < responses_clients.size(); i++) {
       if (responses_clients[i] != NULL)
