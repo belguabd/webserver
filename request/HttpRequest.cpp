@@ -105,11 +105,7 @@ int HttpRequest::readData()
   if (bytes_received > 0)
   {
     readBuffer.assign(buffer, bytes_received);
-    // puts("=========================");
-    // std::cout << readBuffer << "\n";
-    // puts("=========================");
     handleRequest();
-
   }
   return bytes_received;
 }
@@ -138,7 +134,6 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   this->cgiExtension = 0;
   vector <string >extension;
   extension = splitstring(structConfig._cgi_extension);
-  // cout <<data<<endl;
   if(structConfig._root.empty()) {
     root = config.getRoot();
   } else {

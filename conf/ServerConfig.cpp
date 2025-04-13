@@ -15,6 +15,18 @@ void    checkcontent(string substr)
         }
     }
 }
+void    checkContentServer(string substr)
+{
+    int i =0 ;
+    while(i < substr.length()) {
+        if (substr[i]=='\t' ||  substr[i]==' '|| substr[i]=='\n')
+            i++;
+        else {
+            cout << REDCOLORE << "Error: unexpected data after server block" << endl;
+            exit(0);
+        }
+    }
+}
 void chechAllowedMethodValid(string &str) {
     vector <string> words;
     words = splitstring(str);

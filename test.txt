@@ -51,3 +51,11 @@ emagueri:
 
 
 Connection: close --->cgi
+
+
+
+
+http://localhost:8080/cgi/login/index.php
+
+
+204 No Content
