@@ -51,3 +51,17 @@ emagueri:
 
 
 Connection: close --->cgi
+
+first line
+location /add
+location /browser
+location /upload
+location /login
+location /games
+
+
+localhost:8080/dew/dew/f
+
+location / find("/")!=string::nops 
+
+

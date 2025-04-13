@@ -224,6 +224,9 @@ void HttpRequest::checkPathIscgi(string &path)
     if (!log._return.empty()) {
       return;
     }
+    // cout <<"data fisr line : "<<this->dataFirstLine[0]<<endl;
+    // cout <<"log._allowed_methods: "<<log._allowed_methods<<endl;
+    // cout <<"location : "<<str<<endl;
     if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
       this->requestStatus = 405;
       this->endHeaders = 1;
@@ -232,8 +235,41 @@ void HttpRequest::checkPathIscgi(string &path)
     if (!log._cgi_extension.empty()) {
       this->checkCgi = setDataCgi(data,config,log);
     }
-  }
+   } else if(config.location.find("/") != config.location.end()) {
+      log = getValueMap(config.location,config.location.find("/"));
+      string valid ;
+      string path;
+      if (!log._root.empty()) {
+        valid = log._root;
+      }
+      else
+        valid = config.getRoot();
+      valid += this->dataFirstLine[1];
+      if (pathExists(valid)){
+        if (!log._return.empty()) {
+          return;
+        }
+        // cout <<"data fisr line : "<<this->dataFirstLine[0]<<endl;
+        // cout <<"log._allowed_methods: "<<log._allowed_methods<<endl;
+        // cout <<"location : "<<str<<endl;
+        if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
+          this->requestStatus = 405;
+          this->endHeaders = 1;
+          return ;
+        }
+        if (!log._cgi_extension.empty()) {
+          this->checkCgi = setDataCgi(this->dataFirstLine[1],config,log);
+        }
+      }
+      else {
+        this->requestStatus = 404;
+        this->endHeaders = 1;
+        return ;
+      }
+    }
+
 }
+
 int HttpRequest::defineTypeMethod(string firstline) {
   vector<string> words;
   stringstream word(firstline);

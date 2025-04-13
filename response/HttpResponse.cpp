@@ -233,6 +233,8 @@ string findMatchingLocation(const string& uri, const map<string, LocationConfig>
     size_t max_len = 0;
     for (map<string, LocationConfig>::const_iterator it = locations.begin(); it != locations.end(); ++it) {
         const string& loc = it->first;
+        if (it->first=="/")
+          continue;
         if (uri.find(loc) == 0 && loc.length() > max_len) {
             matched = loc;
             max_len = loc.length();
@@ -253,33 +255,67 @@ void HttpResponse::getResponse() {
 
     if (data.empty() && words[1].back() == '/')
         data = "/";
-  if (config.location.find(strLocation) != config.location.end()) {
-    LocationConfig log = getValueMap(config.location, config.location.find(this->strLocation));
-    if (!log._return.empty()) {
-      redirectionResponse(log._return,config);
+    if (config.location.find(strLocation) != config.location.end()) {
+      LocationConfig log = getValueMap(config.location, config.location.find(this->strLocation));
+      if (!log._return.empty()) {
+        redirectionResponse(log._return,config);
+        return;
+      }
+      getLocationResponse(log, data, config);
       return;
     }
-    getLocationResponse(log, data, config);
-    return;
-  }
-  path = config.getRoot();
-  if (words[1]=="/") {
-    path += DEFAULTINDEX;
-    if (checkTypePath(path) == 0) {
-      this->sendErrorPage(config, 404);
-    } else if (checkTypePath(path) == 1) {
-      this->fileDataSend(path, config);
+    if (config.location.find("/") != config.location.end()) {
+      LocationConfig log = getValueMap(config.location, config.location.find("/"));
+      string valid ;
+      string path;
+      if (!log._root.empty()) {
+        valid = log._root;
+      }
+      else
+        valid = config.getRoot();
+      valid += words[1];
+      cout <<"valid  ----------> "<<valid<<endl;
+      if (pathExists(valid)){
+        puts("raaah valid");
+        cout <<"valid  =: "<<words[1]<<endl;
+        if (!log._return.empty()) {
+          redirectionResponse(log._return,config);
+          return;
+        }
+        getLocationResponse(log, words[1], config);
+      }
+      else {
+        this->sendErrorPage(config, 404);
+        puts("mashi valid");
+      }
     }
-    return ;
-  }
-  path += words[1];
-  this->sendErrorPage(config, 404);
+    else 
+    {
+      puts("makunash location /");
+      path = DEFAULTROOT;
+      cout <<"path root "<<path<<endl;
+      if (words[1]=="/") {
+        path += DEFAULTINDEX;
+        if (checkTypePath(path) == 0) {
+          this->sendErrorPage(config, 404);
+        } else if (checkTypePath(path) == 1) {
+          this->fileDataSend(path, config);
+        }
+        return ;
+      }
+      path += words[1];
+      this->sendErrorPage(config, 404);
+    }
 }
 
-
+bool pathExists(string & path) {
+    struct stat info;
+    return (stat(path.c_str(), &info) == 0);
+}
 int HttpResponse::checkDataResev() {
   ServerConfig config = this->request->getServerConfig();
   int statuscode = this->request->getRequestStatus();
+  cout <<"---->status code = "<<statuscode<<endl;
   if (statuscode == 400) {
     this->sendErrorPage(config, 400);
     return 1;
