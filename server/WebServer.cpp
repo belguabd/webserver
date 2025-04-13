@@ -1,17 +1,13 @@
 
 #include "WebServer.hpp"
 #include <algorithm>
-#include <atomic>
 #include <cctype>
-#include <csignal>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <iterator>
-#include <memory>
 #include <ostream>
-#include <ratio>
 #include <stdexcept>
 #include <string>
 #include <sys/_types/_pid_t.h>
@@ -20,11 +16,10 @@
 #include <sys/fcntl.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
-#include <system_error>
-#include <type_traits>
 #include <unistd.h>
 #include <utility>
 #include <vector>
+#include <signal.h>
 enum { PHP = 1, PYTHON = 2 };
 
 #define TIMEOUT_INTERVAL 5000
@@ -46,9 +41,9 @@ void WebServer::addServerSocket(ServerConfig &conf) {
       EV_SET(&monitor_socket, newSocket.getServer_fd(), EVFILT_READ,
              EV_ADD | EV_ENABLE, 0, 0, NULL);
       if (kevent(kqueue_fd, &monitor_socket, 1, NULL, 0, NULL) == -1) {
+        close(newSocket.getServer_fd());
         throw std::runtime_error("Error monitoring socket with kevent: " +
                                  std::string(strerror(errno)));
-        close(newSocket.getServer_fd());
       }
       serverSockets.push_back(newSocket);
       map_configs[newSocket.getServer_fd()] = conf;
@@ -103,7 +98,6 @@ void WebServer::closeAllSockets() {
   for (size_t i = 0; i < serverSockets.size(); i++) {
     close(serverSockets[i].getServer_fd());
   }
-  
 }
 void WebServer::receive_from_client(int event_fd) {
   HttpRequest *request = NULL;
@@ -147,6 +141,7 @@ void WebServer::receive_from_client(int event_fd) {
     return;
   }
   if (request->getRequestStatus()) {
+    request->Is_open = request->checkCgi;
     HttpResponse *responseclient = NULL;
     try {
       responseclient = new HttpResponse(request);
@@ -198,7 +193,6 @@ void WebServer::cleanupClientConnection(
 std::string HttpResponse::extractBodyFromFile(const std::string &filename) {
   std::ifstream file(filename);
   if (!file.is_open()) {
-    puts("file not opened----");
     throw std::runtime_error("Failed to open file: " + filename);
   }
   std::stringstream buffer;
@@ -220,11 +214,11 @@ std::string HttpResponse::extractBodyFromFile(const std::string &filename) {
     }
     return fileContent.substr(header_end + 4);
   }
+
   return fileContent;
 }
 
 void WebServer::respond_to_client(int event_fd) {
-
   HttpResponse *response = NULL;
   HttpRequest *request = NULL;
   std::vector<HttpResponse *>::iterator it;
@@ -244,8 +238,10 @@ void WebServer::respond_to_client(int event_fd) {
     }
   }
 
-  if (request->checkCgi)
+  if (request->checkCgi && request->Is_open) {
     request->setBodyCgi(response->extractBodyFromFile(request->filename));
+    request->Is_open = 0;
+  }
   ssize_t bytes_written = response->writeData();
   if (response->complete == 1) {
     try {
@@ -290,7 +286,8 @@ void WebServer::separateServer() {
     }
     size_t start = strserv.find("{", pos);
     if (start == string::npos) {
-      cout << REDCOLORE << "Error: missing opening '{' for server block" << endl;
+      cout << REDCOLORE << "Error: missing opening '{' for server block"
+           << endl;
       exit(0);
     }
     size_t end = start;
@@ -321,6 +318,7 @@ void WebServer::separateServer() {
     cout << REDCOLORE << "Error: no server blocks defined" << endl;
     exit(0);
   }
+  checkContentServer(strserv);
 }
 
 void WebServer ::dataConfigFile() {
@@ -338,9 +336,7 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
   ss << "cgi" << request->getfd();
   request->filename = ss.str();
   int fd = open(request->filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
-
   if (fd < 0) {
-    puts("look at this");
     throw std::runtime_error("Failed to open file: " +
                              std::string(strerror(errno)));
   }
@@ -357,18 +353,16 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
     if (request->_method == POST) {
       int fd_body = open(request->getFileName().c_str(), O_RDWR, 0644);
       if (fd_body < 0) {
-        std::cerr << "Error: failed to open file: " << strerror(errno)
-                  << std::endl;
-        close(fd);
-        exit(EXIT_FAILURE);
+        throw std::runtime_error("Failed to open file: " +
+                                 std::string(strerror(errno)));
       }
       dup2(fd_body, STDIN_FILENO);
       close(fd_body);
     } else
       close(STDIN_FILENO);
     if (execve(args[0], &args[0], &envp[0]) == -1) {
-      perror("execve failed");
-      _exit(EXIT_FAILURE);
+      throw std::runtime_error("Failed to execute script: " +
+                               std::string(strerror(errno)));
     }
   } else {
     close(fd);
@@ -446,6 +440,7 @@ void WebServer::handleCGIRequest(int client_fd) {
     env["CONTENT_TYPE"] = env["HTTP_CONTENT_TYPE"];
     env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"];
   }
+
   if (client->cgiExtension == PHP)
     env["INTERPRETER"] = "./cgi/php-cgi";
   else if (client->cgiExtension == PYTHON)
@@ -498,7 +493,6 @@ void WebServer::run() {
         handle_new_connection(event_fd);
       } else {
         if (events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT)) {
-          puts("exit");
           pid_t pid = events[i].ident;
           HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
           if (!req) {
@@ -519,7 +513,6 @@ void WebServer::run() {
             throw std::runtime_error(error_message);
           }
         } else if (filter == EVFILT_TIMER) {
-          // puts("here");
           pid_t pid = events[i].ident;
           if (checkPid(pid)) {
             HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
@@ -552,29 +545,48 @@ void WebServer::run() {
             }
           }
         } else if (filter == EVFILT_READ) {
-          
           receive_from_client(event_fd);
           if (isCGIRequest(event_fd)) {
             handleCGIRequest(event_fd);
           }
         } else if (filter == EVFILT_WRITE) {
-           
           respond_to_client(event_fd);
         }
       }
     }
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
-    closeAllSockets();
     for (size_t i = 0; i < connected_clients.size(); i++) {
-      if (connected_clients[i] != NULL)
-        delete connected_clients[i];
+      struct kevent change;
+      EV_SET(&change, connected_clients[i]->getfd(), EVFILT_READ, EV_DELETE, 0,
+             0, NULL);
+      kevent(kqueue_fd, &change, 1, NULL, 0, NULL);
+      EV_SET(&change, connected_clients[i]->getfd(), EVFILT_WRITE, EV_DELETE, 0,
+             0, NULL);
+      kevent(kqueue_fd, &change, 1, NULL, 0, NULL);
+      EV_SET(&change, connected_clients[i]->getfd(), EVFILT_TIMER, EV_DELETE, 0,
+             0, NULL);
+      kevent(kqueue_fd, &change, 1, NULL, 0, NULL);
+      EV_SET(&change, connected_clients[i]->getfd(), EVFILT_PROC, EV_DELETE, 0,
+             0, NULL);
+      kevent(kqueue_fd, &change, 1, NULL, 0, NULL);
+      std::vector<HttpRequest *>::iterator it =
+          std::find(connected_clients.begin(), connected_clients.end(),
+                    connected_clients[i]);
+      if (it != connected_clients.end()) {
+        close(connected_clients[i]->getfd());
+        delete *it;
+        connected_clients.erase(it);
+      }
     }
     for (size_t i = 0; i < responses_clients.size(); i++) {
-      if (responses_clients[i] != NULL)
-        delete responses_clients[i];
+      std::vector<HttpResponse *>::iterator it =
+          std::find(responses_clients.begin(), responses_clients.end(),
+                    responses_clients[i]);
+      if (it != responses_clients.end()) {
+        delete *it;
+        responses_clients.erase(it);
+      }
     }
-    // close(kqueue_fd);
-    // exit(EXIT_FAILURE);
   }
 }

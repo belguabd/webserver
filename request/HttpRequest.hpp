@@ -1,6 +1,7 @@
 #pragma once
 #include "../conf/ServerConfig.hpp"
 #include "./Post/Post.hpp"
+#include <algorithm>
 #include <cstring>
 #include <fcntl.h>
 #include <filesystem>
@@ -12,7 +13,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <algorithm>
 #include <vector>
 // class HttpRequest;
 
@@ -49,6 +49,7 @@ public:
   void setBodyCgi(const string &bodyCgi) { body_cgi = bodyCgi; }
 
   int checkCgi;
+  int Is_open;
   string typeConnection;
   int cgiExtension;
   string rootcgi;
@@ -73,7 +74,8 @@ public:
   HttpRequest(int client_fd, ServerConfig &server_config);
   ~HttpRequest();
   /*    --------------*/
-int setDataCgi(string data,ServerConfig &config,LocationConfig &structConfig);
+  int setDataCgi(string data, ServerConfig &config,
+                 LocationConfig &structConfig);
   /*    --------------*/
   int getRequestStatus() { return this->requestStatus; }
   int readData();
@@ -112,7 +114,8 @@ int setDataCgi(string data,ServerConfig &config,LocationConfig &structConfig);
 vector<string> splitstring(const string &str);
 void checkHeaders(string &str, map<string, string> &headersMap);
 void printNonPrintableChars(const std::string &str);
-LocationConfig getValueMap(map<string, LocationConfig> &configNormal, map<string, LocationConfig>::const_iterator it);
+LocationConfig getValueMap(map<string, LocationConfig> &configNormal,
+                           map<string, LocationConfig>::const_iterator it);
 // void    checkHeaders(string& str, map<string, string>& headersMap);
 void printNonPrintableChars(const std::string &str);
 char characterEncodeing(string &tmp);
@@ -121,3 +124,5 @@ int indexValidPath(string str);
 bool fileExists(std::string &filePath);
 string convertToUpper(string str);
 string findMatchingLocation(const string& uri, const map<string, LocationConfig>& locations);
+bool pathExists(string & path);
+
