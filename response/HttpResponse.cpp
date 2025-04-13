@@ -1,5 +1,6 @@
 #include "HttpResponse.hpp"
 #include <cstddef>
+#include <iostream>
 #include <sys/_types/_ssize_t.h>
 string statusText(int status) {
   string text;
@@ -174,7 +175,7 @@ void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, Serv
     if (typePath == 0) {
         this->sendErrorPage(config, 404);
     } 
-    else if (typePath == 1) {
+    if (typePath == 1) {
         if (data.find(".php") != string::npos || data.find(".py") != string::npos) {
             this->sendErrorPage(config, 403);
         } else {
@@ -252,7 +253,6 @@ void HttpResponse::getResponse() {
     this->strLocation = findMatchingLocation(words[1], config.location);
     if (!this->strLocation.empty())
         data = words[1].substr(this->strLocation.length());
-
     if (data.empty() && words[1].back() == '/')
         data = "/";
     if (config.location.find(strLocation) != config.location.end()) {

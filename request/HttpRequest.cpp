@@ -90,7 +90,7 @@ void HttpRequest::handleRequest()
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) , isCGi(false) , checkCgi(0), cgi_for_test(0) , status_code(0){
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) , isCGi(false) , checkCgi(0) , Is_open(0), cgi_for_test(0) , status_code(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   _post = NULL;
@@ -105,11 +105,7 @@ int HttpRequest::readData()
   if (bytes_received > 0)
   {
     readBuffer.assign(buffer, bytes_received);
-    // puts("=========================");
-    // std::cout << readBuffer << "\n";
-    // puts("=========================");
     handleRequest();
-
   }
   return bytes_received;
 }
@@ -138,7 +134,6 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   this->cgiExtension = 0;
   vector <string >extension;
   extension = splitstring(structConfig._cgi_extension);
-  // cout <<data<<endl;
   if(structConfig._root.empty()) {
     root = config.getRoot();
   } else {

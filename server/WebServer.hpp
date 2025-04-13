@@ -1,7 +1,5 @@
 #include <fcntl.h>
-#include <iostream>
 #include <map>
-#include <ostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/_types/_pid_t.h>
@@ -9,7 +7,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <utility>
 #include <vector>
 #define MAX_EVENTS 1024
 #include "../conf/ServerConfig.hpp"
@@ -22,6 +19,7 @@ class WebServer {
 private:
   int kqueue_fd;
   string _data;
+
   std::vector<ServerSocket> serverSockets;
   std::vector<ServerConfig> config;
   std::map<int, ServerConfig> map_configs;
@@ -36,6 +34,7 @@ private:
 
 public:
   void closeAllSockets();
+  
   bool checkPid(pid_t pid);
   WebServer(string &str);
   std::vector<HttpRequest *> connected_clients;

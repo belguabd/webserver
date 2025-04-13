@@ -65,3 +65,19 @@ localhost:8080/dew/dew/f
 location / find("/")!=string::nops 
 
 
+
+
+
+http://localhost:8080/cgi/login/index.php
+
+
+204 No Content
+
+
+Error: unexpected data before server block
+Target process is using Address Sanitizer so not generating corpse for better performance.
+2025-04-13 19:11:45.725 leaks[69854:2331197] *** Symbolication: analysis tool cannot dlopen /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/12.0.0/lib/darwin/libclang_rt.asan_osx_dynamic.dylib, so cannot introspect target process's malloc zone named asan_0x1062b1c40.
+
+2025-04-13 19:11:45.725 leaks[69854:2331197] *** Symbolication:  no introspect structure for malloc zone asan_0x1062b1c40
+2025-04-13 19:11:45.913 leaks[69854:2331197] *** Symbolication:  no introspect structure for malloc zone asan_0x1062b1c40
+leaks[69854]: [fatal] unable to instantiate a memory scanner.

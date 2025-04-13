@@ -5,10 +5,9 @@
 
 ServerSocket::ServerSocket(int port, ServerConfig conf) {
   int status;
-  memset(&hints, 0, sizeof(hints));
+  std::memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE;
   std::string port_str = std::to_string(port);
   status = getaddrinfo(conf.getHost().c_str(), port_str.c_str(), &hints, &res);
   if (status != 0) {
