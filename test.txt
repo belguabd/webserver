@@ -51,3 +51,7 @@ emagueri:
 
 
 Connection: close --->cgi
+
+
+/UPLOAD/upload1.html --> POST --> /UPLOAD/upload1.html
+/UPLOAD/upload2.html--> POST ---> /UPLOAD/upload2.html

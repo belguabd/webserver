@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +6,6 @@
     <title>Document</title>
 </head>
 <body>
-    this index.php
+    <h1> hello </h1>
 </body>
 </html>

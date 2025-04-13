@@ -64,23 +64,13 @@ size_t pasteInFile(std::string name, std::string &data)
 	std::ofstream file(name, std::ios::app);
 	std::string d = data;
 	size_t fileSize;
-	if (name == "currentRequest")
-	{
-		// std::cout << "in current request\n";
-		std::string::size_type pos = 0;
-		const std::string from = "\r\n";
-		const std::string to = "\\r\\n\n";
-
-		while ((pos = d.find(from, pos)) != std::string::npos) {
-			d.replace(pos, from.length(), to);
-			pos += to.length(); // Move past the replacement
-		}
-	}
-	if (!file.is_open())
-	{
-		std::cerr << "Failed to open file: " << name << " - " << std::strerror(errno) << std::endl;
-		return 0;
-	}
+	// std::cout << "name: " << name << "  popopop" << std::endl;
+	// if (!file.is_open())
+	// {
+	// 	std::cerr << "Failed to open file: " << name << " - " << std::strerror(errno) << std::endl;
+	// 	// return 0;
+	// 	throw std::runtime_error("500");
+	// }
 	file << d;
 	fileSize = static_cast<size_t>(file.tellp());
 	file.close();

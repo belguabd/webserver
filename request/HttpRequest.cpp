@@ -86,7 +86,17 @@ void HttpRequest::handleRequest()
   else if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
     setRequestStatus(200);
   else if (_method == POST && getendHeaders() == 1)
-    handlePost();
+  {
+    try
+    {
+      handlePost();
+    }
+    catch(const std::exception& e)
+    {
+      requestStatus = 500;
+    }
+
+  }
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
