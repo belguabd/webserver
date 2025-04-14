@@ -485,7 +485,7 @@ void trimSpaces(std::string& str) {
 bool isAllowedUriChar(char c) {
     
     const std::string allowedChars = "-._~:/?#[]@!$&'()*+,;=";
-    if (std::isalnum(c) || allowedChars.find(c) != std::string::npos)
+    if (std::isalnum(c) || allowedChars.find(c) == std::string::npos)
         return true;
     return false;
 }
@@ -547,14 +547,55 @@ void HttpRequest ::parsePartRequest(string str_parse)
   if (str_parse.find("\r\n\r\n") != std::string::npos)
   {
     this->endHeaders = 1;
+    std::cout  << "host : "<< mapheaders["HOST"] << std::endl;
     if (mapheaders.find("HOST") == mapheaders.end())
       requestStatus = 400; 
-    else
-      if (mapheaders["HOST"].empty() ||
-        std::find_if(mapheaders["HOST"].begin(), mapheaders["HOST"].end(), isAllowedUriChar) == mapheaders["HOST"].end())
-        requestStatus = 400;
+    // else if (mapheaders["HOST"].empty() )
+    // || std::find_if(mapheaders["HOST"].begin(), mapheaders["HOST"].end(), isAllowedUriChar) == mapheaders["HOST"].end())
+    else{
+      std::string host = mapheaders["HOST"];
+      size_t pos = host.find(":");
+      if (pos == std::string::npos || pos == 0)
+      {
+        requestStatus = 400; 
+        return ;
+        puts("here1");
+      }
+      if (host.rfind(":") != pos)
+      {
+        puts("here2");
+        requestStatus = 400; 
+        return ;
+      }
+      host.erase(0, pos + 1);
+      if (host.length() == 0)
+      {
+        puts("here3");
+        requestStatus = 400; 
+        return ;
+      }
+      for (size_t i = 0; i < host.size(); i++)
+      {
+        if (!std::isdigit(host[i]))
+        {
+          puts(host.c_str());
+        puts("here4");
+        requestStatus = 400; 
+        return ;
+        }
+      }
+    }
     if (mapheaders.find("CONNECTION") == mapheaders.end())
       mapheaders["CONNECTION"] = "keep-alive";
+    if (mapheaders.find("TRANSFER_ENCODING") != mapheaders.end())
+    {
+      std::cout << "transfer encoding : " << mapheaders["TRANSFER_ENCODING"] << std::endl;
+      if (mapheaders["TRANSFER_ENCODING"] !=  "chunked")
+      {
+        requestStatus = 400; 
+        return ;
+      }
+    }
   }
   // setMapHeaders();
   // while (!str_parse.empty())
