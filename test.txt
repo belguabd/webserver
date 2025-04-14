@@ -85,3 +85,9 @@ leaks[69854]: [fatal] unable to instantiate a memory scanner.
 
 /UPLOAD/upload1.html --> POST --> /UPLOAD/upload1.html
 /UPLOAD/upload2.html--> POST ---> /UPLOAD/upload2.html
+
+
+
+GET / HTTP/1.1
+Host: localhost:8585
+Content-type: *

@@ -65,9 +65,7 @@ int HttpRequest::handleDeleteRequest(std::string filePath)
   ServerConfig config = this->getServerConf();
   LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1],config, server_config.location);
   std::string location =  findMatchingLocation(dataFirstLine[1], server_config.location);
- cout<<"location : "<<location<<endl;
   filePath.replace(0, location.length(), lc._root);
-  cout <<"path "<< filePath<<endl;
   // if (filePath.substr(0, pos + 1) != "./upload/")
   //   return 405;
   // Check if the file exists
@@ -123,8 +121,6 @@ void HttpRequest::handleRequest()
       if (_method == DELETE && this->requestStatus==0)
       {
         this->requestStatus = handleDeleteRequest(dataFirstLine[1]);
-        cout <<"request status = "<<this->requestStatus<<endl;
-        puts("--------");
         return;
       }
     }
@@ -528,6 +524,12 @@ void HttpRequest ::parsePartRequest(string str_parse)
 {
   if (this->endHeaders == 1)
     return;
+  // cout <<"nta ==>  :"<<str_parse<<"-"<<endl;
+  if (str_parse == "\r\n")
+  {
+        requestStatus = 400; 
+        return ;
+  }
   // std::cout << "str_parse :"; printNonPrintableChars(str_parse);
   // std::cout << "\\\\\\\n";
 
@@ -559,18 +561,15 @@ void HttpRequest ::parsePartRequest(string str_parse)
       {
         requestStatus = 400; 
         return ;
-        puts("here1");
       }
       if (host.rfind(":") != pos)
       {
-        puts("here2");
         requestStatus = 400; 
         return ;
       }
       host.erase(0, pos + 1);
       if (host.length() == 0)
       {
-        puts("here3");
         requestStatus = 400; 
         return ;
       }
@@ -578,8 +577,6 @@ void HttpRequest ::parsePartRequest(string str_parse)
       {
         if (!std::isdigit(host[i]))
         {
-          puts(host.c_str());
-        puts("here4");
         requestStatus = 400; 
         return ;
         }
@@ -589,7 +586,6 @@ void HttpRequest ::parsePartRequest(string str_parse)
       mapheaders["CONNECTION"] = "keep-alive";
     if (mapheaders.find("TRANSFER_ENCODING") != mapheaders.end())
     {
-      std::cout << "transfer encoding : " << mapheaders["TRANSFER_ENCODING"] << std::endl;
       if (mapheaders["TRANSFER_ENCODING"] !=  "chunked")
       {
         requestStatus = 400; 
