@@ -59,8 +59,3 @@ string dirAutoindex(string &strlocation ,string &dirPath,string &root);
 string errorPage(int statusCode);
 string	status_line(int client_socket,int status);
 string headersSending(int client_socket, string serverName);
-
-
-
-
-bool pathExists(string & path);

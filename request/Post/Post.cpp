@@ -48,7 +48,7 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 	// std::cout
 	buffer = "\r\n" + buffer;
 	setBodyType();
-	// std::cout << "body type : " << this->_bodyType << std::endl;
+	std::cout << "body type : " << this->_bodyType << std::endl;
 	createBodyTypeObject(buffer);
 
 	proseRequest(buffer);

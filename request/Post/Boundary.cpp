@@ -32,19 +32,16 @@ void Boundary::setFileName(std::string &fileName)
     if (fileName == "") return ;
 	struct stat b;
     // fileName = fileName;
-    std::cout << "bound fileName : " << fileName << std::endl;
-    size_t pos =  fileName.rfind(".");
+    size_t pos =  fileName.find(".");
 	std::string name = fileName.substr(0, pos);
-    std::cout << "bound pos : " << pos << std::endl;
-    std::cout << "bound name : " << name << std::endl;
     std::string extention ;
     if (pos < fileName.size())
         extention = fileName.substr(pos);
 	int n = 0;
-	while (stat((std::string(name + extention)).c_str(), &b) == 0)
+	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	fileName = name + extention;
-    std::cout << "bound fileName : " << fileName << std::endl;
+    std::cout << "fileName : " << fileName << std::endl;
 
 }
 

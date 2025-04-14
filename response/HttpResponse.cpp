@@ -1,6 +1,5 @@
 #include "HttpResponse.hpp"
 #include <cstddef>
-#include <iostream>
 #include <sys/_types/_ssize_t.h>
 string statusText(int status) {
   string text;
@@ -175,7 +174,7 @@ void HttpResponse::getLocationResponse(LocationConfig &normal, string &str, Serv
     if (typePath == 0) {
         this->sendErrorPage(config, 404);
     } 
-    if (typePath == 1) {
+    else if (typePath == 1) {
         if (data.find(".php") != string::npos || data.find(".py") != string::npos) {
             this->sendErrorPage(config, 403);
         } else {
@@ -234,8 +233,6 @@ string findMatchingLocation(const string& uri, const map<string, LocationConfig>
     size_t max_len = 0;
     for (map<string, LocationConfig>::const_iterator it = locations.begin(); it != locations.end(); ++it) {
         const string& loc = it->first;
-        if (it->first=="/")
-          continue;
         if (uri.find(loc) == 0 && loc.length() > max_len) {
             matched = loc;
             max_len = loc.length();
@@ -253,65 +250,33 @@ void HttpResponse::getResponse() {
     this->strLocation = findMatchingLocation(words[1], config.location);
     if (!this->strLocation.empty())
         data = words[1].substr(this->strLocation.length());
+
     if (data.empty() && words[1].back() == '/')
         data = "/";
-    if (config.location.find(strLocation) != config.location.end()) {
-      LocationConfig log = getValueMap(config.location, config.location.find(this->strLocation));
-      if (!log._return.empty()) {
-        redirectionResponse(log._return,config);
-        return;
-      }
-      getLocationResponse(log, data, config);
+  if (config.location.find(strLocation) != config.location.end()) {
+    LocationConfig log = getValueMap(config.location, config.location.find(this->strLocation));
+    if (!log._return.empty()) {
+      redirectionResponse(log._return,config);
       return;
     }
-    if (config.location.find("/") != config.location.end()) {
-      LocationConfig log = getValueMap(config.location, config.location.find("/"));
-      string valid ;
-      string path;
-      if (!log._root.empty()) {
-        valid = log._root;
-      }
-      else
-        valid = config.getRoot();
-      valid += words[1];
-      // cout <<"valid  ----------> "<<valid<<endl;
-      if (pathExists(valid)){
-        puts("raaah valid");
-        cout <<"valid  =: "<<words[1]<<endl;
-        if (!log._return.empty()) {
-          redirectionResponse(log._return,config);
-          return;
-        }
-        getLocationResponse(log, words[1], config);
-      }
-      else {
-        this->sendErrorPage(config, 404);
-        puts("mashi valid");
-      }
-    }
-    else 
-    {
-      puts("makunash location /");
-      path = DEFAULTROOT;
-      cout <<"path root "<<path<<endl;
-      if (words[1]=="/") {
-        path += DEFAULTINDEX;
-        if (checkTypePath(path) == 0) {
-          this->sendErrorPage(config, 404);
-        } else if (checkTypePath(path) == 1) {
-          this->fileDataSend(path, config);
-        }
-        return ;
-      }
-      path += words[1];
+    getLocationResponse(log, data, config);
+    return;
+  }
+  path = config.getRoot();
+  if (words[1]=="/") {
+    path += DEFAULTINDEX;
+    if (checkTypePath(path) == 0) {
       this->sendErrorPage(config, 404);
+    } else if (checkTypePath(path) == 1) {
+      this->fileDataSend(path, config);
     }
+    return ;
+  }
+  path += words[1];
+  this->sendErrorPage(config, 404);
 }
 
-bool pathExists(string & path) {
-    struct stat info;
-    return (stat(path.c_str(), &info) == 0);
-}
+
 int HttpResponse::checkDataResev() {
   ServerConfig config = this->request->getServerConfig();
   int statuscode = this->request->getRequestStatus();
@@ -325,7 +290,6 @@ int HttpResponse::checkDataResev() {
     this->sendErrorPage(config, 405);
     return 1;
   } else if (statuscode==404) {
-    puts("----");
     this->sendErrorPage(config, 404);
     return 1;
   } else if (statuscode==403) {
@@ -467,19 +431,19 @@ void HttpResponse::cgiResponse() {
   // cout <<"bodycgi  =>" <<bodycgi<<endl;
     if (firstTimeResponse == 0) {
             file_size = 0;
+              // std::cout << it->first << " -=-=-=-=-= " << it->second << std::endl;
 
             std::ostringstream response_headers;
             response_headers << status_line(this->request->getfd(), this->request->getRequestStatus());
             response_headers << headersSending(this->request->getfd());
-            for (std::unordered_map<std::string, std::string>::iterator it = parseCgiHeaders.begin(); it != parseCgiHeaders.end(); ++it) 
+            for (std::unordered_map<std::string, std::string>::iterator it = parseCgiHeaders.begin(); it != parseCgiHeaders.end(); ++it)
                 response_headers << it->first << ": " << it->second << "\r\n";
 
-            response_headers <<"Access-Control-Allow-Headers: *\r\n"
-                             << "Access-Control-Allow-Origin: *\r\n"
-                             << "Content-Type: text/html\r\n"
+            response_headers << "Content-Type: text/html\r\n"
                              << "Content-Length: " << bodycgi.length() << "\r\n"
-                             << "Connection: close\r\n" 
+                             << "Connection: "<< this->request->typeConnection << "\r\n"
                              << "\r\n";
+            // cout <<"=========>>" <<response_headers.str().c_str()<<endl;
             this->bytesSend = send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
             firstTimeResponse = 1;
         }
@@ -500,7 +464,6 @@ void HttpResponse::cgiResponse() {
     }
 
 }
-
 /*--------------------------------------Post
  * method------------------------------------------*/
 
