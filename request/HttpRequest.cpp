@@ -49,6 +49,7 @@ void HttpRequest::handlePost()
   {
     ServerConfig config = this->getServerConf();
     LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1],config, server_config.location);
+    mapheaders["isCgi"] = std::to_string(checkCgi);
     _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
   else
@@ -135,7 +136,17 @@ void HttpRequest::handleRequest()
   else if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
     setRequestStatus(200);
   else if (_method == POST && getendHeaders() == 1)
-    handlePost();
+  {
+    try
+    {
+      handlePost();
+    }
+    catch(const std::exception& e)
+    {
+      requestStatus = 500;
+    }
+
+  }
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
