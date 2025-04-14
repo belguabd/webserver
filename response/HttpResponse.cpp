@@ -274,7 +274,7 @@ void HttpResponse::getResponse() {
       else
         valid = config.getRoot();
       valid += words[1];
-      cout <<"valid  ----------> "<<valid<<endl;
+      // cout <<"valid  ----------> "<<valid<<endl;
       if (pathExists(valid)){
         puts("raaah valid");
         cout <<"valid  =: "<<words[1]<<endl;
@@ -315,7 +315,6 @@ bool pathExists(string & path) {
 int HttpResponse::checkDataResev() {
   ServerConfig config = this->request->getServerConfig();
   int statuscode = this->request->getRequestStatus();
-  cout <<"---->status code = "<<statuscode<<endl;
   if (statuscode == 400) {
     this->sendErrorPage(config, 400);
     return 1;
@@ -326,6 +325,7 @@ int HttpResponse::checkDataResev() {
     this->sendErrorPage(config, 405);
     return 1;
   } else if (statuscode==404) {
+    puts("----");
     this->sendErrorPage(config, 404);
     return 1;
   } else if (statuscode==403) {
@@ -354,6 +354,7 @@ HttpResponse::~HttpResponse() {}
 
 int HttpResponse::writeData() {
   ServerConfig config = this->request->getServerConfig();
+  string data;
   if (this->checkDataResev() != 0) {
     return this->bytesSend;
   }
@@ -361,7 +362,17 @@ int HttpResponse::writeData() {
      this->cgiResponse();
     return this->bytesSend;
   }
-  this->getResponse();
+  if (this->request->_method==GET)
+  {
+    this->getResponse();
+  } else if (this->request->_method==POST) {
+    data = UPLOADSUCESSE;
+    this->fileDataSend(data,config);
+  }else if (this->request->_method==DELETE) {
+    data = DELETESUCESSE;
+    cout <<this->request->getRequestStatus()<<endl;
+    this->fileDataSend(data,config);
+  }
   return this->bytesSend;
 }
 
@@ -603,7 +614,7 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
   }
   if (!this->file.is_open()) {
     this->file.open(data, std::ios::binary);
-    if (val.empty()||!this->file.is_open()) {
+    if (checkTypePath(data)==2||!this->file.is_open()) {
       string body = errorPage(status);
       stringstream response1;
       response1 << status_line(this->request->getfd(), status);
@@ -614,6 +625,7 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
                 << "\r\n"
                 << body;
       string responseStr = response1.str();
+      cout <<"=====>"<<this->request->getfd()<<endl;
       this->bytesSend = send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
       complete = 1;
       return ;
@@ -639,8 +651,7 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
                      << "Connection: close\r\n"
                      << "\r\n";
     // cout <<"              path : " << strLocation<<"                                                 status code :"<<status<<endl;
-    this->bytesSend = send(this->request->getfd(), response_headers.str().c_str(),
-         response_headers.str().size(), 0);
+    this->bytesSend = send(this->request->getfd(), response_headers.str().c_str(), response_headers.str().size(), 0);
     firstTimeResponse = 1;
   }
 

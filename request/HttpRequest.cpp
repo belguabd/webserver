@@ -1,18 +1,35 @@
 #include "HttpRequest.hpp"
 #define BUFFER_READ 5000
 
-LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, LocationConfig> &configUploads)
+LocationConfig &getMatchedLocationUpload(const std::string &path,ServerConfig &config,map<string, LocationConfig> &configUploads)
 {
-	size_t pos = path.find("/", 1);
 	string keyLocationUpload;
-
-  if (pos == std::string::npos)
-    pos = path.size() + 1;
-	// keyLocationUpload = path.substr(0, pos);
+  LocationConfig log;
   keyLocationUpload = findMatchingLocation(path, configUploads);
-  std::cout << "keyLocationUpload " << keyLocationUpload << std::endl;
-	// if (configUploads.find(keyLocationUpload) == configUploads.end())
-	// 	configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
+  std::cout << "keyLocationUpload : " << keyLocationUpload << std::endl;
+  std::cout << "path : " << path << std::endl;
+  if(configUploads.find("/") != configUploads.end()) {
+      log = getValueMap(configUploads,configUploads.find("/"));
+      string valid ;
+      if (!log._root.empty()) {
+        valid = log._root;
+      }
+      else
+        valid = config.getRoot();
+        valid +=path;
+        cout <<"------->"<<valid<<endl;
+      if (pathExists(valid)){
+          return (configUploads.find("/"))->second;
+      }
+      else {
+        cout <<"<--notvalid path but i have location /-->"<<endl;
+      }
+    }
+    else {
+        cout <<"<--not found location / -->"<<endl;
+    }
+	if (configUploads.find(keyLocationUpload) == configUploads.end())
+		configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1, ._allowed_methods="POST GET"}; // 
 	return (configUploads.find(keyLocationUpload))->second;
 }
 
@@ -27,7 +44,8 @@ void HttpRequest::handlePost()
 {
   if (_post == NULL)
   {
-    LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
+    ServerConfig config = this->getServerConf();
+    LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1],config, server_config.location);
     _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
   else
@@ -40,7 +58,8 @@ int HttpRequest::handleDeleteRequest(std::string filePath)
 {
   struct stat meteData;
   // filePath.insert(0, ".");
-  LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
+  ServerConfig config = this->getServerConf();
+  LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1],config, server_config.location);
   std::string location =  findMatchingLocation(dataFirstLine[1], server_config.location);
   size_t pos = filePath.find("/", 2);
   filePath.replace(0, location.length(), lc._root);
@@ -75,8 +94,11 @@ void HttpRequest::handleRequest()
       setFirstTimeFlag(1);
       _method = defineTypeMethod(str_parse.substr(0, pos + 2));
       str_parse = str_parse.substr(pos + 2);
-      if (_method == DELETE)
-        std::cout << "handle request number: " << handleDeleteRequest(dataFirstLine[1]) << std::endl;
+      if (_method == DELETE && this->requestStatus==0)
+      {
+        this->requestStatus = handleDeleteRequest(dataFirstLine[1]);
+        return;
+      }
     }
   }
   parsePartRequest(str_parse);
