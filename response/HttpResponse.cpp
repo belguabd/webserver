@@ -625,7 +625,7 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
                 << "\r\n"
                 << body;
       string responseStr = response1.str();
-      cout <<"=====>"<<this->request->getfd()<<endl;
+      // cout <<"=====>"<<this->request->getfd()<<endl;
       this->bytesSend = send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
       complete = 1;
       return ;

@@ -6,8 +6,11 @@ LocationConfig &getMatchedLocationUpload(const std::string &path,ServerConfig &c
 	string keyLocationUpload;
   LocationConfig log;
   keyLocationUpload = findMatchingLocation(path, configUploads);
-  std::cout << "keyLocationUpload : " << keyLocationUpload << std::endl;
-  std::cout << "path : " << path << std::endl;
+  if (!keyLocationUpload.empty()) {
+    return (configUploads.find(keyLocationUpload))->second;
+  }
+  // std::cout << "keyLocationUpload : " << keyLocationUpload << std::endl;
+  // std::cout << "path : " << path << std::endl;
   if(configUploads.find("/") != configUploads.end()) {
       log = getValueMap(configUploads,configUploads.find("/"));
       string valid ;
@@ -17,7 +20,7 @@ LocationConfig &getMatchedLocationUpload(const std::string &path,ServerConfig &c
       else
         valid = config.getRoot();
         valid +=path;
-        cout <<"------->"<<valid<<endl;
+        // cout <<"------->"<<valid<<endl;
       if (pathExists(valid)){
           return (configUploads.find("/"))->second;
       }
@@ -61,11 +64,33 @@ int HttpRequest::handleDeleteRequest(std::string filePath)
   ServerConfig config = this->getServerConf();
   LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1],config, server_config.location);
   std::string location =  findMatchingLocation(dataFirstLine[1], server_config.location);
-  size_t pos = filePath.find("/", 2);
+ cout<<"location : "<<location<<endl;
   filePath.replace(0, location.length(), lc._root);
+  cout <<"path "<< filePath<<endl;
   // if (filePath.substr(0, pos + 1) != "./upload/")
   //   return 405;
   // Check if the file exists
+  // cout<<"filePATH : "<<filePath<<endl;
+  // if(server_config.location.find("/") != server_config.location.end()) {
+  //     log = getValueMap(configUploads,configUploads.find("/"));
+  //     string valid ;
+  //     if (!log._root.empty()) {
+  //       valid = log._root;
+  //     }
+  //     else
+  //       valid = config.getRoot();
+  //       valid +=filePath;
+  //       // cout <<"------->"<<valid<<endl;
+  //     if (pathExists(valid)){
+  //         return (configUploads.find("/"))->second;
+  //     }
+  //     else {
+  //       cout <<"<--notvalid path but i have location /-->"<<endl;
+  //     }
+  //   }
+  //   else {
+  //       cout <<"<--not found location / -->"<<endl;
+  //   }
   if (stat(filePath.c_str(), &meteData) != 0)
       return 404;
 
@@ -97,6 +122,8 @@ void HttpRequest::handleRequest()
       if (_method == DELETE && this->requestStatus==0)
       {
         this->requestStatus = handleDeleteRequest(dataFirstLine[1]);
+        cout <<"request status = "<<this->requestStatus<<endl;
+        puts("--------");
         return;
       }
     }
@@ -178,7 +205,7 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   if (!s.empty()) {
     size_t pos = root.find(s);
     this->rootcgi = root.substr(0,pos+s.length());
-    // cout <<rootcgi<<endl;
+    cout <<rootcgi<<endl;
     if (rootcgi.find(".php")!=string::npos) 
       this->cgiExtension = 1;
     else
@@ -235,15 +262,15 @@ void HttpRequest::checkPathIscgi(string &path)
         data = path.substr(str.length());
     }
     else
+    {
         str = "/";
+        data= path;
+    }
    if (config.location.find(str) != config.location.end()) {
     log = getValueMap(config.location,config.location.find(str));
     if (!log._return.empty()) {
       return;
     }
-    // cout <<"data fisr line : "<<this->dataFirstLine[0]<<endl;
-    // cout <<"log._allowed_methods: "<<log._allowed_methods<<endl;
-    // cout <<"location : "<<str<<endl;
     if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
       this->requestStatus = 405;
       this->endHeaders = 1;
@@ -266,9 +293,6 @@ void HttpRequest::checkPathIscgi(string &path)
         if (!log._return.empty()) {
           return;
         }
-        // cout <<"data fisr line : "<<this->dataFirstLine[0]<<endl;
-        // cout <<"log._allowed_methods: "<<log._allowed_methods<<endl;
-        // cout <<"location : "<<str<<endl;
         if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
           this->requestStatus = 405;
           this->endHeaders = 1;
@@ -284,7 +308,6 @@ void HttpRequest::checkPathIscgi(string &path)
         return ;
       }
     }
-
 }
 
 int HttpRequest::defineTypeMethod(string firstline) {
