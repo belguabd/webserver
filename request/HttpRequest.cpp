@@ -1,4 +1,5 @@
 #include "HttpRequest.hpp"
+#include <string>
 #define BUFFER_READ 5000
 
 LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, LocationConfig> &configUploads)
@@ -10,8 +11,8 @@ LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, Lo
     pos = path.size() + 1;
 	// keyLocationUpload = path.substr(0, pos);
   keyLocationUpload = findMatchingLocation(path, configUploads);
-	// if (configUploads.find(keyLocationUpload) == configUploads.end())
-	// 	configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
+	if (configUploads.find(keyLocationUpload) == configUploads.end())
+		configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
 	return (configUploads.find(keyLocationUpload))->second;
 }
 
@@ -26,6 +27,7 @@ void HttpRequest::handlePost()
 {
   if (_post == NULL)
   {
+    mapheaders["isCgi"] = std::to_string(checkCgi);
     LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
     mapheaders["isCgi"] = std::to_string(checkCgi);
     _post = new Post(mapheaders, queryParam, _buffer, lc);
@@ -197,7 +199,7 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
                 }
             }
         }
-        break; 
+        break;
     }
     i++;
   }
@@ -453,6 +455,11 @@ void HttpRequest ::parsePartRequest(string str_parse)
 {
   if (this->endHeaders == 1)
     return;
+  if (str_parse == "\r\n")
+  {
+    requestStatus = 400;
+    return;
+  }
   // std::cout << "str_parse :"; printNonPrintableChars(str_parse);
   // std::cout << "\\\\\\\n";
 
@@ -472,32 +479,52 @@ void HttpRequest ::parsePartRequest(string str_parse)
   if (str_parse.find("\r\n\r\n") != std::string::npos)
   {
     this->endHeaders = 1;
+    std::cout  << "host : "<< mapheaders["HOST"] << std::endl;
     if (mapheaders.find("HOST") == mapheaders.end())
       requestStatus = 400; 
-    else
-      if (mapheaders["HOST"].empty() ||
-        std::find_if(mapheaders["HOST"].begin(), mapheaders["HOST"].end(), isAllowedUriChar) == mapheaders["HOST"].end())
-        requestStatus = 400;
+    // else if (mapheaders["HOST"].empty() )
+    // || std::find_if(mapheaders["HOST"].begin(), mapheaders["HOST"].end(), isAllowedUriChar) == mapheaders["HOST"].end())
+    else{
+      std::string host = mapheaders["HOST"];
+      size_t pos = host.find(":");
+      if (pos == std::string::npos || pos == 0)
+      {
+        requestStatus = 400; 
+        return ;
+      }
+      if (host.rfind(":") != pos)
+      {
+        requestStatus = 400; 
+        return ;
+      }
+      host.erase(0, pos + 1);
+      if (host.length() == 0)
+      {
+        requestStatus = 400; 
+        return ;
+      }
+      for (size_t i = 0; i < host.size(); i++)
+      {
+        if (!std::isdigit(host[i]))
+        {
+          requestStatus = 400; 
+          return ;
+        }
+      }
+    }
     if (mapheaders.find("CONNECTION") == mapheaders.end())
       mapheaders["CONNECTION"] = "keep-alive";
+    this->typeConnection = mapheaders["CONNECTION"];
+    if (mapheaders.find("TRANSFER_ENCODING") != mapheaders.end())
+    {
+      std::cout << "transfer encoding : " << mapheaders["TRANSFER_ENCODING"] << std::endl;
+      if (mapheaders["TRANSFER_ENCODING"] !=  "chunked")
+      {
+        requestStatus = 400; 
+        return ;
+      }
+    }
   }
-  // setMapHeaders();
-  // while (!str_parse.empty())
-  // {
-  //   // ********
-  //   size_t pos = str_parse.find("\r\n");
-  //   if (pos == string::npos)
-  //     break;
-  //   string str = str_parse.substr(0, pos + 2);
-  //   if (str == "\r\n")
-  //   {
-  //     this->endHeaders = 1;
-  //     break;
-  //   }
-  //   str_parse = str_parse.substr(pos + 2);
-  //   checkHeaders(str);
-  //   str.clear();
-  // }
 }
 
 void HttpRequest ::requestLine() {

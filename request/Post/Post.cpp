@@ -1,4 +1,5 @@
 #include "./Post.hpp"
+#include <iostream>
 
 void Post::createBodyTypeObject(std::string& buffer) {
 	if (_bodyType == chunked)
@@ -42,10 +43,8 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 		_status = 413; // ?
 		return ;
 	}
-	// std::cout << "_bodySize: " << _bodySize << std::endl;
 	initializeMimeTypes();
 	_uploadStore = _configUpload._upload_store;
-	// std::cout
 	buffer = "\r\n" + buffer;
 	setBodyType();
 	std::cout << "body type : " << this->_bodyType << std::endl;
@@ -175,7 +174,7 @@ int Post::handleContentLength(std::string &buffer)
 {
 	// printNonPrintableChars(buffer);
 	if (pasteInFile(_fileName, buffer) >= _contentLengthSize)
-		_status = 1;
+		_status = 201;
 	return _status;
 }
 

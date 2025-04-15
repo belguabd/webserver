@@ -34,7 +34,7 @@ private:
 
 public:
   void closeAllSockets();
-  
+  bool is_request(int fd);
   bool checkPid(pid_t pid);
   WebServer(string &str);
   std::vector<HttpRequest *> connected_clients;
