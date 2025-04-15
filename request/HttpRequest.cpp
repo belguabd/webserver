@@ -104,10 +104,11 @@ void HttpRequest::handleRequest()
   }
 }
 
-HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
+HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config , int server_fd)
     : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) , isCGi(false) , checkCgi(0), cgi_for_test(0) , status_code(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+  this->server_fd = server_fd;
   _post = NULL;
 }
 
