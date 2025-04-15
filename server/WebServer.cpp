@@ -281,7 +281,7 @@ void WebServer::respond_to_client(int event_fd) {
     try {
       if (request->typeConnection == "keep-alive") {
         cleanupClientConnection(request, response, iter_req, it);
-        shutdown(event_fd, SHUT_RDWR);
+        // shutdown(event_fd, SHUT_RDWR);
       } else {
         cleanupClientConnection(request, response, iter_req, it);
         close(event_fd);
