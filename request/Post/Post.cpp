@@ -42,10 +42,8 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 		_status = 413; // ?
 		return ;
 	}
-	// std::cout << "_bodySize: " << _bodySize << std::endl;
 	initializeMimeTypes();
 	_uploadStore = _configUpload._upload_store;
-	// std::cout
 	buffer = "\r\n" + buffer;
 	setBodyType();
 	std::cout << "body type : " << this->_bodyType << std::endl;
