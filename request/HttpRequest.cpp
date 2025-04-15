@@ -1,4 +1,5 @@
 #include "HttpRequest.hpp"
+#include <string>
 #define BUFFER_READ 5000
 
 LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, LocationConfig> &configUploads)
@@ -26,6 +27,7 @@ void HttpRequest::handlePost()
 {
   if (_post == NULL)
   {
+    mapheaders["isCgi"] = std::to_string(checkCgi);
     LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
     mapheaders["isCgi"] = std::to_string(checkCgi);
     _post = new Post(mapheaders, queryParam, _buffer, lc);
@@ -197,7 +199,7 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
                 }
             }
         }
-        break; 
+        break;
     }
     i++;
   }

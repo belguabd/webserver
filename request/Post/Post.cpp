@@ -1,4 +1,5 @@
 #include "./Post.hpp"
+#include <iostream>
 
 void Post::createBodyTypeObject(std::string& buffer) {
 	if (_bodyType == chunked)
