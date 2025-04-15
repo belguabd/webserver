@@ -30,6 +30,7 @@ void HttpRequest::handlePost()
   {
     mapheaders["isCgi"] = std::to_string(checkCgi);
     LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
+    mapheaders["isCgi"] = std::to_string(checkCgi);
     _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
   else
@@ -77,8 +78,11 @@ void HttpRequest::handleRequest()
       setFirstTimeFlag(1);
       _method = defineTypeMethod(str_parse.substr(0, pos + 2));
       str_parse = str_parse.substr(pos + 2);
-      if (_method == DELETE)
-        std::cout << "handle request number: " << handleDeleteRequest(dataFirstLine[1]) << std::endl;
+      if (_method == DELETE && this->requestStatus==0)
+      {
+        this->requestStatus = handleDeleteRequest(dataFirstLine[1]);
+        return;
+      }  
     }
   }
   parsePartRequest(str_parse);
@@ -88,11 +92,21 @@ void HttpRequest::handleRequest()
   else if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
     setRequestStatus(200);
   else if (_method == POST && getendHeaders() == 1)
-    handlePost();
+  {
+    try
+    {
+      handlePost();
+    }
+    catch(const std::exception& e)
+    {
+      requestStatus = 500;
+    }
+
+  }
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerConfig &server_config)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) , isCGi(false) , checkCgi(0) , Is_open(0), cgi_for_test(0) , status_code(0){
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0) , server_config(server_config) , isCGi(false) , checkCgi(0), cgi_for_test(0) , status_code(0){
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   _post = NULL;
@@ -136,6 +150,7 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
   this->cgiExtension = 0;
   vector <string >extension;
   extension = splitstring(structConfig._cgi_extension);
+  // cout <<data<<endl;
   if(structConfig._root.empty()) {
     root = config.getRoot();
   } else {
@@ -159,6 +174,9 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
     size_t pos = root.find(s);
     this->rootcgi = root.substr(0,pos+s.length());
     // cout <<rootcgi<<endl;
+    if (!fileExists(this->rootcgi)) {
+      return 0;
+    }
     if (rootcgi.find(".php")!=string::npos) 
       this->cgiExtension = 1;
     else
@@ -221,9 +239,6 @@ void HttpRequest::checkPathIscgi(string &path)
     if (!log._return.empty()) {
       return;
     }
-    // cout <<"data fisr line : "<<this->dataFirstLine[0]<<endl;
-    // cout <<"log._allowed_methods: "<<log._allowed_methods<<endl;
-    // cout <<"location : "<<str<<endl;
     if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
       this->requestStatus = 405;
       this->endHeaders = 1;
@@ -232,41 +247,8 @@ void HttpRequest::checkPathIscgi(string &path)
     if (!log._cgi_extension.empty()) {
       this->checkCgi = setDataCgi(data,config,log);
     }
-   } else if(config.location.find("/") != config.location.end()) {
-      log = getValueMap(config.location,config.location.find("/"));
-      string valid ;
-      string path;
-      if (!log._root.empty()) {
-        valid = log._root;
-      }
-      else
-        valid = config.getRoot();
-      valid += this->dataFirstLine[1];
-      if (pathExists(valid)){
-        if (!log._return.empty()) {
-          return;
-        }
-        // cout <<"data fisr line : "<<this->dataFirstLine[0]<<endl;
-        // cout <<"log._allowed_methods: "<<log._allowed_methods<<endl;
-        // cout <<"location : "<<str<<endl;
-        if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
-          this->requestStatus = 405;
-          this->endHeaders = 1;
-          return ;
-        }
-        if (!log._cgi_extension.empty()) {
-          this->checkCgi = setDataCgi(this->dataFirstLine[1],config,log);
-        }
-      }
-      else {
-        this->requestStatus = 404;
-        this->endHeaders = 1;
-        return ;
-      }
-    }
-
+  }
 }
-
 int HttpRequest::defineTypeMethod(string firstline) {
   vector<string> words;
   stringstream word(firstline);
@@ -501,6 +483,8 @@ void HttpRequest ::parsePartRequest(string str_parse)
         requestStatus = 400;
     if (mapheaders.find("CONNECTION") == mapheaders.end())
       mapheaders["CONNECTION"] = "keep-alive";
+    this->typeConnection =  mapheaders["CONNECTION"];
+
   }
   // setMapHeaders();
   // while (!str_parse.empty())

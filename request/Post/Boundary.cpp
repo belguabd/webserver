@@ -41,7 +41,7 @@ void Boundary::setFileName(std::string &fileName)
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	fileName = name + extention;
-    // std::cout << "fileName : " << fileName << std::endl;
+    std::cout << "fileName : " << fileName << std::endl;
 
 }
 
