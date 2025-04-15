@@ -89,3 +89,6 @@ leaks[69854]: [fatal] unable to instantiate a memory scanner.
 GET / HTTP/1.1
 Host: localhost:8585
 Content-type: *
+
+post cgi 
+type connition 

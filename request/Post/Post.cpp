@@ -174,7 +174,7 @@ int Post::handleContentLength(std::string &buffer)
 {
 	// printNonPrintableChars(buffer);
 	if (pasteInFile(_fileName, buffer) >= _contentLengthSize)
-		_status = 1;
+		_status = 201;
 	return _status;
 }
 

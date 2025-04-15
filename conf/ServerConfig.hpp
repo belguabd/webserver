@@ -11,7 +11,7 @@
 #include <dirent.h>
 using namespace std;
 #define REDCOLORE "\033[31m"
-#define DEFAULTUPLOAD "doc/html"
+#define DEFAULTUPLOAD "www/upload"
 
 struct LocationConfig {
   string _root;

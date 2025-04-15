@@ -106,7 +106,7 @@ size_t Chunked::getChunkSize(std::string &buffer)
 	if (std::string(buffer + _remainingBuffer) == std::string("\r\n0\r\n\r\n"))
 	{
 		std::cout << "end of req" << std::endl;
-		_status = 1;
+		_status = 201;
 		std::cout << "check file: " << _fileName << std::endl;
 		return 0;
 	}
