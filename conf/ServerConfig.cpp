@@ -156,6 +156,8 @@ void ServerConfig :: locationNormal(string &location) {
     vector <string> words;
     LocationConfig config;
     config._autoindex =false;
+    config._client_max_body_size = this->client_max_body_size;
+    config._allowed_methods = "GET POST DELETE";
     size_t pos = location.find("{");
     tmp = location.substr(8, pos - 8);
     string key = trim(tmp);
@@ -234,12 +236,6 @@ bool directoryExists(const std::string &path) {
 }
 void ServerConfig :: setValLocation(string &str,string &val,LocationConfig &config)
 {
-    if (config._client_max_body_size==0) {
-        config._client_max_body_size = this->client_max_body_size;
-    }
-    if (config._allowed_methods.empty()) {
-        config._allowed_methods = "GET POST DELETE";
-    }
     if (config._upload_store.empty()) {
     if (!directoryExists(DEFAULTUPLOAD)) {
         cout <<REDCOLORE<< "Error: Unable to access default upload (Permission denied)"<<endl;

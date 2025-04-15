@@ -1,4 +1,5 @@
 #include "HttpRequest.hpp"
+#include <string>
 #define BUFFER_READ 5000
 
 LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, LocationConfig> &configUploads)
@@ -11,8 +12,8 @@ LocationConfig &getMatchedLocationUpload(const std::string &path, map<string, Lo
 	// keyLocationUpload = path.substr(0, pos);
   keyLocationUpload = findMatchingLocation(path, configUploads);
   std::cout << "keyLocationUpload " << keyLocationUpload << std::endl;
-	// if (configUploads.find(keyLocationUpload) == configUploads.end())
-	// 	configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
+	if (configUploads.find(keyLocationUpload) == configUploads.end())
+		configUploads[keyLocationUpload] = (LocationConfig){._upload_store = UPLOAD_FOLDER, ._client_max_body_size= 1000000000, ._allowed_methods="POST GET"}; // 
 	return (configUploads.find(keyLocationUpload))->second;
 }
 
@@ -27,6 +28,7 @@ void HttpRequest::handlePost()
 {
   if (_post == NULL)
   {
+    mapheaders["isCgi"] = std::to_string(checkCgi);
     LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
     _post = new Post(mapheaders, queryParam, _buffer, lc);
   }
@@ -180,7 +182,7 @@ int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &st
                 }
             }
         }
-        break; 
+        break;
     }
     i++;
   }
@@ -219,6 +221,9 @@ void HttpRequest::checkPathIscgi(string &path)
     if (!log._return.empty()) {
       return;
     }
+    // cout <<"data fisr line : "<<this->dataFirstLine[0]<<endl;
+    // cout <<"log._allowed_methods: "<<log._allowed_methods<<endl;
+    // cout <<"location : "<<str<<endl;
     if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
       this->requestStatus = 405;
       this->endHeaders = 1;
@@ -227,8 +232,41 @@ void HttpRequest::checkPathIscgi(string &path)
     if (!log._cgi_extension.empty()) {
       this->checkCgi = setDataCgi(data,config,log);
     }
-  }
+   } else if(config.location.find("/") != config.location.end()) {
+      log = getValueMap(config.location,config.location.find("/"));
+      string valid ;
+      string path;
+      if (!log._root.empty()) {
+        valid = log._root;
+      }
+      else
+        valid = config.getRoot();
+      valid += this->dataFirstLine[1];
+      if (pathExists(valid)){
+        if (!log._return.empty()) {
+          return;
+        }
+        // cout <<"data fisr line : "<<this->dataFirstLine[0]<<endl;
+        // cout <<"log._allowed_methods: "<<log._allowed_methods<<endl;
+        // cout <<"location : "<<str<<endl;
+        if (log._allowed_methods.find(this->dataFirstLine[0])==string::npos) {
+          this->requestStatus = 405;
+          this->endHeaders = 1;
+          return ;
+        }
+        if (!log._cgi_extension.empty()) {
+          this->checkCgi = setDataCgi(this->dataFirstLine[1],config,log);
+        }
+      }
+      else {
+        this->requestStatus = 404;
+        this->endHeaders = 1;
+        return ;
+      }
+    }
+
 }
+
 int HttpRequest::defineTypeMethod(string firstline) {
   vector<string> words;
   stringstream word(firstline);

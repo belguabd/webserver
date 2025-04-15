@@ -9,6 +9,7 @@
 #include <iostream>
 #include <iterator>
 #include <ostream>
+#include <signal.h>
 #include <stdexcept>
 #include <string>
 #include <sys/_types/_pid_t.h>
@@ -20,7 +21,6 @@
 #include <unistd.h>
 #include <utility>
 #include <vector>
-#include <signal.h>
 enum { PHP = 1, PYTHON = 2 };
 
 #define TIMEOUT_INTERVAL 5000
@@ -71,6 +71,30 @@ WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
 }
 
 void WebServer::handle_new_connection(int server_fd) {
+
+  // struct sockaddr_in client_addr;
+  // socklen_t client_len = sizeof(client_addr);
+
+  // int client_fd =
+  //     accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
+
+  // struct sockaddr_in server_info;
+  // socklen_t server_len = sizeof(server_info);
+  // if (getsockname(server_fd, (struct sockaddr *)&server_info, &server_len) ==
+  //     -1) {
+  //   std::cerr << "Error getting server address: " << strerror(errno)
+  //             << std::endl;
+  //   close(client_fd);
+  //   close(server_fd);
+  //   return;
+  // }
+  // char server_ip[INET_ADDRSTRLEN];
+  // inet_ntop(AF_INET, &(server_info.sin_addr), server_ip, INET_ADDRSTRLEN);
+  // int server_port = ntohs(server_info.sin_port);
+
+  // std::cout << "Client connected to server at IP: " << server_ip
+  //           << " Port: " << server_port << std::endl;
+
   int client_fd = accept(server_fd, NULL, NULL);
   if (client_fd == -1) {
     throw std::runtime_error("Error accepting client connection: " +
@@ -247,6 +271,7 @@ void WebServer::respond_to_client(int event_fd) {
   if (response->complete == 1) {
     try {
       if (request->typeConnection == "keep-alive") {
+        puts("-------------here-----------");
         cleanupClientConnection(request, response, iter_req, it);
       } else {
         cleanupClientConnection(request, response, iter_req, it);
@@ -476,6 +501,17 @@ bool WebServer::checkPid(pid_t pid) {
   }
   return false;
 };
+bool WebServer::is_request(int fd) {
+  HttpRequest *request = NULL;
+  std::vector<HttpRequest *>::iterator it = connected_clients.begin();
+  for (; it != connected_clients.end(); it++) {
+    if ((*it)->getfd() == fd)
+      request = *it;
+  }
+  if (!request)
+    return false;
+  return true;
+}
 void WebServer::run() {
   try {
     int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
@@ -534,20 +570,24 @@ void WebServer::run() {
               throw std::runtime_error(error_message);
             }
           } else {
-            struct kevent changes[1];
-            close(events[i].ident);
-            EV_SET(&changes[0], events[i].ident, EVFILT_TIMER, EV_DELETE, 0, 0,
-                   NULL);
-            if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+            if (!is_request(events[i].ident)) {
+              struct kevent changes[1];
               close(events[i].ident);
-              throw std::runtime_error(
-                  "Error removing timer event for client socket: " +
-                  std::string(strerror(errno)));
+              EV_SET(&changes[0], events[i].ident, EVFILT_TIMER, EV_DELETE, 0,
+                     0, NULL);
+              if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+                close(events[i].ident);
+                throw std::runtime_error(
+                    "Error removing timer event for client socket: " +
+                    std::string(strerror(errno)));
+              }
             }
           }
         } else if (filter == EVFILT_READ) {
+          puts("\033[1;34m[SERVER] Reading data from client...\033[0m");
           receive_from_client(event_fd);
           if (isCGIRequest(event_fd)) {
+            puts("\033[1;34m[SERVER] Handling CGI request...\033[0m");
             handleCGIRequest(event_fd);
           }
         } else if (filter == EVFILT_WRITE) {

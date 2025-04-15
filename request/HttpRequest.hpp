@@ -123,5 +123,6 @@ string encodeUrl(string &str);
 int indexValidPath(string str);
 bool fileExists(std::string &filePath);
 string convertToUpper(string str);
-string findMatchingLocation(const string &uri,
-                            const map<string, LocationConfig> &locations);
+string findMatchingLocation(const string& uri, const map<string, LocationConfig>& locations);
+bool pathExists(string & path);
+
