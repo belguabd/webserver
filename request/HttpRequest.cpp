@@ -66,6 +66,18 @@ int HttpRequest::handleDeleteRequest(std::string filePath) {
   return 500;
 }
 
+ServerConfig  HttpRequest::validServerConfig() {
+  cout << this->server_configs.size() << "\n";
+  // string host;
+  ServerConfig config;
+  // host = headers["HOST"];
+  // for (size_t i = 0; i < configs.size(); ++i) {
+  //   cout <<"=>>>"<<configs[i]->serverName << endl;
+  // }
+
+  return config;
+}
+
 void HttpRequest::handleRequest() {
   string str_parse;
   // pasteInFile("currentRequest", readBuffer);
@@ -77,23 +89,25 @@ void HttpRequest::handleRequest() {
       setFirstTimeFlag(1);
       _method = defineTypeMethod(str_parse.substr(0, pos + 2));
       str_parse = str_parse.substr(pos + 2);
-      if (_method == DELETE && this->requestStatus == 0) {
-        this->requestStatus = handleDeleteRequest(dataFirstLine[1]);
-        return;
-      }
     }
   }
   parsePartRequest(str_parse);
+  if (getendHeaders() == 1) {
+    setServerConfig(validServerConfig());
+  }
   if (getendHeaders() == 1 && this->requestStatus != 0) {
     return;
-  } else if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
+  } else if (_method == GET && getendHeaders() == 1) {
     setRequestStatus(200);
-  else if (_method == POST && getendHeaders() == 1) {
+  } else if (_method == POST && getendHeaders() == 1) {
     try {
       handlePost();
     } catch (const std::exception &e) {
       requestStatus = 500;
     }
+  } else if (_method == DELETE && this->requestStatus == 0) {
+    this->requestStatus = handleDeleteRequest(dataFirstLine[1]);
+    return;
   }
 }
 
@@ -104,6 +118,7 @@ HttpRequest::HttpRequest(int client_fd, ServerSocket server_socket)
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   this->server_fd = server_socket.getServer_fd();
   server_configs = server_socket.configs;
+  cout << "size-------test------>" << server_socket.configs.size() << "\n";
   this->server_socket = server_socket;
   _post = NULL;
 }
