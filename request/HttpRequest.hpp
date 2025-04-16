@@ -50,6 +50,8 @@ public:
 
   int checkCgi;
   int Is_open;
+
+  int  server_fd;
   string typeConnection;
   int cgiExtension;
   string rootcgi;
@@ -71,7 +73,7 @@ public:
   ServerConfig &getServerConf() { return this->server_config; }
   map<string, string> mapheaders;
   int _method;
-  HttpRequest(int client_fd, ServerConfig &server_config);
+  HttpRequest(int client_fd, ServerConfig &server_config , int server_fd);
   ~HttpRequest();
   /*    --------------*/
   int setDataCgi(string data, ServerConfig &config,

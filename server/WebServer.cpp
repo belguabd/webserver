@@ -97,8 +97,6 @@ void WebServer::handle_new_connection(int server_fd) {
   //           << " Port: " << server_port << std::endl;
 
   int client_fd = accept(server_fd, NULL, NULL);
-  // while(1);
-  puts("---------Client connected--------");
   if (client_fd == -1) {
     throw std::runtime_error("Error accepting client connection: " +
                              std::string(strerror(errno)));
@@ -116,7 +114,7 @@ void WebServer::handle_new_connection(int server_fd) {
   }
   try {
     connected_clients.push_back(
-        new HttpRequest(client_fd, map_configs[server_fd]));
+        new HttpRequest(client_fd, map_configs[server_fd] , server_fd));
   } catch (std::exception &e) {
     close(client_fd);
     throw std::runtime_error("Error creating HttpRequest object: " +
@@ -137,9 +135,9 @@ void WebServer::receive_from_client(int event_fd) {
       break;
     }
   }
-  if (!request) {
-    return;
-  }
+  // if (!request) {
+  //   return;
+  // }
   request->is_client_disconnected = false;
   request->setRequestStatus(0);
   ssize_t bytes_read = request->readData();
@@ -154,7 +152,7 @@ void WebServer::receive_from_client(int event_fd) {
     request->is_client_disconnected = true;
   }
   if (request->is_client_disconnected) {
-
+    puts("\033[1;34mClient disconnected...\033[0m");
     struct kevent changes[2];
     EV_SET(&changes[0], event_fd, EVFILT_READ, EV_DELETE, 0, 0, request);
     EV_SET(&changes[1], event_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
@@ -201,18 +199,19 @@ void WebServer::cleanupClientConnection(
     HttpRequest *request, HttpResponse *response,
     std::vector<HttpRequest *>::iterator iter_req,
     std::vector<HttpResponse *>::iterator it) {
-  struct kevent changes[1];
+    int server_fd = request->server_fd;
+
+  struct kevent changes[2];
   int fd = (*it)->request->getfd();
+  // Remove the write event (EVFILT_WRITE)
   EV_SET(&changes[0], fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-  if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-    throw std::runtime_error("Error removing write event: " +
+  // Add the read event (EVFILT_READ)
+  EV_SET(&changes[1], fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+  if (kevent(kqueue_fd, changes, 2, NULL, 0, NULL) == -1) {
+    cerr << "Error adding read event: " << strerror(errno) << endl;
+    throw std::runtime_error("Error adding read event: " +
                              std::string(strerror(errno)));
-  }
-  // EV_SET(&changes[0], fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-  // if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-  //   throw std::runtime_error("Error removing read event: " +
-  //                            std::string(strerror(errno)));
-  // }
+  } 
   if (request->_method == POST) {
     unlink(request->getFileName().c_str());
   }
@@ -223,6 +222,8 @@ void WebServer::cleanupClientConnection(
   delete response;
   response = NULL;
   request = NULL;
+  connected_clients.push_back(
+        new HttpRequest(fd, map_configs[server_fd] , server_fd));
 }
 std::string HttpResponse::extractBodyFromFile(const std::string &filename) {
   std::ifstream file(filename);
@@ -524,6 +525,7 @@ bool WebServer::is_request(int fd) {
 void WebServer::run() {
   puts("\033[1;34m[SERVER] Running...\033[0m");
   try {
+    
     int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
     cout << "nev = " << nev << endl;
     if (nev == 0) {
@@ -538,6 +540,7 @@ void WebServer::run() {
       bool is_server_socket = false;
       int event_fd = events[i].ident;
       int filter = events[i].filter;
+      
       for (size_t i = 0; i < serverSockets.size(); i++) {
         puts("\033[1;34m[SERVER] Checking server socket...\033[0m");
         if (serverSockets[i].getServer_fd() == event_fd) {
@@ -595,16 +598,16 @@ void WebServer::run() {
             puts("\033[1;34m[SERVER] Timer event for client...\033[0m");
             cout << events[i].ident << endl;
             if (!is_request(events[i].ident)) {
-            struct kevent changes[1];
-            close(events[i].ident);
-            EV_SET(&changes[0], events[i].ident, EVFILT_TIMER, EV_DELETE, 0, 0,
-                   NULL);
-            if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+              struct kevent changes[1];
               close(events[i].ident);
-              throw std::runtime_error(
-                  "Error removing timer event for client socket: " +
-                  std::string(strerror(errno)));
-            }
+              EV_SET(&changes[0], events[i].ident, EVFILT_TIMER, EV_DELETE, 0,
+                     0, NULL);
+              if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+                close(events[i].ident);
+                throw std::runtime_error(
+                    "Error removing timer event for client socket: " +
+                    std::string(strerror(errno)));
+              }
             }
           }
         } else if (filter == EVFILT_READ) {
