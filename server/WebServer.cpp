@@ -34,6 +34,7 @@ void WebServer::initialize_kqueue() {
 }
 
 void WebServer::addServerSocket(ServerConfig &conf) {
+  // static int test = 0;
 
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
     try {
@@ -41,12 +42,16 @@ void WebServer::addServerSocket(ServerConfig &conf) {
         for (size_t j = 0; j < serverSockets.size(); j++) {
           if (serverSockets[i].getPort() == conf.getPorts()[i] &&
               serverSockets[i].getHost() == conf.getHost()) {
+
+                // cout << serverSockets[i].getPort() << "  "
+                //      << serverSockets[i].getHost() << "  "
+                //      << conf.getPorts()[i] << "  "
+                //      << conf.getHost() << endl;
             serverSockets[i].configs.push_back(conf);
             return;
           }
         }
       }
-
       ServerSocket newSocket(conf.getPorts()[i], conf);
       newSocket.bind_socket();
       newSocket.start_listen();
@@ -58,6 +63,7 @@ void WebServer::addServerSocket(ServerConfig &conf) {
         throw std::runtime_error("Error monitoring socket with kevent: " +
                                  std::string(strerror(errno)));
       }
+      
       serverSockets.push_back(newSocket);
       serverSockets[serverSockets.size() - 1].configs.push_back(conf);
 
@@ -67,6 +73,10 @@ void WebServer::addServerSocket(ServerConfig &conf) {
       std::exit(EXIT_FAILURE);
     }
   }
+  // if (test == 1) {
+  //   exit(0);
+  // }
+  // test++;
 }
 
 WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
@@ -78,6 +88,7 @@ WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
   fileContent << file.rdbuf();
   this->_data = fileContent.str();
   this->dataConfigFile();
+
   for (size_t i = 0; i < config.size(); i++) {
     addServerSocket(config[i]);
   }
@@ -85,7 +96,6 @@ WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
 
 void WebServer::handle_new_connection(int server_fd) {
   int client_fd = accept(server_fd, NULL, NULL);
-
   if (client_fd == -1) {
     throw std::runtime_error("Error accepting client connection: " +
                              std::string(strerror(errno)));
@@ -100,13 +110,20 @@ void WebServer::handle_new_connection(int server_fd) {
     throw std::runtime_error("Error monitoring client socket: " +
                              std::string(strerror(errno)));
   }
+
   ServerSocket server_socket;
+
   for (size_t i = 0; i < serverSockets.size(); ++i) {
     if (serverSockets[i].getServer_fd() == server_fd) {
       server_socket = serverSockets[i];
       break;
     }
   }
+  // for (size_t i = 0; i < server_socket.configs.size(); ++i) {
+  //   cout << "------------->" << server_socket.getServer_fd() << "  "
+  //        << server_socket.configs[i].getHost() << " "
+  //        << server_socket.configs[i].getPorts()[0] << "\n";
+  // }
   try {
 
     connected_clients.push_back(new HttpRequest(client_fd, server_socket));
