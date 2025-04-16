@@ -67,15 +67,16 @@ int HttpRequest::handleDeleteRequest(std::string filePath) {
 }
 
 ServerConfig  HttpRequest::validServerConfig() {
-  cout << this->server_configs.size() << "\n";
-  // string host;
-  ServerConfig config;
-  // host = headers["HOST"];
-  // for (size_t i = 0; i < configs.size(); ++i) {
-  //   cout <<"=>>>"<<configs[i]->serverName << endl;
-  // }
-
-  return config;
+  string host;
+  host = this->mapheaders["HOST"];
+  size_t pos = host.find(":");
+  host = host.substr(0,pos);
+  for (size_t i = 0; i < this->server_configs.size(); ++i) {
+    if (this->server_configs[i].serverName == host) {
+      return (this->server_configs[i]);
+    }
+  }
+  return (this->server_configs[0]);
 }
 
 void HttpRequest::handleRequest() {
@@ -94,6 +95,7 @@ void HttpRequest::handleRequest() {
   parsePartRequest(str_parse);
   if (getendHeaders() == 1) {
     setServerConfig(validServerConfig());
+    checkPathIscgi(this->dataFirstLine[1]); /////
   }
   if (getendHeaders() == 1 && this->requestStatus != 0) {
     return;
@@ -117,8 +119,8 @@ HttpRequest::HttpRequest(int client_fd, ServerSocket server_socket)
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   this->server_fd = server_socket.getServer_fd();
-  server_configs = server_socket.configs;
-  cout << "size-------test------>" << server_socket.configs.size() << "\n";
+  this->server_configs = server_socket.configs;
+  cout << "size->>>>>" << server_configs.size() << endl;
   this->server_socket = server_socket;
   _post = NULL;
 }
@@ -279,7 +281,6 @@ int HttpRequest::defineTypeMethod(string firstline) {
   }
   this->dataFirstLine = words;
   requestLine();
-  checkPathIscgi(this->dataFirstLine[1]);
   if (words[0] == "GET")
     return (1);
   else if (words[0] == "POST")

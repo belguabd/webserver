@@ -47,7 +47,7 @@ private:
 
 public:
   ServerSocket server_socket;
-  std::vector<ServerConfig *> server_configs;
+  std::vector<ServerConfig> server_configs;
   string getBodyCgi() const { return body_cgi; }
 
   // Setter for body_cgi

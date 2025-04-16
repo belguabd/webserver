@@ -34,14 +34,20 @@ void WebServer::initialize_kqueue() {
 }
 
 void WebServer::addServerSocket(ServerConfig &conf) {
+  // static int test = 0;
 
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
     try {
-      if (serverSockets.size() > 1) {
+      if (serverSockets.size() >= 1) {
         for (size_t j = 0; j < serverSockets.size(); j++) {
           if (serverSockets[i].getPort() == conf.getPorts()[i] &&
               serverSockets[i].getHost() == conf.getHost()) {
-            serverSockets[i].configs.push_back(&conf);
+
+                // cout << serverSockets[i].getPort() << "  "
+                //      << serverSockets[i].getHost() << "  "
+                //      << conf.getPorts()[i] << "  "
+                //      << conf.getHost() << endl;
+            serverSockets[i].configs.push_back(conf);
             return;
           }
         }
@@ -57,14 +63,20 @@ void WebServer::addServerSocket(ServerConfig &conf) {
         throw std::runtime_error("Error monitoring socket with kevent: " +
                                  std::string(strerror(errno)));
       }
+      
       serverSockets.push_back(newSocket);
-      newSocket.configs.push_back(&conf);
+      serverSockets[serverSockets.size() - 1].configs.push_back(conf);
+
     } catch (std::exception &e) {
       closeAllSockets();
       std::cerr << "Error: " << e.what() << std::endl;
       std::exit(EXIT_FAILURE);
     }
   }
+  // if (test == 1) {
+  //   exit(0);
+  // }
+  // test++;
 }
 
 WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
@@ -76,6 +88,7 @@ WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
   fileContent << file.rdbuf();
   this->_data = fileContent.str();
   this->dataConfigFile();
+
   for (size_t i = 0; i < config.size(); i++) {
     addServerSocket(config[i]);
   }
@@ -97,14 +110,20 @@ void WebServer::handle_new_connection(int server_fd) {
     throw std::runtime_error("Error monitoring client socket: " +
                              std::string(strerror(errno)));
   }
+
   ServerSocket server_socket;
+
   for (size_t i = 0; i < serverSockets.size(); ++i) {
     if (serverSockets[i].getServer_fd() == server_fd) {
       server_socket = serverSockets[i];
       break;
     }
   }
-
+  // for (size_t i = 0; i < server_socket.configs.size(); ++i) {
+  //   cout << "------------->" << server_socket.getServer_fd() << "  "
+  //        << server_socket.configs[i].getHost() << " "
+  //        << server_socket.configs[i].getPorts()[0] << "\n";
+  // }
   try {
 
     connected_clients.push_back(new HttpRequest(client_fd, server_socket));
@@ -191,7 +210,7 @@ void WebServer::keepClientConnectionOpen(
     std::vector<HttpRequest *>::iterator iter_req,
     std::vector<HttpResponse *>::iterator it) {
   ServerSocket server_socket = request->server_socket;
-  cout <<  "---------here------" << server_socket.getPort() << "\n";
+  cout << "---------here------" << server_socket.getPort() << "\n";
 
   struct kevent changes[2];
   int fd = (*it)->request->getfd();
@@ -313,13 +332,13 @@ void WebServer::respond_to_client(int event_fd) {
     }
   }
 }
-int checkports(vector <int>&portserver1,vector <int>&portserver2)
-{
+int checkports(vector<int> &portserver1, vector<int> &portserver2) {
   for (size_t i = 0; i < portserver1.size(); ++i) {
-        if (find(portserver2.begin(), portserver2.end(), portserver1[i]) != portserver2.end()) {
-            return 1;
-        }
+    if (find(portserver2.begin(), portserver2.end(), portserver1[i]) !=
+        portserver2.end()) {
+      return 1;
     }
+  }
   return 0;
 }
 int beforStart(string str) {
@@ -369,15 +388,15 @@ void WebServer::separateServer() {
     strserv = strserv.substr(end + 1);
     ServerConfig conf(server);
     conf.parseServerConfig(server);
-    if (conf.getHost()=="127.0.0.1") {
+    if (conf.getHost() == "127.0.0.1") {
       conf.setHost("localhost");
     }
     for (size_t i = 0; i < config.size(); i++) {
       if (config[i].getHost() == conf.getHost()) {
         if (config[i].serverName == conf.serverName) {
-          if (checkports(config[i].ports,conf.ports)==1) {
-                  cout << "Error: same ports host servername" << endl;
-          exit(0);
+          if (checkports(config[i].ports, conf.ports) == 1) {
+            cout << "Error: same ports host servername" << endl;
+            exit(0);
           }
         }
       }
@@ -397,7 +416,8 @@ void WebServer::separateServer() {
 void WebServer ::dataConfigFile() {
   this->_data = removeComments(this->_data);
   this->separateServer();
-  // for (vector<ServerConfig>::iterator it = this->config.begin(); it != this->config.end(); ++it) {
+  // for (vector<ServerConfig>::iterator it = this->config.begin(); it !=
+  // this->config.end(); ++it) {
   //   cout << it->getHost() << endl;
   //   cout << it->getPorts().at(0)<<endl;
   //   cout << it->serverName << endl;

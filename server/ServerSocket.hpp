@@ -19,7 +19,7 @@ private:
 
 public:
   ServerSocket();
-  std::vector<ServerConfig *> configs;
+  std::vector<ServerConfig> configs;
   ServerSocket(int port, ServerConfig conf);
   void bind_socket();
   void start_listen();
