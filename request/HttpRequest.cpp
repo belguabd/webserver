@@ -120,7 +120,6 @@ HttpRequest::HttpRequest(int client_fd, ServerSocket server_socket)
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   this->server_fd = server_socket.getServer_fd();
   this->server_configs = server_socket.configs;
-  cout << "size->>>>>" << server_configs.size() << endl;
   this->server_socket = server_socket;
   _post = NULL;
 }
@@ -480,7 +479,6 @@ void HttpRequest ::parsePartRequest(string str_parse) {
 
   if (str_parse.find("\r\n\r\n") != std::string::npos) {
     this->endHeaders = 1;
-    std::cout << "host : " << mapheaders["HOST"] << std::endl;
     if (mapheaders.find("HOST") == mapheaders.end())
       requestStatus = 400;
     // else if (mapheaders["HOST"].empty() )
