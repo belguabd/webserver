@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 ServerSocket::ServerSocket(int port, ServerConfig conf) {
+
   int status;
   std::memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_INET;
@@ -16,6 +17,8 @@ ServerSocket::ServerSocket(int port, ServerConfig conf) {
                              std::string(gai_strerror(status)));
   }
   server_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+  this->_port = port;
+  this->_host = conf.getHost();
   if (server_fd < 0) {
     throw std::runtime_error("Socket creation failed");
   }
@@ -27,6 +30,8 @@ ServerSocket::ServerSocket(int port, ServerConfig conf) {
   }
 }
 
+int ServerSocket::getPort() const { return _port; }
+std::string ServerSocket::getHost() const { return _host; }
 void ServerSocket::bind_socket() {
   if (bind(server_fd, res->ai_addr, res->ai_addrlen) == -1) {
     close(server_fd);
@@ -42,4 +47,5 @@ void ServerSocket::start_listen() {
   }
 }
 
+ServerSocket::ServerSocket() {}
 ServerSocket::~ServerSocket() {}
