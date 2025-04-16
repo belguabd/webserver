@@ -76,10 +76,6 @@ http://localhost:8080/cgi/login/index.php
 
 
 headers localhost:8080
-2025-04-13 19:11:45.725 leaks[69854:2331197] *** Symbolication:  no introspect structure for malloc zone asan_0x1062b1c40
-2025-04-13 19:11:45.913 leaks[69854:2331197] *** Symbolication:  no introspect structure for malloc zone asan_0x1062b1c40
-leaks[69854]: [fatal] unable to instantiate a memory scanner.
-
 
 /UPLOAD/upload1.html --> POST --> /UPLOAD/upload1.html
 /UPLOAD/upload2.html--> POST ---> /UPLOAD/upload2.html
@@ -92,3 +88,13 @@ Content-type: *
 
 post cgi 
 type connition 
+
+
+ports / / / 
+host =
+server_name locahost
+-----------------------------------------
+ports / + +
+host =
+server_name locahost
+if (

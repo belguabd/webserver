@@ -17,9 +17,9 @@
 #include <vector>
 #include <unordered_map>
 #define DEFAULTINDEX "/indexServer.html"
-#define DEFAULTROOT "doc/html"
-#define UPLOADSUCESSE "doc/html/uploadsucsse.html"
-#define DELETESUCESSE "doc/html/deletesucess.html"
+#define DEFAULTROOT "default/html"
+#define UPLOADSUCESSE "default/html/uploadsucsse.html"
+#define DELETESUCESSE "default/html/deletesucess.html"
 using namespace std;
 class HttpResponse {
 private:

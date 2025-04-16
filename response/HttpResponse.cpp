@@ -20,7 +20,7 @@ string statusText(int status) {
   } else if (status==413){
     text = "413 Request Entity Too Large\r\n";
   } else if(status==500) {
-    text = "500 Internal Server Error\r\n";///
+    text = "500 Internal Server Error\r\n";
   } else if(status==504) {
     text = "504 Gateway Timeout\r\n";
   } else if (status==505){
@@ -264,6 +264,7 @@ void HttpResponse::getResponse() {
   }
   path = config.getRoot();
   if (words[1]=="/") {
+    path = DEFAULTROOT;
     path += DEFAULTINDEX;
     if (checkTypePath(path) == 0) {
       this->sendErrorPage(config, 404);

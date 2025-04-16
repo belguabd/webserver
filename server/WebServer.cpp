@@ -282,7 +282,6 @@ void WebServer::respond_to_client(int event_fd) {
     try {
       if (request->typeConnection == "keep-alive") {
         cleanupClientConnection(request, response, iter_req, it);
-        // shutdown(event_fd, SHUT_RDWR);
       } else {
         cleanupClientConnection(request, response, iter_req, it);
         close(event_fd);
@@ -291,6 +290,15 @@ void WebServer::respond_to_client(int event_fd) {
       throw std::runtime_error(e.what());
     }
   }
+}
+int checkports(vector <int>&portserver1,vector <int>&portserver2)
+{
+  for (size_t i = 0; i < portserver1.size(); ++i) {
+        if (find(portserver2.begin(), portserver2.end(), portserver1[i]) != portserver2.end()) {
+            return 1;
+        }
+    }
+  return 0;
 }
 int beforStart(string str) {
   if (str.empty())
@@ -339,13 +347,20 @@ void WebServer::separateServer() {
     strserv = strserv.substr(end + 1);
     ServerConfig conf(server);
     conf.parseServerConfig(server);
+    if (conf.getHost()=="127.0.0.1") {
+      conf.setHost("localhost");
+    }
     for (size_t i = 0; i < config.size(); i++) {
       if (config[i].getHost() == conf.getHost()) {
-        sig = true;
+        if (config[i].serverName == conf.serverName) {
+          if (checkports(config[i].ports,conf.ports)==1) {
+                  cout << "Error: same ports host servername" << endl;
+          exit(0);
+          }
+        }
       }
     }
-    if (!sig)
-      this->config.push_back(conf);
+    this->config.push_back(conf);
     found = true;
     pos = 0;
   }
@@ -360,8 +375,12 @@ void WebServer::separateServer() {
 void WebServer ::dataConfigFile() {
   this->_data = removeComments(this->_data);
   this->separateServer();
-  // this->validbrackets();
-  // this->parseServerConfig();
+  // for (vector<ServerConfig>::iterator it = this->config.begin(); it != this->config.end(); ++it) {
+  //   cout << it->getHost() << endl;
+  //   cout << it->getPorts().at(0)<<endl;
+  //   cout << it->serverName << endl;
+  //   cout <<"----------------------------------------------------"<<endl;
+  // }
 }
 
 /*----------------------------------------------------*/

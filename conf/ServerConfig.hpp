@@ -11,7 +11,7 @@
 #include <dirent.h>
 using namespace std;
 #define REDCOLORE "\033[31m"
-#define DEFAULTUPLOAD "www/upload"
+#define DEFAULTUPLOAD "default/upload"
 
 struct LocationConfig {
   string _root;
@@ -28,13 +28,14 @@ class ServerConfig
 {
     private:
         string data;
-        string host;//d
-        string root;//d
+        string host;
+        string root;
         size_t client_max_body_size;
     public:
         map<string,string> errorpage;
         map<string, LocationConfig> location;
         int typeUrl;
+        string serverName;
         vector<int> ports; //d
         ServerConfig(){};
         ServerConfig(string &str);
@@ -49,6 +50,7 @@ class ServerConfig
         string getHost(){return  host;}
         // bool getAutoindex(){return  autoindex;}
         string getRoot() const {return this->root;}
+        void  setHost(string _host) { this->host = _host;}
         // string getServerName(){return  server_name;}
       std::vector<int> getPorts(){return ports;}
       // map <string ,LocationConfig> &getConfigUpload() {return configUpload;}

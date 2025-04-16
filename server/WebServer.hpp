@@ -58,3 +58,4 @@ public:
   void separateServer();
 };
 void dataBeforServer(string str);
+int checkports(vector <int>&portserver1,vector <int>&portserver2);

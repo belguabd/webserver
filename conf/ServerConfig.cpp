@@ -344,7 +344,9 @@ void ServerConfig :: setVal(string &str,string &val)
         }
         this->ports.push_back(a);
         
-    }else if (str == "error_page") {
+    } else if (str == "server_name") {
+        this->serverName = val;
+    } else if (str == "error_page") {
         vector <string > words;
         words = splitstring(val);
         if (words.size()==0 || words.size()==1) {
@@ -457,7 +459,7 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
         }
         if (firstWord == "listen" || firstWord == "host"
             || firstWord == "client_max_body_size"
-            || firstWord == "error_page" || firstWord == "root") {
+            || firstWord == "error_page" || firstWord == "root"|| firstWord == "server_name") {
             size_t pos = line.find(";");
             if (pos == string::npos) {
                cout <<REDCOLORE<< "ERROR : unexpected " <<"\"" <<firstWord <<"\""<< endl;
@@ -479,7 +481,11 @@ void ServerConfig :: checkGlobalConfig(string strConfig) {
             checkcontent(line);
         }
     }
-    if (words.size() != 4) {
+    if (this->serverName.empty()) {
+        words.insert("localhost");
+        this->serverName = "localhost";
+    }
+    if (words.size() != 5) {
         cout <<REDCOLORE<< "ERROR : invalid number of arguments"<< endl;
         exit(0);
     }
