@@ -34,20 +34,18 @@ void WebServer::initialize_kqueue() {
 }
 
 void WebServer::addServerSocket(ServerConfig &conf) {
-  // static int test = 0;
-
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
     try {
       if (serverSockets.size() >= 1) {
         for (size_t j = 0; j < serverSockets.size(); j++) {
-          if (serverSockets[i].getPort() == conf.getPorts()[i] &&
-              serverSockets[i].getHost() == conf.getHost()) {
+          if (serverSockets[j].getPort() == conf.getPorts()[i] &&
+              serverSockets[j].getHost() == conf.getHost()) {
 
                 // cout << serverSockets[i].getPort() << "  "
                 //      << serverSockets[i].getHost() << "  "
                 //      << conf.getPorts()[i] << "  "
                 //      << conf.getHost() << endl;
-            serverSockets[i].configs.push_back(conf);
+            serverSockets[j].configs.push_back(conf);
             return;
           }
         }
@@ -119,11 +117,6 @@ void WebServer::handle_new_connection(int server_fd) {
       break;
     }
   }
-  // for (size_t i = 0; i < server_socket.configs.size(); ++i) {
-  //   cout << "------------->" << server_socket.getServer_fd() << "  "
-  //        << server_socket.configs[i].getHost() << " "
-  //        << server_socket.configs[i].getPorts()[0] << "\n";
-  // }
   try {
 
     connected_clients.push_back(new HttpRequest(client_fd, server_socket));
@@ -210,8 +203,6 @@ void WebServer::keepClientConnectionOpen(
     std::vector<HttpRequest *>::iterator iter_req,
     std::vector<HttpResponse *>::iterator it) {
   ServerSocket server_socket = request->server_socket;
-  cout << "---------here------" << server_socket.getPort() << "\n";
-
   struct kevent changes[2];
   int fd = (*it)->request->getfd();
   // Remove the write event (EVFILT_WRITE)
@@ -233,7 +224,13 @@ void WebServer::keepClientConnectionOpen(
   delete response;
   response = NULL;
   request = NULL;
+  try{
   connected_clients.push_back(new HttpRequest(fd, server_socket));
+  }
+  catch (std::exception &e) {
+    throw std::runtime_error("Error creating HttpRequest object: " +
+                             std::string(strerror(errno)));
+  }
 }
 void WebServer::terminateClientConnection(
 
@@ -308,7 +305,6 @@ void WebServer::respond_to_client(int event_fd) {
       break;
     }
   }
-
   if (request->checkCgi && request->Is_open) {
     request->setBodyCgi(response->extractBodyFromFile(request->filename));
     request->Is_open = 0;
@@ -590,11 +586,6 @@ void WebServer::run() {
   try {
 
     int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
-    cout << "nev = " << nev << endl;
-    if (nev == 0) {
-      puts("\033[1;34m[SERVER] No events detected...\033[0m");
-      return;
-    }
     if (nev == -1)
       throw std::runtime_error("kevent failed: " +
                                std::string(strerror(errno)));
@@ -664,7 +655,6 @@ void WebServer::run() {
             }
           } else {
             puts("\033[1;34m[SERVER] Timer event for client...\033[0m");
-            cout << events[i].ident << endl;
             if (!is_request(events[i].ident)) {
               struct kevent changes[1];
               close(events[i].ident);
