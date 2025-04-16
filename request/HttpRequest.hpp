@@ -1,5 +1,6 @@
 #pragma once
 #include "../conf/ServerConfig.hpp"
+#include "../server/ServerSocket.hpp"
 #include "./Post/Post.hpp"
 #include <algorithm>
 #include <cstring>
@@ -31,7 +32,9 @@ private:
   map<string, string> queryParam;
   string queryString;
   std::string readBuffer;
+
   ServerConfig server_config;
+
   string file;
   std::string buffer_cgi;
   bool isCGi;
@@ -43,6 +46,8 @@ private:
   void handlePost();
 
 public:
+  ServerSocket server_socket;
+  std::vector<ServerConfig *> server_configs;
   string getBodyCgi() const { return body_cgi; }
 
   // Setter for body_cgi
@@ -51,7 +56,7 @@ public:
   int checkCgi;
   int Is_open;
 
-  int  server_fd;
+  int server_fd;
   string typeConnection;
   int cgiExtension;
   string rootcgi;
@@ -61,6 +66,7 @@ public:
   int status_code;
 
   string filename;
+
   int parseFiledLine(std::string &headers);
   std::string &parseFiledLineName(std::string &filedLine);
   int getCgi() { return cgi_fd; }
@@ -73,7 +79,7 @@ public:
   ServerConfig &getServerConf() { return this->server_config; }
   map<string, string> mapheaders;
   int _method;
-  HttpRequest(int client_fd, ServerConfig &server_config , int server_fd);
+  HttpRequest(int client_fd, ServerSocket server_socket);
   ~HttpRequest();
   /*    --------------*/
   int setDataCgi(string data, ServerConfig &config,
@@ -125,5 +131,6 @@ string encodeUrl(string &str);
 int indexValidPath(string str);
 bool fileExists(std::string &filePath);
 string convertToUpper(string str);
-string findMatchingLocation(const string& uri, const map<string, LocationConfig>& locations);
-bool pathExists(string & path);
+string findMatchingLocation(const string &uri,
+                            const map<string, LocationConfig> &locations);
+bool pathExists(string &path);

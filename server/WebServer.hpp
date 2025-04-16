@@ -13,7 +13,6 @@
 #include "../request/HttpRequest.hpp"
 #include "../response/HttpResponse.hpp"
 #include "ServerSocket.hpp"
-#include <unordered_map>
 
 class WebServer {
 private:
@@ -23,11 +22,13 @@ private:
   std::vector<ServerSocket> serverSockets;
   std::vector<ServerConfig> config;
   std::map<int, ServerConfig> map_configs;
-  std::unordered_map<pid_t, HttpRequest *> cgi_requests;
   std::vector<pid_t> pids_cgi;
+  std::vector<std::string> fileNamesCgi;
+  std::map<ServerSocket, std::vector<ServerConfig> > socket_configs;
 
   std::map<int, HttpRequest *> pipe_fds;
   std::map<int, pid_t> pid_processes;
+
   struct kevent events[MAX_EVENTS];
   int max_events;
   void initialize_kqueue();
@@ -48,9 +49,12 @@ public:
   bool isRequest(int fd);
   bool isCGIRequest(int client_fd);
   void pipe_read(int fd);
-  void cleanupClientConnection(HttpRequest *request, HttpResponse *response,
-                               std::vector<HttpRequest *>::iterator iter_req,
-                               std::vector<HttpResponse *>::iterator it);
+  void keepClientConnectionOpen(HttpRequest *request, HttpResponse *response,
+                                std::vector<HttpRequest *>::iterator iter_req,
+                                std::vector<HttpResponse *>::iterator it);
+  void terminateClientConnection(HttpRequest *request, HttpResponse *response,
+                                 std::vector<HttpRequest *>::iterator iter_req,
+                                 std::vector<HttpResponse *>::iterator it);
   void run_script(HttpRequest *request, std::vector<char *> args,
                   std::vector<char *> envp);
   void run();

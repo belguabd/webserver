@@ -26,6 +26,7 @@ int main(int arc, char **arv) {
   string str = arv[1];
   WebServer server(str);
   // makeFileEmpty(CURREQ);
-  while (true)
+  while (1337)
     server.run();
+  cout << "Server stopped." << endl;
 }

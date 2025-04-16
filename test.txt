@@ -92,3 +92,4 @@ Content-type: *
 
 post cgi 
 type connition 
+---------> if (errno == EACCES || errno == EPERM)

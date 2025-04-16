@@ -1,5 +1,6 @@
 
 #include "WebServer.hpp"
+#include "ServerSocket.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
@@ -31,10 +32,20 @@ void WebServer::initialize_kqueue() {
     std::exit(EXIT_FAILURE);
   }
 }
+
 void WebServer::addServerSocket(ServerConfig &conf) {
 
   for (size_t i = 0; i < conf.getPorts().size(); i++) {
     try {
+      if (serverSockets.size() > 1) {
+        for (size_t j = 0; j < serverSockets.size(); j++) {
+          if (serverSockets[i].getPort() == conf.getPorts()[i] &&
+              serverSockets[i].getHost() == conf.getHost()) {
+            serverSockets[i].configs.push_back(&conf);
+            return;
+          }
+        }
+      }
       ServerSocket newSocket(conf.getPorts()[i], conf);
       newSocket.bind_socket();
       newSocket.start_listen();
@@ -46,9 +57,8 @@ void WebServer::addServerSocket(ServerConfig &conf) {
         throw std::runtime_error("Error monitoring socket with kevent: " +
                                  std::string(strerror(errno)));
       }
-
       serverSockets.push_back(newSocket);
-      map_configs[newSocket.getServer_fd()] = conf;
+      newSocket.configs.push_back(&conf);
     } catch (std::exception &e) {
       closeAllSockets();
       std::cerr << "Error: " << e.what() << std::endl;
@@ -72,30 +82,6 @@ WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
 }
 
 void WebServer::handle_new_connection(int server_fd) {
-
-  // struct sockaddr_in client_addr;
-  // socklen_t client_len = sizeof(client_addr);
-
-  // int client_fd =
-  //     accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
-
-  // struct sockaddr_in server_info;
-  // socklen_t server_len = sizeof(server_info);
-  // if (getsockname(server_fd, (struct sockaddr *)&server_info, &server_len) ==
-  //     -1) {
-  //   std::cerr << "Error getting server address: " << strerror(errno)
-  //             << std::endl;
-  //   close(client_fd);
-  //   close(server_fd);
-  //   return;
-  // }
-  // char server_ip[INET_ADDRSTRLEN];
-  // inet_ntop(AF_INET, &(server_info.sin_addr), server_ip, INET_ADDRSTRLEN);
-  // int server_port = ntohs(server_info.sin_port);
-
-  // std::cout << "Client connected to server at IP: " << server_ip
-  //           << " Port: " << server_port << std::endl;
-
   int client_fd = accept(server_fd, NULL, NULL);
   if (client_fd == -1) {
     throw std::runtime_error("Error accepting client connection: " +
@@ -103,18 +89,25 @@ void WebServer::handle_new_connection(int server_fd) {
   }
   struct kevent changes[2]; // Two events: READ + TIMER
   EV_SET(&changes[0], client_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-  EV_SET(&changes[1], client_fd, EVFILT_TIMER, EV_ADD | EV_ENABLE,
-  NOTE_SECONDS,
-         10, NULL); // 10-second timeout
+  EV_SET(&changes[1], client_fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS,
+         30, NULL); // 10-second timeout
 
   if (kevent(kqueue_fd, changes, 2, NULL, 0, NULL) == -1) {
     close(client_fd);
     throw std::runtime_error("Error monitoring client socket: " +
                              std::string(strerror(errno)));
   }
+  ServerSocket server_socket;
+  for (size_t i = 0; i < serverSockets.size(); ++i) {
+    if (serverSockets[i].getServer_fd() == server_fd) {
+      server_socket = serverSockets[i];
+      break;
+    }
+  }
+
   try {
-    connected_clients.push_back(
-        new HttpRequest(client_fd, map_configs[server_fd] , server_fd));
+
+    connected_clients.push_back(new HttpRequest(client_fd, server_socket));
   } catch (std::exception &e) {
     close(client_fd);
     throw std::runtime_error("Error creating HttpRequest object: " +
@@ -135,9 +128,7 @@ void WebServer::receive_from_client(int event_fd) {
       break;
     }
   }
-  // if (!request) {
-  //   return;
-  // }
+
   request->is_client_disconnected = false;
   request->setRequestStatus(0);
   ssize_t bytes_read = request->readData();
@@ -146,9 +137,9 @@ void WebServer::receive_from_client(int event_fd) {
                              std::to_string(event_fd) + ": " +
                              std::string(strerror(errno)));
   } else if (bytes_read == 0) {
-    std::cout
-        << "\033[1;34mConnection closed gracefully by request (client_fd: "
-        << event_fd << ")\033[0m" << std::endl;
+    // std::cout
+    //     << "\033[1;34mConnection closed gracefully by request (client_fd: "
+    //     << event_fd << ")\033[0m" << std::endl;
     request->is_client_disconnected = true;
   }
   if (request->is_client_disconnected) {
@@ -194,12 +185,13 @@ void WebServer::receive_from_client(int event_fd) {
   }
 }
 
-void WebServer::cleanupClientConnection(
+void WebServer::keepClientConnectionOpen(
 
     HttpRequest *request, HttpResponse *response,
     std::vector<HttpRequest *>::iterator iter_req,
     std::vector<HttpResponse *>::iterator it) {
-    int server_fd = request->server_fd;
+  ServerSocket server_socket = request->server_socket;
+  cout <<  "---------here------" << server_socket.getPort() << "\n";
 
   struct kevent changes[2];
   int fd = (*it)->request->getfd();
@@ -211,7 +203,7 @@ void WebServer::cleanupClientConnection(
     cerr << "Error adding read event: " << strerror(errno) << endl;
     throw std::runtime_error("Error adding read event: " +
                              std::string(strerror(errno)));
-  } 
+  }
   if (request->_method == POST) {
     unlink(request->getFileName().c_str());
   }
@@ -222,8 +214,33 @@ void WebServer::cleanupClientConnection(
   delete response;
   response = NULL;
   request = NULL;
-  connected_clients.push_back(
-        new HttpRequest(fd, map_configs[server_fd] , server_fd));
+  connected_clients.push_back(new HttpRequest(fd, server_socket));
+}
+void WebServer::terminateClientConnection(
+
+    HttpRequest *request, HttpResponse *response,
+    std::vector<HttpRequest *>::iterator iter_req,
+    std::vector<HttpResponse *>::iterator it) {
+  int server_fd = request->server_fd;
+
+  struct kevent changes[1];
+  int fd = (*it)->request->getfd();
+  EV_SET(&changes[0], fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+  if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+    cerr << "Error adding read event: " << strerror(errno) << endl;
+    throw std::runtime_error("Error adding read event: " +
+                             std::string(strerror(errno)));
+  }
+  if (request->_method == POST) {
+    unlink(request->getFileName().c_str());
+  }
+  unlink(request->filename.c_str());
+  responses_clients.erase(it);
+  connected_clients.erase(iter_req);
+  delete request;
+  delete response;
+  response = NULL;
+  request = NULL;
 }
 std::string HttpResponse::extractBodyFromFile(const std::string &filename) {
   std::ifstream file(filename);
@@ -278,12 +295,17 @@ void WebServer::respond_to_client(int event_fd) {
     request->Is_open = 0;
   }
   ssize_t bytes_written = response->writeData();
+  if (bytes_written == -1 && bytes_written == 0) {
+    terminateClientConnection(request, response, iter_req, it);
+    close(event_fd);
+    return;
+  }
   if (response->complete == 1) {
     try {
       if (request->typeConnection == "keep-alive") {
-        cleanupClientConnection(request, response, iter_req, it);
+        keepClientConnectionOpen(request, response, iter_req, it);
       } else {
-        cleanupClientConnection(request, response, iter_req, it);
+        terminateClientConnection(request, response, iter_req, it);
         close(event_fd);
       }
     } catch (std::exception &e) {
@@ -370,6 +392,8 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
   std::stringstream ss;
   ss << "cgi" << request->getfd();
   request->filename = ss.str();
+  this->fileNamesCgi.push_back(request->filename);
+
   int fd = open(request->filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
   if (fd < 0) {
     throw std::runtime_error("Failed to open file: " +
@@ -524,7 +548,7 @@ bool WebServer::is_request(int fd) {
 void WebServer::run() {
   puts("\033[1;34m[SERVER] Running...\033[0m");
   try {
-    
+
     int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
     cout << "nev = " << nev << endl;
     if (nev == 0) {
@@ -539,7 +563,7 @@ void WebServer::run() {
       bool is_server_socket = false;
       int event_fd = events[i].ident;
       int filter = events[i].filter;
-      
+
       for (size_t i = 0; i < serverSockets.size(); i++) {
         puts("\033[1;34m[SERVER] Checking server socket...\033[0m");
         if (serverSockets[i].getServer_fd() == event_fd) {
@@ -552,9 +576,11 @@ void WebServer::run() {
         handle_new_connection(event_fd);
       } else {
         if (events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT)) {
+
           puts("\033[1;34m[SERVER] CGI process exited...\033[0m");
           pid_t pid = events[i].ident;
           HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
+
           if (!req) {
             throw std::runtime_error("Null request pointer");
           }
@@ -577,6 +603,9 @@ void WebServer::run() {
           pid_t pid = events[i].ident;
           if (checkPid(pid)) {
             HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
+            if (!req) {
+              throw std::runtime_error("Null request pointer");
+            }
             req->setRequestStatus(504);
             std::cout << "[SERVER] CGI process " << pid
                       << " timed out! Killing..." << std::endl;
@@ -648,6 +677,10 @@ void WebServer::run() {
         connected_clients.erase(it);
       }
     }
+    for (size_t i = 0; i < fileNamesCgi.size(); i++) {
+      unlink(fileNamesCgi[i].c_str());
+    }
+
     for (size_t i = 0; i < responses_clients.size(); i++) {
       std::vector<HttpResponse *>::iterator it =
           std::find(responses_clients.begin(), responses_clients.end(),
@@ -657,5 +690,7 @@ void WebServer::run() {
         responses_clients.erase(it);
       }
     }
+    close(kqueue_fd);
+    kqueue_fd = kqueue();
   }
 }
