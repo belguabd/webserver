@@ -40,11 +40,6 @@ void WebServer::addServerSocket(ServerConfig &conf) {
         for (size_t j = 0; j < serverSockets.size(); j++) {
           if (serverSockets[j].getPort() == conf.getPorts()[i] &&
               serverSockets[j].getHost() == conf.getHost()) {
-
-                // cout << serverSockets[i].getPort() << "  "
-                //      << serverSockets[i].getHost() << "  "
-                //      << conf.getPorts()[i] << "  "
-                //      << conf.getHost() << endl;
             serverSockets[j].configs.push_back(conf);
             return;
           }
@@ -61,7 +56,7 @@ void WebServer::addServerSocket(ServerConfig &conf) {
         throw std::runtime_error("Error monitoring socket with kevent: " +
                                  std::string(strerror(errno)));
       }
-      
+
       serverSockets.push_back(newSocket);
       serverSockets[serverSockets.size() - 1].configs.push_back(conf);
 
@@ -71,10 +66,6 @@ void WebServer::addServerSocket(ServerConfig &conf) {
       std::exit(EXIT_FAILURE);
     }
   }
-  // if (test == 1) {
-  //   exit(0);
-  // }
-  // test++;
 }
 
 WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
@@ -100,7 +91,8 @@ void WebServer::handle_new_connection(int server_fd) {
   }
   struct kevent changes[2]; // Two events: READ + TIMER
   EV_SET(&changes[0], client_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-  EV_SET(&changes[1], client_fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS,
+  EV_SET(&changes[1], client_fd, EVFILT_TIMER, EV_ADD | EV_ENABLE,
+  NOTE_SECONDS,
          30, NULL); // 10-second timeout
 
   if (kevent(kqueue_fd, changes, 2, NULL, 0, NULL) == -1) {
@@ -145,13 +137,8 @@ void WebServer::receive_from_client(int event_fd) {
   request->setRequestStatus(0);
   ssize_t bytes_read = request->readData();
   if (bytes_read == -1) {
-    throw std::runtime_error("Error receiving data from request " +
-                             std::to_string(event_fd) + ": " +
-                             std::string(strerror(errno)));
+    request->is_client_disconnected = true;
   } else if (bytes_read == 0) {
-    // std::cout
-    //     << "\033[1;34mConnection closed gracefully by request (client_fd: "
-    //     << event_fd << ")\033[0m" << std::endl;
     request->is_client_disconnected = true;
   }
   if (request->is_client_disconnected) {
@@ -224,10 +211,9 @@ void WebServer::keepClientConnectionOpen(
   delete response;
   response = NULL;
   request = NULL;
-  try{
-  connected_clients.push_back(new HttpRequest(fd, server_socket));
-  }
-  catch (std::exception &e) {
+  try {
+    connected_clients.push_back(new HttpRequest(fd, server_socket));
+  } catch (std::exception &e) {
     throw std::runtime_error("Error creating HttpRequest object: " +
                              std::string(strerror(errno)));
   }
@@ -237,8 +223,6 @@ void WebServer::terminateClientConnection(
     HttpRequest *request, HttpResponse *response,
     std::vector<HttpRequest *>::iterator iter_req,
     std::vector<HttpResponse *>::iterator it) {
-  int server_fd = request->server_fd;
-
   struct kevent changes[1];
   int fd = (*it)->request->getfd();
   EV_SET(&changes[0], fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
@@ -311,8 +295,7 @@ void WebServer::respond_to_client(int event_fd) {
   }
   ssize_t bytes_written = response->writeData();
   if (bytes_written == -1 && bytes_written == 0) {
-    terminateClientConnection(request, response, iter_req, it);
-    close(event_fd);
+    terminateClientConnection(request, response, iter_req, it);  
     return;
   }
   if (response->complete == 1) {
@@ -321,6 +304,7 @@ void WebServer::respond_to_client(int event_fd) {
         keepClientConnectionOpen(request, response, iter_req, it);
       } else {
         terminateClientConnection(request, response, iter_req, it);
+        // shutdown(event_fd, SHUT_RDWR);
         close(event_fd);
       }
     } catch (std::exception &e) {
