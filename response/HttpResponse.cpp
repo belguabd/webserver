@@ -36,14 +36,17 @@ string status_line(int client_socket, int status) {
   return firstline;
 }
 
-string headersSending(int client_socket) {
+string HttpResponse:: headersSending(int client_socket) {
   std::string header;
+  ServerConfig config = this->request->getServerConf();
   time_t now = time(0);
   struct tm tstruct = *localtime(&now);
   char buffer[80];
   strftime(buffer, sizeof(buffer), "%a %d %b %Y %H:%M:%S GMT\r\n", &tstruct);
   header += "Date: ";
   header += buffer;
+  header += "Server: ";
+  header += config.serverName + "\r\n";
   return header;
 }
 /*---------------------- Get method------------------------------------------*/

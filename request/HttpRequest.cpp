@@ -46,8 +46,7 @@ int HttpRequest::handleDeleteRequest(std::string filePath) {
       getMatchedLocationUpload(dataFirstLine[1], server_config.location);
   std::string location =
       findMatchingLocation(dataFirstLine[1], server_config.location);
-  size_t pos = filePath.find("/", 2);
-  filePath.replace(0, location.length(), lc._root);
+  filePath.replace(0, location.length()-1, lc._root);
   // if (filePath.substr(0, pos + 1) != "./upload/")
   //   return 405;
   // Check if the file exists
@@ -66,6 +65,19 @@ int HttpRequest::handleDeleteRequest(std::string filePath) {
   return 500;
 }
 
+ServerConfig  HttpRequest::validServerConfig() {
+  string host;
+  host = this->mapheaders["HOST"];
+  size_t pos = host.find(":");
+  host = host.substr(0,pos);
+  for (size_t i = 0; i < this->server_configs.size(); ++i) {
+    if (this->server_configs[i].serverName == host) {
+      return (this->server_configs[i]);
+    }
+  }
+  return (this->server_configs[0]);
+}
+
 void HttpRequest::handleRequest() {
   string str_parse;
   // pasteInFile("currentRequest", readBuffer);
@@ -77,23 +89,26 @@ void HttpRequest::handleRequest() {
       setFirstTimeFlag(1);
       _method = defineTypeMethod(str_parse.substr(0, pos + 2));
       str_parse = str_parse.substr(pos + 2);
-      if (_method == DELETE && this->requestStatus == 0) {
-        this->requestStatus = handleDeleteRequest(dataFirstLine[1]);
-        return;
-      }
     }
   }
   parsePartRequest(str_parse);
+  if (getendHeaders() == 1) {
+    setServerConfig(validServerConfig());
+    checkPathIscgi(this->dataFirstLine[1]); /////
+  }
   if (getendHeaders() == 1 && this->requestStatus != 0) {
     return;
-  } else if ((_method == GET || _method == DELETE) && getendHeaders() == 1)
+  } else if (_method == GET && getendHeaders() == 1) {
     setRequestStatus(200);
-  else if (_method == POST && getendHeaders() == 1) {
+  } else if (_method == POST && getendHeaders() == 1) {
     try {
       handlePost();
     } catch (const std::exception &e) {
       requestStatus = 500;
     }
+  } else if (_method == DELETE && this->requestStatus == 0&& getendHeaders() == 1) {
+    this->requestStatus = handleDeleteRequest(dataFirstLine[1]);
+    return;
   }
 }
 
@@ -264,7 +279,6 @@ int HttpRequest::defineTypeMethod(string firstline) {
   }
   this->dataFirstLine = words;
   requestLine();
-  checkPathIscgi(this->dataFirstLine[1]);
   if (words[0] == "GET")
     return (1);
   else if (words[0] == "POST")

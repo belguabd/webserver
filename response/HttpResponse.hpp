@@ -50,7 +50,8 @@ public:
   void getLocationResponse(LocationConfig &normal,string &str,ServerConfig &config);
   void fileDataSend(string &data,ServerConfig &config);
   void dirDataSend(string &data,string &root,LocationConfig &normal, ServerConfig &config);
-  std::string extractBodyFromFile(const std::string &filename);
+  std::string extractBodyFromFile(const std::string &filename); 
+  string headersSending(int client_socket);
 };
 string findMatchingLocation(const string& uri, const map<string, LocationConfig>& locations);
 int checkTypePath(string &path);
@@ -58,4 +59,3 @@ bool ExistFile(string &filePath);
 string dirAutoindex(string &strlocation ,string &dirPath,string &root);
 string errorPage(int statusCode);
 string	status_line(int client_socket,int status);
-string headersSending(int client_socket, string serverName);

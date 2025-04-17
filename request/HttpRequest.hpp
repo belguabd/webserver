@@ -85,6 +85,7 @@ public:
   int setDataCgi(string data, ServerConfig &config,
                  LocationConfig &structConfig);
   /*    --------------*/
+  void setServerConfig(ServerConfig config) {this->server_config = config;}
   int getRequestStatus() { return this->requestStatus; }
   int readData();
   int getfd() const { return this->client_fd; }
@@ -103,6 +104,7 @@ public:
   void checkHeaders(string &str);
   void checkPathIscgi(string &path);
   void requestLine();
+  ServerConfig validServerConfig ();
   void display() {
     std::cout << "Client fd: " << this->client_fd << std::endl;
     std::cout << "buffer: " << this->readBuffer << std::endl;
@@ -128,9 +130,11 @@ LocationConfig getValueMap(map<string, LocationConfig> &configNormal,
 void printNonPrintableChars(const std::string &str);
 char characterEncodeing(string &tmp);
 string encodeUrl(string &str);
+ServerConfig validServerConfig();
 int indexValidPath(string str);
 bool fileExists(std::string &filePath);
 string convertToUpper(string str);
 string findMatchingLocation(const string &uri,
                             const map<string, LocationConfig> &locations);
 bool pathExists(string &path);
+ServerConfig validServerConfig(vector<ServerConfig *>configs, map<string, string> headers);
