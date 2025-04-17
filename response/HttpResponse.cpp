@@ -327,17 +327,17 @@ int HttpResponse::writeData() {
   if (this->checkDataResev() != 0) {
     return this->bytesSend;
   }
-  if (this->request->checkCgi) {
+  if (this->request->getCheckCgi()) {
      this->cgiResponse();
     return this->bytesSend;
   }
-  if (this->request->_method==GET)
+  if (this->request->getMethod()==GET)
   {
     this->getResponse();
-  } else if (this->request->_method==POST) {
+  } else if (this->request->getMethod()==POST) {
     data = UPLOADSUCESSE;
     this->fileDataSend(data,config);
-  }else if (this->request->_method==DELETE) {
+  }else if (this->request->getMethod()==DELETE) {
     data = DELETESUCESSE;
     std::cout<<this->request->getRequestStatus()<<std::endl;
     this->fileDataSend(data,config);

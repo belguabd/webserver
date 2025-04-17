@@ -8,13 +8,11 @@ void Post::createBodyTypeObject(std::string& buffer) {
 		bound = new Boundary(_queryParam, _bufferBody, _remainingBuffer, _headers, _status, _uploadStore);
 	else if (_bodyType == boundaryChunked) {
 		buffer.insert(0, "\r\n2\r\n\r\n");
-		_bodySize -= 7;
 		boundChunk = new BoundaryChunked(_queryParam, _bufferBody, _remainingBuffer, _headers, _status, _uploadStore);
 	}
 	else if (_bodyType == contentLength) {
 		buffer.erase(0, 2); // to remove \r\n
 		setFileName(_mimeToExtension[_headers["CONTENT_TYPE"]]);
-		// setFileName(_mimeToExtension[_headers["Content-Type"]]);
 	}
 }
 
@@ -24,14 +22,13 @@ std::string &Post::getFileName()
 		return chunk->_fileName;
 	return _fileName;
 }
-Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer, LocationConfig &configUpload)
+Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer, LocationConfig &configUpload, int isCgi)
 :_headers(headers), _queryParam(queryParam)
 , _configUpload(configUpload)
 {
-	// setHeaders(headers);
+	_isCgi = isCgi;
 	setContentLengthSize();
 	_status = 0;
-	_bodySize = 0;
 	if (configUpload._allowed_methods.find("POST") == std::string::npos)
 	{
 		_status = 405; // 405
@@ -39,7 +36,7 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 	}
 	if (_contentLengthSize > _configUpload._client_max_body_size)
 	{
-		std::cout<< "body limits\n";
+		// std::cout << "body limits\n";
 		_status = 413; // ?
 		return ;
 	}
@@ -47,20 +44,14 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 	_uploadStore = _configUpload._upload_store;
 	buffer = "\r\n" + buffer;
 	setBodyType();
-	std::cout<< "body type : " << this->_bodyType << std::endl;
 	createBodyTypeObject(buffer);
-
 	proseRequest(buffer);
 }
 
 int Post::proseRequest(std::string &buffer)
 {
-	_bodySize += buffer.size(); // attention of pre added \r\n in buffer;
 	if (this->_bodyType == contentLength)
 		return handleContentLength(buffer);
-	// if (this->_bodyType == keyVal)
-	// 	std::cout<< "keyVal\n";
-	// std::cout<< "=========buffer befor: =========";  printNonPrintableChars(buffer);
 	if (manipulateBuffer(buffer) == std::string::npos)
 		return _status;
 	if (this->_bodyType == chunked)
@@ -93,45 +84,28 @@ void Post::setHeaders(std::map<std::string, std::string> &headers)
 
 void Post::setContentLengthSize()
 {
-	// 10737418240
-	// 2147483648
 	if (_headers.find("CONTENT_LENGTH") != _headers.end())
 		_contentLengthSize = std::stoll(_headers["CONTENT_LENGTH"]);
 }
 
 void Post::setBodyType()
 {
-	// std::cout<< "_headers[\"Content-Type\"] :";printNonPrintableChars(_headers["Content-Type"]);
-	// if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("; boundary=") != std::string::npos)
 	if (_headers.find("CONTENT_TYPE") != _headers.end() && _headers["CONTENT_TYPE"].find("; boundary=") != std::string::npos)
 	{
 		if (_headers.find("TRANSFER_ENCODING") != _headers.end() && _headers["TRANSFER_ENCODING"] == "chunked")
 			_bodyType = boundaryChunked;
 		else
-		{
 			_bodyType = boundary;
-			std::cout<< "This is boundary\n";
-		}
 	}
-	// else if (_headers.find("CONTENT_TYPE") != _headers.end() && _headers["CONTENT_TYPE"].find("x-www-form-urlencoded") != std::string::npos)
-	// 	_bodyType = contentLength;
 	else if (_headers.find("TRANSFER_ENCODING") != _headers.end() && _headers["TRANSFER_ENCODING"].find("chunked") != std::string::npos)
-	{
-		std::cout<< "This is chunked\n";
 		_bodyType = chunked;
-	}
 	else
 		_bodyType = contentLength;
-	if (_bodyType == boundary && _headers["isCgi"] == "1")
-	{
-		std::cout<< "I am boundary and cgi\n";
+	
+	if (_bodyType == boundary && _isCgi == 1)
 		_bodyType = contentLength;
-	}
-	else if (_bodyType == boundaryChunked && _headers["isCgi"] == "1")
-	{
-		std::cout<< "I am boundaryChunked and cgi\n";
+	else if (_bodyType == boundaryChunked && _isCgi == 1)
 		_bodyType = chunked;
-	}
 
 }
 
@@ -141,16 +115,14 @@ void printNonPrintableChars(const std::string &str)
 	{
 		if (!isprint(static_cast<unsigned char>(*it)))
 		{
-			std::cout<< "(x" << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)(*it) << ")";
-			// if (static_cast<unsigned char>(*it) == '\n')
-			// 	std::cout<< "\n";
+			std::cout << "(x" << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)(*it) << ")";
 		}
 		else
 		{
-			std::cout<< *it;
+			std::cout << *it;
 		}
 	}
-	std::cout<< std::endl;
+	std::cout << std::endl;
 }
 
 bool fileExists(std::string &filePath)
@@ -166,47 +138,15 @@ void Post::setFileName(std::string extention)
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	_fileName = (name + extention);
-	std::cout<< "fileName : " << _fileName << std::endl;
+	std::cout << "fileName : " << _fileName << std::endl;
 }
 
 int Post::handleContentLength(std::string &buffer)
 {
-	// printNonPrintableChars(buffer);
 	if (pasteInFile(_fileName, buffer) >= _contentLengthSize)
 		_status = 201;
 	return _status;
 }
-
-// int Post::handleKeyVal(std::string &buffer)
-// {
-// 	buffer
-// }
-
-// int Post::start(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer)
-// {
-// 	// std::cout<<"buffer "<<buffer<<std::endl;
-// 	// _queryParam = queryParam;
-// 	buffer = "\r\n" + buffer;
-// 	_status = 0;
-// 	setHeaders(headers);
-// 	setBodyType();
-// 	setContentLengthSize();
-// 	if (_bodyType == chunked)
-// 		chunk = new Chunked(_bufferBody, _remainingBuffer, _headers, _status);
-// 	else if (_bodyType == boundary)
-// 		bound = new Boundary(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
-// 	else if (_bodyType == boundaryChunked)
-// 	{
-// 		buffer.insert(0, "\r\n2\r\n\r\n");
-// 		boundChunk = new BoundaryChunked(_queryParam, _bufferBody, _remainingBuffer, _headers, _status);
-// 	}
-// 	else if (_bodyType == contentLength)
-// 	{
-// 		buffer.erase(0, 2); // to remove \r\n
-// 		setFileName(_mimeToExtension[headers["Content-Type"]]);
-// 	}
-// 	return proseRequest(buffer);
-// }
 
 size_t Post::manipulateBuffer(std::string &buffer)
 {

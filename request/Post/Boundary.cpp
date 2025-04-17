@@ -1,12 +1,5 @@
 #include "Boundary.hpp"
 
-
-// Boundary::Boundary(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status):
-//     _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status)
-// {
-//     setBoundaryString();
-// }
-
 Boundary::Boundary(std::map<std::string, std::string> &queryParam, std::string &bufferBody, \
     std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &status, std::string &uploadStore):
     _queryParam(queryParam), _bufferBody(bufferBody),
@@ -37,7 +30,6 @@ void Boundary::setFileName(std::string &fileName)
     std::string extention ;
     if (pos < fileName.size())
         extention = fileName.substr(pos);
-	int n = 0;
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	fileName = name + extention;
@@ -65,7 +57,6 @@ void Boundary::setMetaData(std::string &headBoundary, std::string key)
     if (key == "filename")
     {
         setFileName(_metadata[key]);
-
     }
 }
 
@@ -117,21 +108,6 @@ bool Boundary::checkHeaderIsCompleted()
 
 int Boundary::handleBoundary()
 {
-    
-    // if (_bufferBody.empty())
-    // {
-    //     _status = 1; // 404
-    //     std::cout << "adsdasda\n";
-    //     return _status;
-    // }
-    // if (_bufferBody.size() < 5120)
-    // {
-    //     if (_bufferBody.find(_boundaryStringEnd) == std::string::npos)
-    //     {
-    //         _status = 1; // 404
-    //         return _status;
-    //     }
-    // }
     handleBoundaryRec();
     return _status;
 }
@@ -153,7 +129,7 @@ int Boundary::handleBoundaryRec()
     
     if (setBoundaryHeadAndEraseBuffer() == -1)
     {
-        // std::cout<<  "since we don't has \\r\\n\\r\\n and we have boundaryString I wait until the next read \n";
+        // std::cout <<  "since we don't has \\r\\n\\r\\n and we have boundaryString I wait until the next read \n";
         if (_bufferBody.find(_boundaryStringEnd) != std::string::npos)
             _status = 404; // 404
         _remainingBuffer = _bufferBody + _remainingBuffer;
