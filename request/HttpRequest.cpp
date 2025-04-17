@@ -46,8 +46,7 @@ int HttpRequest::handleDeleteRequest(std::string filePath) {
       getMatchedLocationUpload(dataFirstLine[1], server_config.location);
   std::string location =
       findMatchingLocation(dataFirstLine[1], server_config.location);
-  size_t pos = filePath.find("/", 2);
-  filePath.replace(0, location.length(), lc._root);
+  filePath.replace(0, location.length()-1, lc._root);
   // if (filePath.substr(0, pos + 1) != "./upload/")
   //   return 405;
   // Check if the file exists
@@ -107,7 +106,7 @@ void HttpRequest::handleRequest() {
     } catch (const std::exception &e) {
       requestStatus = 500;
     }
-  } else if (_method == DELETE && this->requestStatus == 0) {
+  } else if (_method == DELETE && this->requestStatus == 0&& getendHeaders() == 1) {
     this->requestStatus = handleDeleteRequest(dataFirstLine[1]);
     return;
   }
