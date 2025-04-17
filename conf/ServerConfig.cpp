@@ -77,8 +77,6 @@ std::string removeComments(std::string& input) {
 
 std::string removeLocationBlocks(std::string& configData) {
 	std::string result = configData;
-    // std::cout<<configData;
-	// Regex pattern to match "location { ... }" blocks
 	std::string locationRegexPattern = "\\s*location\\s+[^}]*\\{[^}]*\\}\\s*";
 	std::regex locationRegex(locationRegexPattern);
 	result = regex_replace(result, locationRegex, "");  
@@ -345,6 +343,10 @@ void ServerConfig :: setVal(std::string &str,std::string &val)
         this->ports.push_back(a);
         
     } else if (str == "server_name") {
+        if (splitstring(val).size()!=1) {
+            std::cout<<REDCOLORE<< "ERROR : invalid \"server_name\" argument "<<std::endl;
+            exit(0);
+        }
         this->serverName = val;
     } else if (str == "error_page") {
         std::vector <std::string > words;

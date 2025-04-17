@@ -568,7 +568,6 @@ bool WebServer::is_request(int fd) {
 void WebServer::run() {
   puts("\033[1;34m[SERVER] Running...\033[0m");
   try {
-
     int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
     if (nev == -1)
       throw std::runtime_error("kevent failed: " +
