@@ -9,7 +9,7 @@
 void makeFileEmpty(const std::string filename) {
   std::ofstream file(filename, std::ios::trunc);
   if (file.is_open()) {
-    std::cout << "File " << filename << " has been emptied." << std::endl;
+    std::cout<< "File " << filename << " has been emptied." << std::endl;
     file.close();
   } else {
     std::cerr << "Unable to open file: " << filename << std::endl;
@@ -19,14 +19,15 @@ void makeFileEmpty(const std::string filename) {
 void f() { system("leaks webserver"); }
 
 int main(int arc, char **arv) {
+  (void)arc;
   if (!arv[1])
     return 0;
   // atexit(f);
   signal(SIGPIPE, SIG_IGN);
-  string str = arv[1];
+  std::string str = arv[1];
   WebServer server(str);
   // makeFileEmpty(CURREQ);
   while (1337)
     server.run();
-  cout << "Server stopped." << endl;
+  std::cout<< "Server stopped." << std::endl;
 }

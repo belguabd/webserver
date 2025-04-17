@@ -51,9 +51,9 @@ int BoundaryChunked::boundaryPart()
 	_chunkSize -= (long)_boundaryBuffer.size();
 	_boundaryBuffer.insert(0, _remainingBoundaryBuffer);
 	_remainingBoundaryBuffer  = "";
-	// std::cout << "{{{{{{{{{{_buffer in boundaryChunked}}}}}}}}\n";
+	// std::cout<< "{{{{{{{{{{_buffer in boundaryChunked}}}}}}}}\n";
     // printNonPrintableChars(_boundaryBuffer);
-    // std::cout << "{{{{{{{{{{end _buffer in boundaryChunked}}}}}}}}}\n";
+    // std::cout<< "{{{{{{{{{{end _buffer in boundaryChunked}}}}}}}}}\n";
     _boundary->handleBoundary();
 	return 1;
 }
@@ -62,7 +62,7 @@ int BoundaryChunked::handleChunkedRec()
 {
     if (_chunkSize <= 0) // check is remending data
 	{
-		// std::cout << "buffer head : "; printNonPrintableChars(_bufferBody.substr(0, 12));
+		// std::cout<< "buffer head : "; printNonPrintableChars(_bufferBody.substr(0, 12));
 		_chunkSize = getChunkSize(_bufferBody);
 		if (_chunkSize == 0)
 			return 1;
@@ -72,12 +72,12 @@ int BoundaryChunked::handleChunkedRec()
 	boundaryPart();
 	// pasteInFile(_fileName, _boundaryBuffer);
     // _boundary.handleBoundary();
-    // std::cout << _boundaryBuffer << std::endl;
+    // std::cout<< _boundaryBuffer << std::endl;
 
-	// std::cout << "_chunkSize: " << _chunkSize << std::endl;
+	// std::cout<< "_chunkSize: " << _chunkSize << std::endl;
     if (_chunkSize > 0)
 	{
-		// std::cout << "uncompleted request\n";
+		// std::cout<< "uncompleted request\n";
 		return (long)_boundaryBuffer.size(); // uncompleted request
 	}
 	return handleChunkedRec();
@@ -88,40 +88,40 @@ size_t BoundaryChunked::getChunkSize(std::string &buffer)
 {
 	if (buffer == std::string("\r\n"))
 	{
-		// std::cout << "due i enter on this when the sizeChunk=0 which mean the [chunk is done] so we saved in [remainingBody] \n";
-		// std::cout << "this crlf need set it in next part to make sure that is a valid chunkHead (\r\n0xN\r\n)\n";
+		// std::cout<< "due i enter on this when the sizeChunk=0 which mean the [chunk is done] so we saved in [remainingBody] \n";
+		// std::cout<< "this crlf need set it in next part to make sure that is a valid chunkHead (\r\n0xN\r\n)\n";
 		this->_remainingBuffer.insert(0, buffer);
 		return 0;
 	}
 	if (buffer == std::string("\r\n0\r\n"))
 	{
-		// std::cout << "I need this to this to add it in next for bodyBuffer to make sure is completed\n";
+		// std::cout<< "I need this to this to add it in next for bodyBuffer to make sure is completed\n";
 		this->_remainingBuffer.insert(0, buffer);
 		return 0;
 	}
 	if (std::string(buffer + _remainingBuffer) == std::string("\r\n0\r\n\r\n"))
 	{
-		std::cout << "end of req" << std::endl;
+		std::cout<< "end of req" << std::endl;
 		_status = 1;
-		std::cout << "check file: " << _fileName << std::endl;
+		std::cout<< "check file: " << _fileName << std::endl;
 		return 0;
 	}
 
 	if (buffer.substr(0,2) != std::string("\r\n"))
 	{
-		std::cout << "throw invalid head chunk1" << std::endl;
+		std::cout<< "throw invalid head chunk1" << std::endl;
 		return 0;
 	}
 	size_t pos = buffer.find("\r\n", 2);
 	if (pos == std::string::npos)
 	{
-		std::cout << "throw invalid head chunk2\n" << std::endl;
+		std::cout<< "throw invalid head chunk2\n" << std::endl;
 		return 0;
 	}
 	for (int i = 2; i < pos; i++)
 		if (!std::isxdigit(buffer[i]))
 		{
-			std::cout << "throw invalid head chunk3\n" << std::endl;
+			std::cout<< "throw invalid head chunk3\n" << std::endl;
 			return 0;
 		}
     size_t n = strtol(buffer.substr(2, pos).c_str(), NULL, 16);

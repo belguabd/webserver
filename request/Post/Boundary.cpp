@@ -153,7 +153,7 @@ int Boundary::handleBoundaryRec()
     
     if (setBoundaryHeadAndEraseBuffer() == -1)
     {
-        // std::cout <<  "since we don't has \\r\\n\\r\\n and we have boundaryString I wait until the next read \n";
+        // std::cout<<  "since we don't has \\r\\n\\r\\n and we have boundaryString I wait until the next read \n";
         if (_bufferBody.find(_boundaryStringEnd) != std::string::npos)
             _status = 404; // 404
         _remainingBuffer = _bufferBody + _remainingBuffer;

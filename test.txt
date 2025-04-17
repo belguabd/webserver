@@ -1,5 +1,5 @@
 ranges
-// Use set instead of vector
+// Use set instead of std::vector
 
 
 delete status code 
@@ -62,7 +62,7 @@ location /games
 
 localhost:8080/dew/dew/f
 
-location / find("/")!=string::nops 
+location / find("/")!=std::string::nops 
 
 
 

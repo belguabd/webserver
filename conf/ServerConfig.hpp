@@ -9,65 +9,64 @@
 #include <string>
 #include <unistd.h>
 #include <dirent.h>
-using namespace std;
 #define REDCOLORE "\033[31m"
 #define DEFAULTUPLOAD "default/upload"
 
 struct LocationConfig {
-  string _root;
-  string _index;
+  std::string _root;
+  std::string _index;
   bool _autoindex;
-  string _allowed_methods;
-  string _upload_store;
-  string _cgi_extension;
-  string _return;
+  std::string _allowed_methods;
+  std::string _upload_store;
+  std::string _cgi_extension;
+  std::string _return;
   size_t _client_max_body_size;
 };
 
 class ServerConfig
 {
     private:
-        string data;
-        string host;
-        string root;
+        std::string data;
+        std::string host;
+        std::string root;
         size_t client_max_body_size;
     public:
-        map<string,string> errorpage;
-        map<string, LocationConfig> location;
+        std::map<std::string,std::string> errorpage;
+        std::map<std::string, LocationConfig> location;
         int typeUrl;
-        string serverName;
-        vector<int> ports; //d
+        std::string serverName;
+        std::vector<int> ports; //d
         ServerConfig(){};
-        ServerConfig(string &str);
+        ServerConfig(std::string &str);
         ~ServerConfig();
-        void parseServerConfig(string &strdata);
-        void checkGlobalConfig(string strConfig);
-        void locationData(string &strlocat);
-        void locationNormal(string &location);
-        void setVal(string &str,string &val);
-        void setValLocation(string &str,string &val,LocationConfig &config);
-        string getdata() const {return this->data;}
-        string getHost(){return  host;}
+        void parseServerConfig(std::string &strdata);
+        void checkGlobalConfig(std::string strConfig);
+        void locationData(std::string &strlocat);
+        void locationNormal(std::string &location);
+        void setVal(std::string &str,std::string &val);
+        void setValLocation(std::string &str,std::string &val,LocationConfig &config);
+        std::string getdata() const {return this->data;}
+        std::string getHost(){return  host;}
         // bool getAutoindex(){return  autoindex;}
-        string getRoot() const {return this->root;}
-        void  setHost(string _host) { this->host = _host;}
+        std::string getRoot() const {return this->root;}
+        void  setHost(std::string _host) { this->host = _host;}
         // string getServerName(){return  server_name;}
       std::vector<int> getPorts(){return ports;}
-      // map <string ,LocationConfig> &getConfigUpload() {return configUpload;}
+      // std::map <string ,LocationConfig> &getConfigUpload() {return configUpload;}
 };
 
-void validbrackets(string &str);
-vector<string> splithost(string& input, char c);
-string removeComments(string &input);
-bool checkCharacter(string &substr, char c);
-string removeLocationBlocks(string &configData);
-string trim(string &str);
-void checkcontent(string substr);
-void checkContentServer(string substr);
-void isNumber(string& str);
-void numberHost(string& str);
+void validbrackets(std::string &str);
+std::vector<std::string> splithost(std::string& input, char c);
+std::string removeComments(std::string &input);
+bool checkCharacter(std::string &substr, char c);
+std::string removeLocationBlocks(std::string &configData);
+std::string trim(std::string &str);
+void checkcontent(std::string substr);
+void checkContentServer(std::string substr);
+void isNumber(std::string& str);
+void numberHost(std::string& str);
 bool directoryExists(const std::string &path);
-void isNumberValid(string& str);
-vector<string> splitstring(const string &str);
-void chechAllowedMethodValid(string &str);
-size_t checkValidBadySise(string str);
+void isNumberValid(std::string& str);
+std::vector<std::string> splitstring(const std::string &str);
+void chechAllowedMethodValid(std::string &str);
+size_t checkValidBadySise(std::string str);

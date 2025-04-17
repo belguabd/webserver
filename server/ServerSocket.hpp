@@ -13,8 +13,7 @@ class ServerSocket {
 private:
   int server_fd;
   int _port;
-  string _host;
-  socklen_t addr_size;
+  std::string _host;
   struct addrinfo hints, *res;
 
 public:

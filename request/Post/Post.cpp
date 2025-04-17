@@ -39,7 +39,7 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 	}
 	if (_contentLengthSize > _configUpload._client_max_body_size)
 	{
-		std::cout << "body limits\n";
+		std::cout<< "body limits\n";
 		_status = 413; // ?
 		return ;
 	}
@@ -47,7 +47,7 @@ Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, st
 	_uploadStore = _configUpload._upload_store;
 	buffer = "\r\n" + buffer;
 	setBodyType();
-	std::cout << "body type : " << this->_bodyType << std::endl;
+	std::cout<< "body type : " << this->_bodyType << std::endl;
 	createBodyTypeObject(buffer);
 
 	proseRequest(buffer);
@@ -59,8 +59,8 @@ int Post::proseRequest(std::string &buffer)
 	if (this->_bodyType == contentLength)
 		return handleContentLength(buffer);
 	// if (this->_bodyType == keyVal)
-	// 	std::cout << "keyVal\n";
-	// std::cout << "=========buffer befor: =========";  printNonPrintableChars(buffer);
+	// 	std::cout<< "keyVal\n";
+	// std::cout<< "=========buffer befor: =========";  printNonPrintableChars(buffer);
 	if (manipulateBuffer(buffer) == std::string::npos)
 		return _status;
 	if (this->_bodyType == chunked)
@@ -101,7 +101,7 @@ void Post::setContentLengthSize()
 
 void Post::setBodyType()
 {
-	// std::cout << "_headers[\"Content-Type\"] :";printNonPrintableChars(_headers["Content-Type"]);
+	// std::cout<< "_headers[\"Content-Type\"] :";printNonPrintableChars(_headers["Content-Type"]);
 	// if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("; boundary=") != std::string::npos)
 	if (_headers.find("CONTENT_TYPE") != _headers.end() && _headers["CONTENT_TYPE"].find("; boundary=") != std::string::npos)
 	{
@@ -110,26 +110,26 @@ void Post::setBodyType()
 		else
 		{
 			_bodyType = boundary;
-			std::cout << "This is boundary\n";
+			std::cout<< "This is boundary\n";
 		}
 	}
 	// else if (_headers.find("CONTENT_TYPE") != _headers.end() && _headers["CONTENT_TYPE"].find("x-www-form-urlencoded") != std::string::npos)
 	// 	_bodyType = contentLength;
 	else if (_headers.find("TRANSFER_ENCODING") != _headers.end() && _headers["TRANSFER_ENCODING"].find("chunked") != std::string::npos)
 	{
-		std::cout << "This is chunked\n";
+		std::cout<< "This is chunked\n";
 		_bodyType = chunked;
 	}
 	else
 		_bodyType = contentLength;
 	if (_bodyType == boundary && _headers["isCgi"] == "1")
 	{
-		std::cout << "I am boundary and cgi\n";
+		std::cout<< "I am boundary and cgi\n";
 		_bodyType = contentLength;
 	}
 	else if (_bodyType == boundaryChunked && _headers["isCgi"] == "1")
 	{
-		std::cout << "I am boundaryChunked and cgi\n";
+		std::cout<< "I am boundaryChunked and cgi\n";
 		_bodyType = chunked;
 	}
 
@@ -141,16 +141,16 @@ void printNonPrintableChars(const std::string &str)
 	{
 		if (!isprint(static_cast<unsigned char>(*it)))
 		{
-			std::cout << "(x" << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)(*it) << ")";
+			std::cout<< "(x" << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)(*it) << ")";
 			// if (static_cast<unsigned char>(*it) == '\n')
-			// 	std::cout << "\n";
+			// 	std::cout<< "\n";
 		}
 		else
 		{
-			std::cout << *it;
+			std::cout<< *it;
 		}
 	}
-	std::cout << std::endl;
+	std::cout<< std::endl;
 }
 
 bool fileExists(std::string &filePath)
@@ -167,7 +167,7 @@ void Post::setFileName(std::string extention)
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	_fileName = (name + extention);
-	std::cout << "fileName : " << _fileName << std::endl;
+	std::cout<< "fileName : " << _fileName << std::endl;
 }
 
 int Post::handleContentLength(std::string &buffer)
@@ -185,7 +185,7 @@ int Post::handleContentLength(std::string &buffer)
 
 // int Post::start(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer)
 // {
-// 	// std::cout <<"buffer "<<buffer<<std::endl;
+// 	// std::cout<<"buffer "<<buffer<<std::endl;
 // 	// _queryParam = queryParam;
 // 	buffer = "\r\n" + buffer;
 // 	_status = 0;

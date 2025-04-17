@@ -41,10 +41,10 @@ void WebServer::addServerSocket(ServerConfig &conf) {
           if (serverSockets[j].getPort() == conf.getPorts()[i] &&
               serverSockets[j].getHost() == conf.getHost()) {
 
-                // cout << serverSockets[i].getPort() << "  "
+                // std::cout<< serverSockets[i].getPort() << "  "
                 //      << serverSockets[i].getHost() << "  "
                 //      << conf.getPorts()[i] << "  "
-                //      << conf.getHost() << endl;
+                //      << conf.getHost() << std::endl;
             serverSockets[j].configs.push_back(conf);
             return;
           }
@@ -77,12 +77,12 @@ void WebServer::addServerSocket(ServerConfig &conf) {
   // test++;
 }
 
-WebServer::WebServer(string &str) : max_events(MAX_EVENTS) {
+WebServer::WebServer(std::string &str) : max_events(MAX_EVENTS) {
   initialize_kqueue();
-  ifstream file(str);
-  stringstream fileContent;
+  std::ifstream file(str);
+  std::stringstream fileContent;
   if (!file.is_open())
-    cout << "error file not opened " << endl;
+    std::cout<< "error file not opened " << std::endl;
   fileContent << file.rdbuf();
   this->_data = fileContent.str();
   this->dataConfigFile();
@@ -210,7 +210,7 @@ void WebServer::keepClientConnectionOpen(
   // Add the read event (EVFILT_READ)
   EV_SET(&changes[1], fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
   if (kevent(kqueue_fd, changes, 2, NULL, 0, NULL) == -1) {
-    cerr << "Error adding read event: " << strerror(errno) << endl;
+    std::cerr << "Error adding read event: " << strerror(errno) << std::endl;
     throw std::runtime_error("Error adding read event: " +
                              std::string(strerror(errno)));
   }
@@ -243,7 +243,7 @@ void WebServer::terminateClientConnection(
   int fd = (*it)->request->getfd();
   EV_SET(&changes[0], fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
   if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-    cerr << "Error adding read event: " << strerror(errno) << endl;
+    std::cerr << "Error adding read event: " << strerror(errno) << std::endl;
     throw std::runtime_error("Error adding read event: " +
                              std::string(strerror(errno)));
   }
@@ -274,7 +274,7 @@ std::string HttpResponse::extractBodyFromFile(const std::string &filename) {
     size_t start = 0;
     size_t end = 0;
     while ((end = headers.find("\r\n", start)) != std::string::npos) {
-      string header_line = headers.substr(start, end - start);
+      std::string header_line = headers.substr(start, end - start);
       size_t n = header_line.find(":");
       if (n != std::string::npos)
         parseCgiHeaders[header_line.substr(0, n)] = header_line.substr(n + 1);
@@ -328,7 +328,7 @@ void WebServer::respond_to_client(int event_fd) {
     }
   }
 }
-int checkports(vector<int> &portserver1, vector<int> &portserver2) {
+int checkports(std::vector<int> &portserver1, std::vector<int> &portserver2) {
   for (size_t i = 0; i < portserver1.size(); ++i) {
     if (find(portserver2.begin(), portserver2.end(), portserver1[i]) !=
         portserver2.end()) {
@@ -337,7 +337,7 @@ int checkports(vector<int> &portserver1, vector<int> &portserver2) {
   }
   return 0;
 }
-int beforStart(string str) {
+int beforStart(std::string str) {
   if (str.empty())
     return 0;
   int i = 0;
@@ -349,26 +349,26 @@ int beforStart(string str) {
   return 0;
 }
 void WebServer::separateServer() {
-  string strserv = this->_data;
+  std::string strserv = this->_data;
   validbrackets(strserv);
   if (strserv.empty()) {
-    cout << REDCOLORE << "Error: configuration file is empty" << endl;
+    std::cout<< REDCOLORE << "Error: configuration file is empty" << std::endl;
     exit(0);
   }
   size_t pos = 0;
   bool found = false;
   bool sig;
   while (!strserv.empty() &&
-         (pos = strserv.find("server", pos)) != string::npos) {
+         (pos = strserv.find("server", pos)) != std::string::npos) {
     sig = false;
     if (beforStart(strserv.substr(0, pos)) == 1) {
-      cout << REDCOLORE << "Error: unexpected data before server block" << endl;
+      std::cout<< REDCOLORE << "Error: unexpected data before server block" << std::endl;
       exit(0);
     }
     size_t start = strserv.find("{", pos);
-    if (start == string::npos) {
-      cout << REDCOLORE << "Error: missing opening '{' for server block"
-           << endl;
+    if (start == std::string::npos) {
+      std::cout<< REDCOLORE << "Error: missing opening '{' for server block"
+           << std::endl;
       exit(0);
     }
     size_t end = start;
@@ -380,7 +380,7 @@ void WebServer::separateServer() {
       if (strserv[end] == '}')
         brakets--;
     }
-    string server = strserv.substr(pos, end - pos + 1);
+    std::string server = strserv.substr(pos, end - pos + 1);
     strserv = strserv.substr(end + 1);
     ServerConfig conf(server);
     conf.parseServerConfig(server);
@@ -391,7 +391,7 @@ void WebServer::separateServer() {
       if (config[i].getHost() == conf.getHost()) {
         if (config[i].serverName == conf.serverName) {
           if (checkports(config[i].ports, conf.ports) == 1) {
-            cout << "Error: same ports host servername" << endl;
+            std::cout<< "Error: same ports host servername" << std::endl;
             exit(0);
           }
         }
@@ -403,7 +403,7 @@ void WebServer::separateServer() {
   }
 
   if (!found) {
-    cout << REDCOLORE << "Error: no server blocks defined" << endl;
+    std::cout<< REDCOLORE << "Error: no server blocks defined" << std::endl;
     exit(0);
   }
   checkContentServer(strserv);
@@ -412,12 +412,12 @@ void WebServer::separateServer() {
 void WebServer ::dataConfigFile() {
   this->_data = removeComments(this->_data);
   this->separateServer();
-  // for (vector<ServerConfig>::iterator it = this->config.begin(); it !=
+  // for (std::vector<ServerConfig>::iterator it = this->config.begin(); it !=
   // this->config.end(); ++it) {
-  //   cout << it->getHost() << endl;
-  //   cout << it->getPorts().at(0)<<endl;
-  //   cout << it->serverName << endl;
-  //   cout <<"----------------------------------------------------"<<endl;
+  //   std::cout<< it->getHost() << std::endl;
+  //   std::cout<< it->getPorts().at(0)<<std::endl;
+  //   std::cout<< it->serverName << std::endl;
+  //   std::cout<<"----------------------------------------------------"<<std::endl;
   // }
 }
 
@@ -513,11 +513,11 @@ void WebServer::handleCGIRequest(int client_fd) {
     if ((*it)->getfd() == client_fd)
       client = *it;
   }
-  map<string, string>::iterator iter_headers = client->mapheaders.begin();
+  std::map<std::string, std::string>::iterator iter_headers = client->mapheaders.begin();
 
-  map<string, string> env;
+  std::map<std::string, std::string> env;
   for (; iter_headers != client->mapheaders.end(); iter_headers++) {
-    string key = (*iter_headers).first;
+    std::string key = (*iter_headers).first;
     transform(key.begin(), key.end(), key.begin(), ::toupper);
     std::replace(key.begin(), key.end(), '-', '_');
     env["HTTP_" + key] = (*iter_headers).second;
@@ -541,7 +541,7 @@ void WebServer::handleCGIRequest(int client_fd) {
   else if (client->cgiExtension == PYTHON)
     env["INTERPRETER"] = "./cgi/python-cgi";
   env["QUERY_STRING"] = client->getQueryString();
-  std::map<string, string>::iterator iter = env.begin();
+  std::map<std::string, std::string>::iterator iter = env.begin();
   std::vector<std::string> envp_map;
   std::vector<char *> envp;
   for (; iter != env.end(); iter++)
@@ -638,7 +638,7 @@ void WebServer::run() {
               throw std::runtime_error("Null request pointer");
             }
             req->setRequestStatus(504);
-            std::cout << "[SERVER] CGI process " << pid
+            std::cout<< "[SERVER] CGI process " << pid
                       << " timed out! Killing..." << std::endl;
             if (kill(pid, SIGKILL) == -1) {
               std::string error_message = "Error sending SIGKILL to process " +

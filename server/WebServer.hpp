@@ -17,7 +17,7 @@
 class WebServer {
 private:
   int kqueue_fd;
-  string _data;
+  std::string _data;
 
   std::vector<ServerSocket> serverSockets;
   std::vector<ServerConfig> config;
@@ -37,7 +37,7 @@ public:
   void closeAllSockets();
   bool is_request(int fd);
   bool checkPid(pid_t pid);
-  WebServer(string &str);
+  WebServer(std::string &str);
   std::vector<HttpRequest *> connected_clients;
   std::vector<HttpResponse *> responses_clients;
   void addServerSocket(ServerConfig &conf);
@@ -61,5 +61,4 @@ public:
   void dataConfigFile();
   void separateServer();
 };
-void dataBeforServer(string str);
-int checkports(vector <int>&portserver1,vector <int>&portserver2);
+int checkports(std::vector <int>&portserver1,std::vector <int>&portserver2);
