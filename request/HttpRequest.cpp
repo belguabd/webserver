@@ -113,8 +113,14 @@ void HttpRequest::handleRequest() {
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerSocket server_socket)
-    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0),
-      isCGi(false), checkCgi(0), cgi_for_test(0), status_code(0) {
+    : client_fd(client_fd),
+      firsttime(0),
+      endHeaders(0),
+      isCGi(false),
+      _method(0),
+      checkCgi(0),
+      cgi_for_test(0),
+      status_code(0) {
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   this->server_fd = server_socket.getServer_fd();
@@ -310,7 +316,6 @@ void HttpRequest::checkHeaders(std::string &str) {
   size_t pos = str.find(':');
   std::string result;
   std::string key;
-  int i = 0;
   std::vector<std::string> words;
   std::vector<std::string> hostsize;
   if (pos == std::string::npos || (pos > 0 && str[pos - 1] == ' ')) {

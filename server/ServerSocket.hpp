@@ -2,7 +2,6 @@
 
 #include "../conf/ServerConfig.hpp"
 #include <arpa/inet.h>
-#include <iostream>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>

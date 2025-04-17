@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-#define MAX_EVENTS 1024
+#define MAX_EVENTS (1024 * 2)
 #include "../conf/ServerConfig.hpp"
 #include "../request/HttpRequest.hpp"
 #include "../response/HttpResponse.hpp"
@@ -23,7 +23,6 @@ private:
   std::vector<ServerConfig> config;
   std::map<int, ServerConfig> map_configs;
   std::vector<pid_t> pids_cgi;
-  std::vector<std::string> fileNamesCgi;
   std::map<ServerSocket, std::vector<ServerConfig> > socket_configs;
 
   std::map<int, HttpRequest *> pipe_fds;
@@ -34,6 +33,8 @@ private:
   void initialize_kqueue();
 
 public:
+  int getKqueue_fd() { return kqueue_fd; }
+  std::vector<std::string> fileNamesCgi;
   void closeAllSockets();
   bool is_request(int fd);
   bool checkPid(pid_t pid);

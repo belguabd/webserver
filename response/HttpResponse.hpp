@@ -26,15 +26,14 @@ private:
 public:
   HttpRequest *request;
   std::unordered_map<std::string, std::string> parseCgiHeaders;
-
+  int firstTimeResponse;
+  std::streampos file_offset;
+  int complete;
   ssize_t totalSent;
   ssize_t bytesSend;
   std::string bodycgi;
-   int firstTimeResponse;
-  int complete;
   std::ifstream file;
   std::string strLocation;
-  std::streampos file_offset;
   size_t file_size;
   std::map<std::string, std::string> mimeType;
   HttpResponse(HttpRequest *re);
@@ -51,11 +50,11 @@ public:
   void fileDataSend(std::string &data,ServerConfig &config);
   void dirDataSend(std::string &data,std::string &root,LocationConfig &normal, ServerConfig &config);
   std::string extractBodyFromFile(const std::string &filename); 
-  std::string headersSending(int client_socket);
+  std::string headersSending();
 };
 std::string findMatchingLocation(const std::string& uri, const std::map<std::string, LocationConfig>& locations);
 int checkTypePath(std::string &path);
 bool ExistFile(std::string &filePath);
 std::string dirAutoindex(std::string &strlocation ,std::string &dirPath,std::string &root);
 std::string errorPage(int statusCode);
-std::string	status_line(int client_socket,int status);
+std::string	status_line(int status);

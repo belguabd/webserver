@@ -163,7 +163,6 @@ void Post::setFileName(std::string extention)
 {
 	struct stat b;
 	std::string name = _configUpload._upload_store + "/" + std::string("filePost");
-	int n = 0;
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	_fileName = (name + extention);

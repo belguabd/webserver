@@ -30,13 +30,13 @@ std::string statusText(int status) {
   }
   return text;
 }
-std::string status_line(int client_socket, int status) {
+std::string status_line(int status) {
   std::string firstline = "HTTP/1.1 ";
   firstline += statusText(status);
   return firstline;
 }
 
-std::string HttpResponse:: headersSending(int client_socket) {
+std::string HttpResponse:: headersSending() {
   std::string header;
   ServerConfig config = this->request->getServerConf();
   time_t now = time(0);
@@ -51,6 +51,7 @@ std::string HttpResponse:: headersSending(int client_socket) {
 }
 /*---------------------- Get method------------------------------------------*/
 void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
+  (void)config;
     std::string ContentType;
 
     if (!this->file.is_open()) {
@@ -74,8 +75,8 @@ void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
                 ContentType = getMimeType(extension);
             }
             std::ostringstream response_headers;
-            response_headers << status_line(this->request->getfd(), this->request->getRequestStatus());
-            response_headers << headersSending(this->request->getfd());
+            response_headers << status_line(this->request->getRequestStatus());
+            response_headers << headersSending();
             response_headers << "Content-Type: " << ContentType << "\r\n"
                              << "Content-Length: " << file_size << "\r\n"
                              << "Connection: " << this->request->typeConnection << "\r\n"
@@ -138,8 +139,8 @@ void HttpResponse::dirDataSend(std::string &data, std::string &root, LocationCon
     } else {
         std::string body = dirAutoindex(this->strLocation,data,root);
         std::stringstream response1;
-        response1 << status_line(this->request->getfd(),200);
-        response1 << headersSending(this->request->getfd());
+        response1 << status_line(200);
+        response1 << headersSending();
         response1 << "Content-Type: text/html\r\n"
                   << "Content-Length: " << body.size() << "\r\n"
                   << "Connection: close\r\n"
@@ -204,8 +205,8 @@ void HttpResponse::redirectionResponse(std::string &str,ServerConfig &config) {
     data = str;
   }
   std::stringstream response1;
-  response1 << status_line(this->request->getfd(), 301);
-  response1 << headersSending(this->request->getfd());
+  response1 << status_line(301);
+  response1 << headersSending();
   response1 << "Location:" << data << "\r\n\r\n";
   std::string responseStr = response1.str();
   this->bytesSend = send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
@@ -438,8 +439,8 @@ void HttpResponse::cgiResponse() {
               // std::cout<< it->first << " -=-=-=-=-= " << it->second << std::endl;
 
             std::ostringstream response_headers;
-            response_headers << status_line(this->request->getfd(), this->request->getRequestStatus());
-            response_headers << headersSending(this->request->getfd());
+            response_headers << status_line( this->request->getRequestStatus());
+            response_headers << headersSending();
             for (std::unordered_map<std::string, std::string>::iterator it = parseCgiHeaders.begin(); it != parseCgiHeaders.end(); ++it)
                 response_headers << it->first << ": " << it->second << "\r\n";
 
@@ -583,8 +584,8 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
     if (checkTypePath(data)==2||!this->file.is_open()) {
       std::string body = errorPage(status);
       std::stringstream response1;
-      response1 << status_line(this->request->getfd(), status);
-      response1 << headersSending(this->request->getfd());
+      response1 << status_line(status);
+      response1 << headersSending();
       response1 << "Content-Type: text/html\r\n"
                 << "Content-Length: " << body.size() << "\r\n"
                 << "Connection: close\r\n"
@@ -610,8 +611,8 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
       ContentType = getMimeType(extension);
     }
     std::ostringstream response_headers;
-    response_headers << status_line(this->request->getfd(), status);
-    response_headers << headersSending(this->request->getfd());
+    response_headers << status_line(status);
+    response_headers << headersSending();
     response_headers << "Content-Type: " << ContentType << "\r\n"
                      << "Content-Length: " << file_size << "\r\n"
                      << "Connection: close\r\n"

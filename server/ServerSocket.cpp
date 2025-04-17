@@ -5,7 +5,6 @@
 #include <unistd.h>
 
 ServerSocket::ServerSocket(int port, ServerConfig conf) {
-
   int status;
   std::memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_INET;

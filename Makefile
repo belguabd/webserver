@@ -1,11 +1,11 @@
 NAME = webserver
-CPP = c++# -fsanitize=address -g -std=c++98
-CPPFLAGS = -Wall -Wextra -Werror -std=c++98
+CPP = c++ -fsanitize=address -g -std=c++98
+# CPPFLAGS = -Wall -Wextra -Werror -std=c++98
 RM = rm -f
 
 SRC = main.cpp ./server/ServerSocket.cpp  ./server/WebServer.cpp ./request/HttpRequest.cpp \
-	./request/Post/Post.cpp ./request/Post/Chunked.cpp ./request/Post/Boundary.cpp ./request/Post/BoundaryChunked.cpp  \
-	 ./conf/ServerConfig.cpp ./response/HttpResponse.cpp
+	 ./conf/ServerConfig.cpp ./response/HttpResponse.cpp \
+	./request/Post/Post.cpp ./request/Post/Chunked.cpp ./request/Post/Boundary.cpp ./request/Post/BoundaryChunked.cpp  
 
 OBJ = $(SRC:.cpp=.o)
 all:$(NAME)

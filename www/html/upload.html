@@ -3,88 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Page</title>
+    <title>Animated Upload Page</title>
     <style>
+        :root {
+            --primary-color: #4CAF50;
+            --hover-color: #45a049;
+            --bg-gradient: linear-gradient(135deg, #f0f0f0, #e8f5e9);
+            --text-color: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(to right, #f8f9fa, #e0e0e0);
-            color: #333;
-            text-align: center;
-            padding: 50px 20px;
-        }
-
-        h1 {
-            font-size: 3em;
-            color: #4CAF50;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            font-size: 1.8em;
-            margin-bottom: 30px;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
         }
 
         .upload-container {
             background: #fff;
-            border-radius: 8px;
             padding: 40px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            display: inline-block;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            text-align: center;
             max-width: 500px;
-            width: 100%;
+            width: 90%;
+            animation: fadeInUp 1s ease forwards;
+        }
+
+        h1 {
+            font-size: 2.8em;
+            color: var(--primary-color);
+            margin-bottom: 20px;
         }
 
         label {
+            display: block;
             font-size: 1.2em;
+            margin-bottom: 15px;
             color: #555;
         }
 
         input[type="file"] {
-            margin: 20px 0;
             padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 1em;
-            background-color: #f7f7f7;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            width: 100%;
+            background-color: #fafafa;
+            cursor: pointer;
+        }
+
+        input[type="file"]:hover {
+            border-color: var(--primary-color);
         }
 
         input[type="submit"] {
-            background-color: #4CAF50;
+            margin-top: 25px;
+            background-color: var(--primary-color);
             color: white;
-            padding: 15px 30px;
-            font-size: 1.2em;
+            padding: 14px 28px;
+            font-size: 1.1em;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
         }
 
         input[type="submit"]:hover {
-            background-color: #45a049;
+            background-color: var(--hover-color);
         }
 
         .footer {
-            margin-top: 30px;
-            font-size: 1em;
-            color: #888;
+            margin-top: 25px;
+            font-size: 0.9em;
+            color: #999;
         }
 
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            input[type="submit"] {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- <h2>Upload Your Data</h2>
+    <div class="upload-container">
+        <h1>Upload Your File</h1>
         <form method="POST" enctype="multipart/form-data">
-            <label for="file1">Choose a file to adsasda:</label>
+            <label for="file1">Choose a file:</label>
             <input type="file" id="file1" name="upload" required>
             <input type="submit" value="Upload">
         </form>
         <div class="footer">
-            <p>Powered by Your Company</p>
-        </div> -->
-        <h1>Welcome to the File Upload</h1>
-        <form method="POST" enctype="multipart/form-data">
-            <label for="file1">Choose a file to upload:</label>
-            <input type="file" id="file1" name="upload" required>
-            <input type="submit" value="Upload">
-        </form>
+            <p>🚀 ---------</p>
+        </div>
+    </div>
+</body>
 </html>

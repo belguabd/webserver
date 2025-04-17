@@ -5,7 +5,7 @@
 #include <string>
 void    checkcontent(std::string substr)
 {
-    int i =0 ;
+    size_t i =0 ;
     while(i < substr.length()) {
         if (substr[i]=='\t' ||  substr[i]==' '|| substr[i]=='\n')
             i++;
@@ -17,7 +17,7 @@ void    checkcontent(std::string substr)
 }
 void    checkContentServer(std::string substr)
 {
-    int i =0 ;
+    size_t i =0 ;
     while(i < substr.length()) {
         if (substr[i]=='\t' ||  substr[i]==' '|| substr[i]=='\n')
             i++;
@@ -39,7 +39,7 @@ void chechAllowedMethodValid(std::string &str) {
 }
 
 bool checkCharacter(std::string& substr,char c) {
-	int i =0 ;
+	size_t i =0 ;
 	while(i < substr.length()) {
 		if (substr[i]!='\t' &&  substr[i]!=' '&& substr[i]!='\n' && substr[i]!=c)
 			return true;
@@ -96,7 +96,7 @@ size_t checkValidBadySise(std::string str)
     size_t maxBadysize;
     std::string number;
     std::string typeStorage;
-    int i = 0;
+    size_t i = 0;
     while (i < str.length()) {
         if(isdigit(str[i]))
             number += str[i];
@@ -271,7 +271,7 @@ void ServerConfig :: setValLocation(std::string &str,std::string &val,LocationCo
         } 
         config._upload_store = val;
     } else if (str== "allowed_methods") {
-        int i = 0;
+        size_t i = 0;
         std::vector<std::string> words = splitstring(val);
         while (i < words.size()) {
             if (words[i] != "GET" && words[i] != "POST" && words[i] != "DELETE") {
@@ -282,7 +282,7 @@ void ServerConfig :: setValLocation(std::string &str,std::string &val,LocationCo
         }
         config._allowed_methods = val;
     } else if (str== "cgi_extension") {
-        int i = 0;
+        size_t i = 0;
         std::vector<std::string> words = splitstring(val);
         while (i < words.size()) {
             if (words[i]!=".php"&&words[i]!=".py") {
@@ -379,7 +379,7 @@ void ServerConfig :: setVal(std::string &str,std::string &val)
         }
         else {
             std::vector<std::string> format;
-            int i = 0;
+            size_t i = 0;
             format = splithost(val,'.');
             if (format.size() != 4 ) {
                 std::cout<<REDCOLORE<< "ERROR : unknown directive \"host\" "<< std::endl;
@@ -407,7 +407,7 @@ void isNumber(std::string& str) {
         std::cout<<REDCOLORE<< "ERROR : invalid port in  " <<"\"" <<str <<"\""<<" of the " <<"\"listen\""<< std::endl;
         exit(0);
     }
-    for (int i=0;i<str.length();i++) {
+    for (size_t i=0;i<str.length();i++) {
         if (!isdigit(str[i])) {
             std::cout<<REDCOLORE<<  "ERROR : invalid port in  " <<"\"" <<str <<"\""<<" of the " <<"\"listen\""<< std::endl;
             exit(0);
@@ -419,7 +419,7 @@ void numberHost(std::string& str) {
         std::cout<<REDCOLORE<< "ERROR : unknown directive \"host\" "<< std::endl;
         exit(0);
     }
-    for (int i=0;i<str.length();i++) {
+    for (size_t i=0;i<str.length();i++) {
         if (!isdigit(str[i])) {
             std::cout<<REDCOLORE<< "ERROR : unknown directive \"host\" "<< std::endl;
             exit(0);
@@ -427,7 +427,7 @@ void numberHost(std::string& str) {
     }
 }
 void isNumberValid(std::string& str) {
-    for (int i=0;i<str.length();i++) {
+    for (size_t i=0;i<str.length();i++) {
         if (!isdigit(str[i])) {
             std::cout<<REDCOLORE<<  "ERROR : invalid HTTP status code " <<"\""<<str<<"\""<< std::endl;
             exit(0);
