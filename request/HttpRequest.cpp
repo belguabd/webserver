@@ -4,9 +4,9 @@
 
 LocationConfig &
 getMatchedLocationUpload(const std::string &path,
-                         std::map<std::string, LocationConfig> &configUploads) {
+                         map<string, LocationConfig> &configUploads) {
   size_t pos = path.find("/", 1);
-  std::string keyLocationUpload;
+  string keyLocationUpload;
 
   if (pos == std::string::npos)
     pos = path.size() + 1;
@@ -20,20 +20,20 @@ getMatchedLocationUpload(const std::string &path,
   return (configUploads.find(keyLocationUpload))->second;
 }
 
-std::string HttpRequest::getFileName() {
+string HttpRequest::getFileName() {
   if (checkCgi)
     return _post->getFileName();
   return "";
 }
 
-void HttpRequest::handlePost() {
-  if (_post == NULL) {
-    mapheaders["isCgi"] = std::to_string(checkCgi);
-    LocationConfig &lc =
-        getMatchedLocationUpload(dataFirstLine[1], server_config.location);
-    mapheaders["isCgi"] = std::to_string(checkCgi);
-    _post = new Post(mapheaders, queryParam, _buffer, lc);
-  } else
+void HttpRequest::handlePost()
+{
+  if (_post == NULL)
+  {
+    LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
+    _post = new Post(mapheaders, queryParam, _buffer, lc, checkCgi);
+  }
+  else
     _post->proseRequest(readBuffer);
   setRequestStatus(_post->getStatus());
   this->readBuffer.clear();
@@ -41,32 +41,20 @@ void HttpRequest::handlePost() {
 
 int HttpRequest::handleDeleteRequest(std::string filePath) {
   struct stat meteData;
-  // filePath.insert(0, ".");
-  LocationConfig &lc =
-      getMatchedLocationUpload(dataFirstLine[1], server_config.location);
-  std::string location =
-      findMatchingLocation(dataFirstLine[1], server_config.location);
-  filePath.replace(0, location.length()-1, lc._root);
-  // if (filePath.substr(0, pos + 1) != "./upload/")
-  //   return 405;
-  // Check if the file exists
+  LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
+  std::string location =  findMatchingLocation(dataFirstLine[1], server_config.location);
+  filePath.replace(0, location.length() - 1, lc._root);
   if (stat(filePath.c_str(), &meteData) != 0)
     return 404;
 
-  // Try to delete the file
   if (unlink(filePath.c_str()) == 0)
     return 204;
 
-  // Handle permission errors
-  if (errno == EACCES || errno == EPERM)
-    return 403;
-
-  // Other filesystem errors
   return 500;
 }
 
 ServerConfig  HttpRequest::validServerConfig() {
-  std::string host;
+  string host;
   host = this->mapheaders["HOST"];
   size_t pos = host.find(":");
   host = host.substr(0,pos);
@@ -79,13 +67,13 @@ ServerConfig  HttpRequest::validServerConfig() {
 }
 
 void HttpRequest::handleRequest() {
-  std::string str_parse;
-  // pasteInFile("currentRequest", readBuffer);
+  string str_parse;
+
   joinBuffer();
   str_parse = partRquest();
   if (getFirstTimeFlag() == 0) {
     size_t pos = str_parse.find("\r\n");
-    if (pos != std::string::npos) {
+    if (pos != string::npos) {
       setFirstTimeFlag(1);
       _method = defineTypeMethod(str_parse.substr(0, pos + 2));
       str_parse = str_parse.substr(pos + 2);
@@ -113,14 +101,8 @@ void HttpRequest::handleRequest() {
 }
 
 HttpRequest::HttpRequest(int client_fd, ServerSocket server_socket)
-    : client_fd(client_fd),
-      firsttime(0),
-      endHeaders(0),
-      isCGi(false),
-      _method(0),
-      checkCgi(0),
-      cgi_for_test(0),
-      status_code(0) {
+    : client_fd(client_fd), firsttime(0), endHeaders(0), _method(0),
+      isCGi(false), checkCgi(0), cgi_for_test(0), status_code(0) {
   int flags = fcntl(client_fd, F_GETFL, 0);
   fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
   this->server_fd = server_socket.getServer_fd();
@@ -147,24 +129,28 @@ std::string trimNewline(std::string str) {
   }
   return str;
 }
-LocationConfig getValueMap(std::map<std::string, LocationConfig> &configNormal,
-                           std::map<std::string, LocationConfig>::const_iterator it) {
+LocationConfig getValueMap(map<string, LocationConfig> &configNormal,
+                           map<string, LocationConfig>::const_iterator it) {
   LocationConfig config;
   if (it != configNormal.end()) {
     config = it->second;
   }
   return config;
 }
-HttpRequest::~HttpRequest() {}
-int HttpRequest::setDataCgi(std::string data, ServerConfig &config,
-                            LocationConfig &structConfig) {
-  std::string s;
-  std::string root;
+HttpRequest::~HttpRequest() 
+{
+  delete _post;
+}
+
+int HttpRequest:: setDataCgi(string data,ServerConfig &config,LocationConfig &structConfig)
+{
+  string s;
+  string root;
   int checkcgi = 0;
   this->cgiExtension = 0;
-  std::vector<std::string> extension;
+  vector<string> extension;
   extension = splitstring(structConfig._cgi_extension);
-  // std::cout<<data<<std::endl;
+  // cout <<data<<endl;
   if (structConfig._root.empty()) {
     root = config.getRoot();
   } else {
@@ -174,12 +160,12 @@ int HttpRequest::setDataCgi(std::string data, ServerConfig &config,
   if (root[root.length() - 1] != '/') {
     root.push_back('/');
   }
-  std::string str;
+  string str;
   size_t i = 0;
-  std::vector<std::string> words;
+  vector<string> words;
   words = splitstring(structConfig._index);
   for (size_t i = 0; i < extension.size(); i++) {
-    if (data.find(extension[i]) != std::string::npos) {
+    if (data.find(extension[i]) != string::npos) {
       s = extension[i];
       break;
     }
@@ -187,11 +173,11 @@ int HttpRequest::setDataCgi(std::string data, ServerConfig &config,
   if (!s.empty()) {
     size_t pos = root.find(s);
     this->rootcgi = root.substr(0, pos + s.length());
-    // std::cout<<rootcgi<<std::endl;
+    // cout <<rootcgi<<endl;
     if (!fileExists(this->rootcgi)) {
       return 0;
     }
-    if (rootcgi.find(".php") != std::string::npos)
+    if (rootcgi.find(".php") != string::npos)
       this->cgiExtension = 1;
     else
       this->cgiExtension = 2;
@@ -202,11 +188,11 @@ int HttpRequest::setDataCgi(std::string data, ServerConfig &config,
       str = root + words[i];
       if (fileExists(str)) {
         this->rootcgi = str;
-        if (str.find(".php") != std::string::npos ||
-            str.find(".py") != std::string::npos) {
+        if (str.find(".php") != string::npos ||
+            str.find(".py") != string::npos) {
           for (size_t j = 0; j < extension.size(); j++) {
-            if (str.find(extension[j]) != std::string::npos) {
-              if (str.find(".php") != std::string::npos)
+            if (str.find(extension[j]) != string::npos) {
+              if (str.find(".php") != string::npos)
                 this->cgiExtension = 1;
               else
                 this->cgiExtension = 2;
@@ -222,13 +208,13 @@ int HttpRequest::setDataCgi(std::string data, ServerConfig &config,
   }
   return checkcgi;
 }
-void HttpRequest::checkPathIscgi(std::string &path) {
+void HttpRequest::checkPathIscgi(string &path) {
   ServerConfig config;
-  std::string method;
-  std::string data;
-  std::string str;
-  std::vector<std::string> allowedMethod;
-  std::vector<std::string> extension;
+  string method;
+  string data;
+  string str;
+  vector<string> allowedMethod;
+  vector<string> extension;
   LocationConfig log;
   config = this->getServerConfig();
   int i = 0;
@@ -251,7 +237,7 @@ void HttpRequest::checkPathIscgi(std::string &path) {
     if (!log._return.empty()) {
       return;
     }
-    if (log._allowed_methods.find(this->dataFirstLine[0]) == std::string::npos) {
+    if (log._allowed_methods.find(this->dataFirstLine[0]) == string::npos) {
       this->requestStatus = 405;
       this->endHeaders = 1;
       return;
@@ -261,10 +247,10 @@ void HttpRequest::checkPathIscgi(std::string &path) {
     }
   }
 }
-int HttpRequest::defineTypeMethod(std::string firstline) {
-  std::vector<std::string> words;
-  std::stringstream word(firstline);
-  std::string str;
+int HttpRequest::defineTypeMethod(string firstline) {
+  vector<string> words;
+  stringstream word(firstline);
+  string str;
   for (size_t i = 0; i < firstline.length(); i++) {
     if (firstline[0] == ' ' || firstline[i] == '\t' ||
         (firstline[i] == ' ' && firstline[i + 1] == ' ') ||
@@ -296,11 +282,11 @@ int HttpRequest::defineTypeMethod(std::string firstline) {
   return (0);
 }
 
-std::vector<std::string> splitstring(const std::string &str) {
-  std::vector<std::string> words;
+vector<string> splitstring(const string &str) {
+  vector<string> words;
   size_t i = 0, j;
   while (i < str.length()) {
-    if ((j = str.find_first_of(" \t", i)) != std::string::npos) {
+    if ((j = str.find_first_of(" \t", i)) != string::npos) {
       if (j > i)
         words.push_back(str.substr(i, j - i));
       i = j + 1;
@@ -311,38 +297,37 @@ std::vector<std::string> splitstring(const std::string &str) {
   }
   return (words);
 }
-void HttpRequest::checkHeaders(std::string &str) {
+void HttpRequest::checkHeaders(string &str) {
   str = trimNewline(str);
   size_t pos = str.find(':');
-  std::string result;
-  std::string key;
-  std::vector<std::string> words;
-  std::vector<std::string> hostsize;
-  if (pos == std::string::npos || (pos > 0 && str[pos - 1] == ' ')) {
+  string result;
+  string key;
+  int i = 0;
+  vector<string> words;
+  vector<string> hostsize;
+  if (pos == string::npos || (pos > 0 && str[pos - 1] == ' ')) {
     this->requestStatus = 400;
     this->endHeaders = 1;
     return;
   }
   words = splitstring(str.substr(pos + 1, str.length()));
-  for (std::vector<std::string>::const_iterator it = words.begin(); it != words.end();
+  for (vector<string>::const_iterator it = words.begin(); it != words.end();
        ++it) {
-    const std::string &words = *it;
+    const string &words = *it;
     result += ' ';
     result += words;
   }
-  std::string headerName = str.substr(0, pos);
+  string headerName = str.substr(0, pos);
   result.erase(0, result.find_first_not_of(" "));
   hostsize = splitstring(result);
   key = convertToUpper(headerName);
   if (key == "CONNECTION") {
     this->typeConnection = result;
   }
-  // std::cout<<"key --->"<<key;
-  // std::cout<<"     val --->"<<result<<std::endl;
   if (key == "HOST") {
     if (hostsize.size() != 1 ||
         this->mapheaders.find(headerName) != this->mapheaders.end()) {
-      std::cout<< "bad request " << std::endl;
+      cout << "bad request " << endl;
       this->requestStatus = 400;
       this->endHeaders = 1;
       return;
@@ -351,20 +336,20 @@ void HttpRequest::checkHeaders(std::string &str) {
   this->mapheaders[headerName] = result;
 }
 
-std::string HttpRequest ::partRquest() {
+string HttpRequest ::partRquest() {
   if (this->endHeaders == 1)
     return "";
-  std::string line;
-  std::string str;
+  string line;
+  string str;
   line += this->_buffer;
   this->_buffer.clear();
   size_t pos = line.find("\r\n\r\n");
-  if (pos != std::string::npos) {
+  if (pos != string::npos) {
     str = line.substr(0, pos + 4);
     this->_buffer = line.substr(pos + 4);
   } else {
     pos = line.rfind("\r\n");
-    if (pos != std::string::npos) {
+    if (pos != string::npos) {
       str = line.substr(0, pos + 2);
       this->_buffer = line.substr(pos + 2);
     } else {
@@ -382,8 +367,8 @@ void HttpRequest ::joinBuffer() {
   this->readBuffer.clear();
 }
 /*-----------------*/
-std::string convertToUpper(std::string str) {
-  std::string result;
+string convertToUpper(string str) {
+  string result;
   for (size_t i = 0; i < str.size(); i++) {
     result += toupper(str[i]);
   }
@@ -439,7 +424,7 @@ int HttpRequest::parseFiledLine(std::string &filedLine) {
       filedLineName[i] = '_';
   }
 
-  // std::cout<< "filedLineName : " << filedLineName << std::endl;
+  // std::cout << "filedLineName : " << filedLineName << std::endl;
   if (mapheaders.find(filedLineName) != mapheaders.end()) {
     std::vector<std::string> keys;
     keys.push_back("HOST");
@@ -450,24 +435,24 @@ int HttpRequest::parseFiledLine(std::string &filedLine) {
     keys.push_back("DATE");
     keys.push_back("UPGRADE");
     if (std::find(keys.begin(), keys.end(), filedLineName) != keys.end())
-      return 400; // std::cout<< "I am duplicate\n";
+      return 400; // std::cout << "I am duplicate\n";
   }
   std::string filedLineValue = filedLine.substr(pos + 1, filedLine.length());
   trimSpaces(filedLineValue);
-  // std::cout<< "filedLineValue->>" << filedLineValue << "---------\n";
+  // std::cout << "filedLineValue->>" << filedLineValue << "---------\n";
   mapheaders[filedLineName] = filedLineValue;
   return 0;
 }
 
-void HttpRequest ::parsePartRequest(std::string str_parse) {
+void HttpRequest ::parsePartRequest(string str_parse) {
   if (this->endHeaders == 1)
     return;
   if (str_parse == "\r\n") {
     requestStatus = 400;
     return;
   }
-  // std::cout<< "str_parse :"; printNonPrintableChars(str_parse);
-  // std::cout<< "\\\\\\\n";
+  // std::cout << "str_parse :"; printNonPrintableChars(str_parse);
+  // std::cout << "\\\\\\\n";
 
   size_t pos1 = 0;
   size_t pos2 = str_parse.find("\r\n");
@@ -515,7 +500,7 @@ void HttpRequest ::parsePartRequest(std::string str_parse) {
       mapheaders["CONNECTION"] = "keep-alive";
     this->typeConnection = mapheaders["CONNECTION"];
     if (mapheaders.find("TRANSFER_ENCODING") != mapheaders.end()) {
-      std::cout<< "transfer encoding : " << mapheaders["TRANSFER_ENCODING"]
+      std::cout << "transfer encoding : " << mapheaders["TRANSFER_ENCODING"]
                 << std::endl;
       if (mapheaders["TRANSFER_ENCODING"] != "chunked") {
         requestStatus = 400;
@@ -529,7 +514,7 @@ void HttpRequest ::requestLine() {
   if (this->endHeaders == 1) {
     return;
   }
-  std::string path;
+  string path;
   this->dataFirstLine[1] = encodeUrl(this->dataFirstLine[1]);
   if (this->dataFirstLine[1].empty()) {
     this->requestStatus = 400;
@@ -544,19 +529,19 @@ void HttpRequest ::requestLine() {
   }
   size_t pos = path.find("?");
   size_t posHashtag = path.find("#");
-  if (posHashtag != std::string::npos) {
+  if (posHashtag != string::npos) {
     this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, posHashtag);
   }
-  if (pos != std::string::npos) {
+  if (pos != string::npos) {
     this->queryString = this->dataFirstLine[1].substr(pos);
     this->dataFirstLine[1] = this->dataFirstLine[1].substr(0, pos);
   }
 }
 
-std::string encodeUrl(std::string &str) {
+string encodeUrl(string &str) {
   size_t pos = 0;
-  std::string tmp;
-  while ((pos = str.find("%", pos)) != std::string::npos) {
+  string tmp;
+  while ((pos = str.find("%", pos)) != string::npos) {
     tmp = str.substr(pos + 1, 2);
     char c = characterEncodeing(tmp);
     if (c == 0)
@@ -567,7 +552,7 @@ std::string encodeUrl(std::string &str) {
   return (str);
 }
 
-char characterEncodeing(std::string &tmp) {
+char characterEncodeing(string &tmp) {
   printNonPrintableChars(tmp);
   if (tmp[0] < '2' || tmp[0] > '7' ||
       (!isdigit(tmp[1]) && (tmp[1] < 'A' || tmp[1] > 'F'))) {

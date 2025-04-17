@@ -15,12 +15,11 @@ Chunked &Chunked::operator=(const Chunked &other)
 	return *this;
 }
 
-Chunked::Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &_status, std::string &uploadStore):
-    _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _status(_status), _uploadStore(uploadStore)
+Chunked::Chunked(std::string &bufferBody, std::string &remainingBuffer, std::map<std::string, std::string> &headers, int &status, std::string &uploadStore):
+    _bufferBody(bufferBody), _remainingBuffer(remainingBuffer), _headers(headers), _uploadStore(uploadStore), _status(status)
 {
 	_chunkSize = 0;
 	initializeMimeTypes();
-	// setFileName(_mimeToExtension[_headers["Content-Type"]]);
 	setFileName(_mimeToExtension[_headers["CONTENT_TYPE"]]);
 }
 
@@ -28,12 +27,10 @@ void Chunked::setFileName(std::string extention)
 {
 	struct stat b;
 	std::string name = _uploadStore + "/" + std::string("filePost");
-	std::cout<< "_uploadStore : " <<_uploadStore << std::endl;
-	int n = 0;
+	std::cout << "_uploadStore : " <<_uploadStore << std::endl;
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	_fileName = name + extention;
-	std::cout<< "file : " << _fileName << std::endl;
 }
 
 int Chunked::handleChunked()
@@ -41,7 +38,7 @@ int Chunked::handleChunked()
 	std::string fileData;
 	if (_chunkSize <= 0) // check is remending data
 	{
-		// std::cout<< "buffer head : "; printNonPrintableChars(_bufferBody.substr(0, 12));
+		// std::cout << "buffer head : "; printNonPrintableChars(_bufferBody.substr(0, 12));
 		_chunkSize = getChunkSize(_bufferBody);
 		if (_chunkSize == 0)
 			return 1;
@@ -53,7 +50,7 @@ int Chunked::handleChunked()
 	_chunkSize -= (long)fileData.size();
 	if (_chunkSize > 0)
 	{
-		// std::cout<< "uncompleted request\n";
+		// std::cout << "uncompleted request\n";
 		return (long)fileData.size(); // uncompleted request
 	}
 	return handleChunked();
@@ -64,22 +61,11 @@ size_t pasteInFile(std::string name, std::string &data)
 	std::ofstream file(name, std::ios::app);
 	std::string d = data;
 	size_t fileSize;
-	if (name == "currentRequest")
-	{
-		// std::cout<< "in current request\n";
-		std::string::size_type pos = 0;
-		const std::string from = "\r\n";
-		const std::string to = "\\r\\n\n";
-
-		while ((pos = d.find(from, pos)) != std::string::npos) {
-			d.replace(pos, from.length(), to);
-			pos += to.length(); // Move past the replacement
-		}
-	}
 	if (!file.is_open())
 	{
-		std::cerr << "Failed to open file: " << name << " - " << std::strerror(errno) << std::endl;
-		return 0;
+		// std::cerr << "Failed to open file: " << name << " - " << std::strerror(errno) << std::endl;
+		// return 0;
+		throw std::runtime_error("Failed to open file");
 	}
 	file << d;
 	fileSize = static_cast<size_t>(file.tellp());
@@ -92,40 +78,43 @@ size_t Chunked::getChunkSize(std::string &buffer)
 {
 	if (buffer == std::string("\r\n"))
 	{
-		// std::cout<< "due i enter on this when the sizeChunk=0 which mean the [chunk is done] so we saved in [remainingBody] \n";
-		// std::cout<< "this crlf need set it in next part to make sure that is a valid chunkHead (\r\n0xN\r\n)\n";
+		// std::cout << "due i enter on this when the sizeChunk=0 which mean the [chunk is done] so we saved in [remainingBody] \n";
+		// std::cout << "this crlf need set it in next part to make sure that is a valid chunkHead (\r\n0xN\r\n)\n";
 		this->_remainingBuffer.insert(0, buffer);
 		return 0;
 	}
 	if (buffer == std::string("\r\n0\r\n"))
 	{
-		// std::cout<< "I need this to this to add it in next for bodyBuffer to make sure is completed\n";
+		// std::cout << "I need this to this to add it in next for bodyBuffer to make sure is completed\n";
 		this->_remainingBuffer.insert(0, buffer);
 		return 0;
 	}
 	if (std::string(buffer + _remainingBuffer) == std::string("\r\n0\r\n\r\n"))
 	{
-		std::cout<< "end of req" << std::endl;
+		std::cout << "end of req" << std::endl;
 		_status = 201;
-		std::cout<< "check file: " << _fileName << std::endl;
+		std::cout << "check file: " << _fileName << std::endl;
 		return 0;
 	}
 
 	if (buffer.substr(0,2) != std::string("\r\n"))
 	{
-		std::cout<< "throw invalid head chunk1" << std::endl;
+		// std::cout << "throw invalid head chunk1" << std::endl;
+		_status = 400;
 		return 0;
 	}
 	size_t pos = buffer.find("\r\n", 2);
 	if (pos == std::string::npos)
 	{
-		std::cout<< "throw invalid head chunk2\n" << std::endl;
+		std::cout << "throw invalid head chunk2\n" << std::endl;
+		_status = 400;
 		return 0;
 	}
-	for (int i = 2; i < pos; i++)
+	for (size_t i = 2; i < pos; i++)
 		if (!std::isxdigit(buffer[i]))
 		{
-			std::cout<< "throw invalid head chunk3\n" << std::endl;
+			std::cout << "throw invalid head chunk3\n" << std::endl;
+			_status = 400;
 			return 0;
 		}
     size_t n = strtol(buffer.substr(2, pos).c_str(), NULL, 16);

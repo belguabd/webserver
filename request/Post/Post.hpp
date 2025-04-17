@@ -45,12 +45,10 @@ private:
     void setContentLengthSize();
     LocationConfig &_configUpload;
     void createBodyTypeObject(std::string& buffer);
+    int _isCgi;
 public:
-    // Post();
-    // Post(std::map<std::string, std::string> &headers, std::map<std::string, \
-    //     std::string> &queryParam, std::string &buffer);
     Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, 
-    std::string &buffer, LocationConfig &configUpload);
+    std::string &buffer, LocationConfig &configUpload, int isCgi);
     std::string &getFileName();
     int getStatus() {return _status;}
     int handleKeyVal(std::string &buffer);
