@@ -158,7 +158,7 @@ void WebServer::receive_from_client(int event_fd) {
     return;
   }
   if (request->getRequestStatus()) {
-    request->Is_open = request->checkCgi;
+    request->Is_open = request->getCheckCgi();
     HttpResponse *responseclient = NULL;
     try {
       responseclient = new HttpResponse(request);
@@ -168,7 +168,7 @@ void WebServer::receive_from_client(int event_fd) {
                                std::string(strerror(errno)));
     }
     responses_clients.push_back(responseclient);
-    request->cgi_for_test = request->checkCgi;
+    request->setCgiForTest(request->getCheckCgi());
     struct kevent changes[1];
     EV_SET(&changes[0], event_fd, EVFILT_READ, EV_DELETE, 0, 0, request);
     if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
@@ -201,7 +201,7 @@ void WebServer::keepClientConnectionOpen(
     throw std::runtime_error("Error adding read event: " +
                              std::string(strerror(errno)));
   }
-  if (request->_method == POST) {
+  if (request->getMethod() == POST) {
     unlink(request->getFileName().c_str());
   }
   unlink(request->filename.c_str());
@@ -231,7 +231,7 @@ void WebServer::terminateClientConnection(
     throw std::runtime_error("Error adding read event: " +
                              std::string(strerror(errno)));
   }
-  if (request->_method == POST) {
+  if (request->getMethod() == POST) {
     unlink(request->getFileName().c_str());
   }
   unlink(request->filename.c_str());
@@ -289,7 +289,7 @@ void WebServer::respond_to_client(int event_fd) {
       break;
     }
   }
-  if (request->checkCgi && request->Is_open) {
+  if (request->getCheckCgi() && request->Is_open) {
     request->setBodyCgi(response->extractBodyFromFile(request->filename));
     request->Is_open = 0;
   }
@@ -429,7 +429,7 @@ void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
   if (pid == 0) {
     dup2(fd, STDOUT_FILENO);
     close(fd);
-    if (request->_method == POST) {
+    if (request->getMethod() == POST) {
       int fd_body = open(request->getFileName().c_str(), O_RDWR, 0644);
       if (fd_body < 0) {
         throw std::runtime_error("Failed to open file: " +
@@ -483,8 +483,8 @@ bool WebServer::isCGIRequest(int client_fd) {
   }
   if (!client)
     return false;
-  if (client->cgi_for_test) {
-    client->cgi_for_test = 0;
+  if (client->getCgiForTest()) {
+    client->setCgiForTest(0);
     return true;
   }
   return false;
@@ -506,16 +506,16 @@ void WebServer::handleCGIRequest(int client_fd) {
     std::replace(key.begin(), key.end(), '-', '_');
     env["HTTP_" + key] = (*iter_headers).second;
   }
-  if (client->_method == GET) {
+  if (client->getMethod() == GET) {
     env["REQUEST_METHOD"] = "GET";
-  } else if (client->_method == POST) {
+  } else if (client->getMethod() == POST) {
     env["REQUEST_METHOD"] = "POST";
   }
   env["SCRIPT_NAME"] = client->rootcgi;     // Path to script
   env["SCRIPT_FILENAME"] = client->rootcgi; // Path to script
   env["PATH_INFO"] = client->pathInfo;      // Path info from URL
   env["REDIRECT_STATUS"] = "1";             // Security feature for CGI
-  if (client->_method == POST) {
+  if (client->getMethod() == POST) {
     env["CONTENT_TYPE"] = env["HTTP_CONTENT_TYPE"];
     env["CONTENT_LENGTH"] = env["HTTP_CONTENT_LENGTH"];
   }

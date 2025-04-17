@@ -302,7 +302,6 @@ void HttpRequest::checkHeaders(string &str) {
   size_t pos = str.find(':');
   string result;
   string key;
-  int i = 0;
   vector<string> words;
   vector<string> hostsize;
   if (pos == string::npos || (pos > 0 && str[pos - 1] == ' ')) {

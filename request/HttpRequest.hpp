@@ -22,12 +22,19 @@ enum Method { NONE = 0, GET = 1, POST = 2, DELETE = 3 };
 using namespace std;
 class HttpRequest {
 private:
-  string body_cgi;
   int client_fd;
-  int cgi_fd;
   int firsttime;
-  int requestStatus;
   int endHeaders;
+  int _method;
+  bool isCGi;
+  int checkCgi;
+  int cgi_for_test;
+  int status_code;
+
+  
+  string body_cgi;
+  int cgi_fd;
+  int requestStatus;
   vector<string> dataFirstLine;
   map<string, string> queryParam;
   string queryString;
@@ -37,7 +44,6 @@ private:
 
   string file;
   std::string buffer_cgi;
-  bool isCGi;
 
   // Delete _delete;
   string _buffer;
@@ -53,7 +59,6 @@ public:
   // Setter for body_cgi
   void setBodyCgi(const string &bodyCgi) { body_cgi = bodyCgi; }
 
-  int checkCgi;
   int Is_open;
 
   int server_fd;
@@ -63,22 +68,21 @@ public:
   string pathInfo;
   bool start_cgi;
   bool is_client_disconnected;
-  int status_code;
+  int getMethod() const { return this->_method; }
+  int getCheckCgi()  { return this->checkCgi; }
+  int getCgiForTest() { return this->cgi_for_test; }
+  void setCgiForTest(int cgi) {  this->cgi_for_test = cgi; }
 
   string filename;
 
   int parseFiledLine(std::string &headers);
   std::string &parseFiledLineName(std::string &filedLine);
-  int getCgi() { return cgi_fd; }
   void setCgi(int fd) { this->cgi_fd = fd; }
-  int cgi_for_test;
-  const bool getCGI() { return isCGi; }
   void setCGI(bool cgi) { this->isCGi = cgi; }
   // Post _post;
   Post *_post;
   ServerConfig &getServerConf() { return this->server_config; }
   map<string, string> mapheaders;
-  int _method;
   HttpRequest(int client_fd, ServerSocket server_socket);
   ~HttpRequest();
   /*    --------------*/
