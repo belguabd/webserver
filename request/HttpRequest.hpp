@@ -25,13 +25,13 @@ private:
   int client_fd;
   int firsttime;
   int endHeaders;
+  int _timeout;
   int _method;
   bool isCGi;
   int checkCgi;
   int cgi_for_test;
   int status_code;
 
-  
   string body_cgi;
   int cgi_fd;
   int requestStatus;
@@ -69,9 +69,9 @@ public:
   bool start_cgi;
   bool is_client_disconnected;
   int getMethod() const { return this->_method; }
-  int getCheckCgi()  { return this->checkCgi; }
+  int getCheckCgi() { return this->checkCgi; }
   int getCgiForTest() { return this->cgi_for_test; }
-  void setCgiForTest(int cgi) {  this->cgi_for_test = cgi; }
+  void setCgiForTest(int cgi) { this->cgi_for_test = cgi; }
 
   string filename;
 
@@ -89,7 +89,7 @@ public:
   int setDataCgi(string data, ServerConfig &config,
                  LocationConfig &structConfig);
   /*    --------------*/
-  void setServerConfig(ServerConfig config) {this->server_config = config;}
+  void setServerConfig(ServerConfig config) { this->server_config = config; }
   int getRequestStatus() { return this->requestStatus; }
   int readData();
   int getfd() const { return this->client_fd; }
@@ -108,7 +108,7 @@ public:
   void checkHeaders(string &str);
   void checkPathIscgi(string &path);
   void requestLine();
-  ServerConfig validServerConfig ();
+  ServerConfig validServerConfig();
   void display() {
     std::cout << "Client fd: " << this->client_fd << std::endl;
     std::cout << "buffer: " << this->readBuffer << std::endl;
@@ -121,6 +121,11 @@ public:
   const std::vector<std::string> &getDataFirstLine() const {
     return dataFirstLine;
   }
+  // Getter for _timeout
+  int getTimeout() const { return _timeout; }
+
+  // Setter for _timeout
+  void setTimeout(int timeout) { _timeout = timeout; }
   ServerConfig &getServerConfig() { return server_config; }
   void setbufferCgi(char *buffer) { this->buffer_cgi.assign(buffer); }
   const std::string &getCGIBuffer() { return this->buffer_cgi; }
@@ -141,4 +146,5 @@ string convertToUpper(string str);
 string findMatchingLocation(const string &uri,
                             const map<string, LocationConfig> &locations);
 bool pathExists(string &path);
-ServerConfig validServerConfig(vector<ServerConfig *>configs, map<string, string> headers);
+ServerConfig validServerConfig(vector<ServerConfig *> configs,
+                               map<string, string> headers);
