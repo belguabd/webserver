@@ -539,8 +539,8 @@ void HttpRequest ::requestLine() {
 
 string encodeUrl(string &str) {
   size_t pos = 0;
-  string tmp;
-  while ((pos = str.find("%", pos)) != string::npos) {
+  std::string tmp;
+  while ((pos = str.find("%", pos)) != std::string::npos) {
     tmp = str.substr(pos + 1, 2);
     char c = characterEncodeing(tmp);
     if (c == 0)
