@@ -43,10 +43,12 @@ int HttpRequest::handleDeleteRequest(std::string filePath) {
   struct stat meteData;
   LocationConfig &lc = getMatchedLocationUpload(dataFirstLine[1], server_config.location);
   std::string location =  findMatchingLocation(dataFirstLine[1], server_config.location);
-  filePath.replace(0, location.length() - 1, lc._root);
+  filePath.replace(0, location.length(), lc._root);
+  filePath.insert(lc._root.size(), "/");
   if (stat(filePath.c_str(), &meteData) != 0)
     return 404;
-
+  if (access(filePath.c_str(), R_OK | W_OK) != 0)
+    return 403;
   if (unlink(filePath.c_str()) == 0)
     return 204;
 
@@ -498,8 +500,6 @@ void HttpRequest ::parsePartRequest(std::string str_parse) {
       mapheaders["CONNECTION"] = "keep-alive";
     this->typeConnection = mapheaders["CONNECTION"];
     if (mapheaders.find("TRANSFER_ENCODING") != mapheaders.end()) {
-      std::cout << "transfer encoding : " << mapheaders["TRANSFER_ENCODING"]
-                << std::endl;
       if (mapheaders["TRANSFER_ENCODING"] != "chunked") {
         requestStatus = 400;
         return;
@@ -551,7 +551,6 @@ std::string encodeUrl(std::string &str) {
 }
 
 char characterEncodeing(std::string &tmp) {
-  printNonPrintableChars(tmp);
   if (tmp[0] < '2' || tmp[0] > '7' ||
       (!isdigit(tmp[1]) && (tmp[1] < 'A' || tmp[1] > 'F'))) {
     return 0;

@@ -51,13 +51,12 @@ std::string HttpResponse:: headersSending() {
 }
 /*---------------------- Get method------------------------------------------*/
 void HttpResponse::fileDataSend(std::string &data, ServerConfig &config) {
-  (void)config;
     std::string ContentType;
 
     if (!this->file.is_open()) {
         this->file.open(data, std::ios::binary);
         if (!this->file.is_open()) {
-            std::cerr << "Error opening file: " << data << std::endl;
+            this->sendErrorPage(config, 403);
             return;
         }
 
@@ -339,7 +338,6 @@ int HttpResponse::writeData() {
     this->fileDataSend(data,config);
   }else if (this->request->getMethod()==DELETE) {
     data = DELETESUCESSE;
-    std::cout<<this->request->getRequestStatus()<<std::endl;
     this->fileDataSend(data,config);
   }
   return this->bytesSend;

@@ -60,6 +60,5 @@ public:
     Body getBodyType() { return _bodyType; }
     int proseRequest(std::string &buffer);
 };
-void printNonPrintableChars(const std::string &str);
 size_t pasteInFile(std::string name, std::string &data);
  

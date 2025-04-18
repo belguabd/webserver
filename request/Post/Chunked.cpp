@@ -27,7 +27,6 @@ void Chunked::setFileName(std::string extention)
 {
 	struct stat b;
 	std::string name = _uploadStore + "/" + std::string("filePost");
-	std::cout << "_uploadStore : " <<_uploadStore << std::endl;
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	_fileName = name + extention;
@@ -38,7 +37,6 @@ int Chunked::handleChunked()
 	std::string fileData;
 	if (_chunkSize <= 0) // check is remending data
 	{
-		// std::cout << "buffer head : "; printNonPrintableChars(_bufferBody.substr(0, 12));
 		_chunkSize = getChunkSize(_bufferBody);
 		if (_chunkSize == 0)
 			return 1;
@@ -91,9 +89,8 @@ size_t Chunked::getChunkSize(std::string &buffer)
 	}
 	if (std::string(buffer + _remainingBuffer) == std::string("\r\n0\r\n\r\n"))
 	{
-		std::cout << "end of req" << std::endl;
+		// std::cout << "end of req" << std::endl;
 		_status = 201;
-		std::cout << "check file: " << _fileName << std::endl;
 		return 0;
 	}
 
@@ -106,14 +103,12 @@ size_t Chunked::getChunkSize(std::string &buffer)
 	size_t pos = buffer.find("\r\n", 2);
 	if (pos == std::string::npos)
 	{
-		std::cout << "throw invalid head chunk2\n" << std::endl;
 		_status = 400;
 		return 0;
 	}
 	for (size_t i = 2; i < pos; i++)
 		if (!std::isxdigit(buffer[i]))
 		{
-			std::cout << "throw invalid head chunk3\n" << std::endl;
 			_status = 400;
 			return 0;
 		}

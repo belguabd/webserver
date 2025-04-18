@@ -78,20 +78,17 @@ size_t BoundaryChunked::getChunkSize(std::string &buffer)
 	if (buffer.substr(0,2) != std::string("\r\n"))
 	{
 		_status = 400;
-		// std::cout << "throw invalid head chunk1" << std::endl;
 		return 0;
 	}
 	size_t pos = buffer.find("\r\n", 2);
 	if (pos == std::string::npos)
 	{
 		_status = 400;
-		// std::cout << "throw invalid head chunk2\n" << std::endl;
 		return 0;
 	}
 	for (size_t i = 2; i < pos; i++)
 		if (!std::isxdigit(buffer[i]))
 		{
-			// std::cout << "throw invalid head chunk3\n" << std::endl;
 			_status = 400;
 			return 0;
 		}

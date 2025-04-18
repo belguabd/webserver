@@ -109,22 +109,6 @@ void Post::setBodyType()
 
 }
 
-void printNonPrintableChars(const std::string &str)
-{
-	for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
-	{
-		if (!isprint(static_cast<unsigned char>(*it)))
-		{
-			std::cout << "(x" << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)(*it) << ")";
-		}
-		else
-		{
-			std::cout << *it;
-		}
-	}
-	std::cout << std::endl;
-}
-
 bool fileExists(std::string &filePath)
 {
 	struct stat buffer;
@@ -138,7 +122,6 @@ void Post::setFileName(std::string extention)
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	_fileName = (name + extention);
-	std::cout << "fileName : " << _fileName << std::endl;
 }
 
 int Post::handleContentLength(std::string &buffer)

@@ -61,7 +61,7 @@ echo "<style>
 // Check if a file has been uploaded
 if (isset($_FILES['file'])) {
     $file = $_FILES['file'];
-    $targetDir = "uploads/";
+    $targetDir = "upload/";
     $targetFile = $targetDir . basename($file["name"]);
     
     // Try to move the uploaded file

@@ -47,8 +47,6 @@ WebServer::WebServer(std::string &str) : max_events(MAX_EVENTS) {
   initialize_kqueue();
   std::ifstream file(str);
   std::stringstream fileContent;
-  if (!file.is_open())
-    std::cout << "error file not opened " << std::endl;
   fileContent << file.rdbuf();
   this->_data = fileContent.str();
   this->dataConfigFile();
@@ -116,7 +114,7 @@ void WebServer::receive_from_client(int event_fd) {
     request->is_client_disconnected = true;
   }
   if (request->is_client_disconnected) {
-    puts("\033[1;34mClient disconnected...\033[0m");
+    // puts("\033[1;34mClient disconnected...\033[0m");
     struct kevent changes[2];
     EV_SET(&changes[0], event_fd, EVFILT_READ, EV_DELETE, 0, 0, request);
     EV_SET(&changes[1], event_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
@@ -285,7 +283,7 @@ void WebServer::respond_to_client(int event_fd) {
         keepClientConnectionOpen(request, response, iter_req, it);
       } else {
         terminateClientConnection(request, response, iter_req, it);
-        puts("\033[1;32mClient disconnected...\033[0m");
+        // puts("\033[1;32mClient disconnected...\033[0m");
         shutdown(event_fd, SHUT_RDWR);
         close(event_fd);
       }
@@ -358,7 +356,7 @@ void WebServer::separateServer() {
       if (config[i].getHost() == conf.getHost()) {
         if (config[i].serverName == conf.serverName) {
           if (checkports(config[i].ports, conf.ports) == 1) {
-            std::cout << "Error: same ports host servername" << std::endl;
+            std::cout << REDCOLORE <<  "Error: same ports host servername" << std::endl;
             exit(0);
           }
         }
@@ -560,36 +558,36 @@ HttpRequest *WebServer::getRequest(int fd) {
 }
 
 void WebServer::run() {
-  puts("\033[1;34m[SERVER] Running...\033[0m");
+  // puts("\033[1;34m[SERVER] Running...\033[0m");
   try {
     int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
     if (nev == 0) {
-      puts("\033[1;34m[SERVER] No events detected...\033[0m");
+      // puts("\033[1;34m[SERVER] No events detected...\033[0m");
       return;
     }
     if (nev == -1)
       throw std::runtime_error("kevent failed: " +
                                std::string(strerror(errno)));
     for (int i = 0; i < nev; i++) {
-      puts("\033[1;34m[SERVER] Event detected...\033[0m");
+      // puts("\033[1;34m[SERVER] Event detected...\033[0m");
       bool is_server_socket = false;
       int event_fd = events[i].ident;
       int filter = events[i].filter;
 
       for (size_t i = 0; i < serverSockets.size(); i++) {
-        puts("\033[1;34m[SERVER] Checking server socket...\033[0m");
+        // puts("\033[1;34m[SERVER] Checking server socket...\033[0m");
         if (serverSockets[i].getServer_fd() == event_fd) {
           is_server_socket = true;
           break;
         }
       }
       if (is_server_socket) {
-        puts("\033[1;34m[SERVER] New connection...\033[0m");
+        // puts("\033[1;34m[SERVER] New connection...\033[0m");
         handle_new_connection(event_fd);
       } else {
         if (events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT)) {
 
-          puts("\033[1;34m[SERVER] CGI process exited...\033[0m");
+          // puts("\033[1;34m[SERVER] CGI process exited...\033[0m");
           pid_t pid = events[i].ident;
           HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
 
@@ -611,7 +609,7 @@ void WebServer::run() {
             throw std::runtime_error(error_message);
           }
         } else if (filter == EVFILT_TIMER) {
-          puts("\033[1;34m[SERVER] Timer event...\033[0m");
+          // puts("\033[1;34m[SERVER] Timer event...\033[0m");
           pid_t pid = events[i].ident;
           if (checkPid(pid)) {
             HttpRequest *req = static_cast<HttpRequest *>(events[i].udata);
@@ -619,8 +617,8 @@ void WebServer::run() {
               throw std::runtime_error("Null request pointer");
             }
             req->setRequestStatus(504);
-            std::cout << "[SERVER] CGI process " << pid
-                      << " timed out! Killing..." << std::endl;
+            // std::cout << "[SERVER] CGI process " << pid
+            //           << " timed out! Killing..." << std::endl;
             if (kill(pid, SIGKILL) == -1) {
               std::string error_message = "Error sending SIGKILL to process " +
                                           std::to_string(pid) + ": " +
@@ -635,10 +633,10 @@ void WebServer::run() {
               throw std::runtime_error(error_message);
             }
           } else {
-            puts("\033[1;32m[SERVER] Timer event for client...\033[0m");
+            // puts("\033[1;32m[SERVER] Timer event for client...\033[0m");
             HttpRequest *req = getRequest(events[i].ident);
             if (req) {
-              puts("\033[1;32m[SERVER] Timer event for client...\033[0m");
+              // puts("\033[1;32m[SERVER] Timer event for client...\033[0m");
               std::time_t now = std::time(0);
               if (std::difftime(now, req->getTimeout()) > TIMEOUT) {
                 for (size_t i = 0; i < connected_clients.size(); i++) {
@@ -663,14 +661,14 @@ void WebServer::run() {
             }
           }
         } else if (filter == EVFILT_READ) {
-          puts("\033[1;34m[SERVER] Reading data from client...\033[0m");
+          // puts("\033[1;34m[SERVER] Reading data from client...\033[0m");
           receive_from_client(event_fd);
           if (isCGIRequest(event_fd)) {
-            puts("\033[1;34m[SERVER] Handling CGI request...\033[0m");
+            // puts("\033[1;34m[SERVER] Handling CGI request...\033[0m");
             handleCGIRequest(event_fd);
           }
         } else if (filter == EVFILT_WRITE) {
-          puts("\033[1;34m[SERVER] Writing data to client...\033[0m");
+          // puts("\033[1;34m[SERVER] Writing data to client...\033[0m");
           respond_to_client(event_fd);
         }
       }

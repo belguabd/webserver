@@ -33,8 +33,6 @@ void Boundary::setFileName(std::string &fileName)
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	fileName = name + extention;
-    std::cout << "fileName : " << fileName << std::endl;
-
 }
 
 std::string Boundary::getBoundaryString()
@@ -77,12 +75,6 @@ int Boundary::setBoundaryHeadAndEraseBuffer()
     if ((_bufferBody.find(_boundaryString)) != 0)
         return 0;
 
-    if (_bufferBody.find(_boundaryString) == 0)
-    {
-        std::cout << "filename: " << _metadata["filename"] << std::endl;
-        // std::cout << "is valid boundary\n";
-    }
-
     size_t sizeHeadBoundary = _bufferBody.find("\r\n\r\n");
     if (sizeHeadBoundary == std::string::npos)
         return -1;
@@ -121,7 +113,6 @@ int Boundary::handleBoundaryRec()
     }
     if (_bufferBody.substr(0, _boundaryStringEnd.size()) == _boundaryStringEnd)
     {
-        std::cout << "end boundary" << std::endl;
         _status = 201;
         _bufferBody = "";
         return _status;

@@ -45,5 +45,4 @@ public:
     void setFileName(std::string &fileName);
     std::string getBoundaryString();
 };
-void printNonPrintableChars(const std::string &str);
 size_t pasteInFile(std::string name, std::string &data);

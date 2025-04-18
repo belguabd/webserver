@@ -15,7 +15,7 @@ $(NAME):$(OBJ)
 
 %.o:%.cpp ./server/ServerSocket.hpp  ./server/WebServer.hpp ./request/HttpRequest.hpp \
 	./request/Post/Post.hpp ./request/Post/Chunked.hpp ./request/Post/Boundary.hpp ./request/Post/BoundaryChunked.hpp  \
-	./response/HttpResponse.hpp ./conf/ServerConfig.hpp ./request/Post/Macros.hpp
+	./response/HttpResponse.hpp ./conf/ServerConfig.hpp
 	$(CPP) $(CPPFLAGS) -c $< -o $@ 
 
 rm:

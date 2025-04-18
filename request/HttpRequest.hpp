@@ -109,10 +109,6 @@ public:
   void checkPathIscgi(std::string &path);
   void requestLine();
   ServerConfig validServerConfig();
-  void display() {
-    std::cout << "Client fd: " << this->client_fd << std::endl;
-    std::cout << "buffer: " << this->readBuffer << std::endl;
-  }
   const std::map<std::string, std::string> &getHeaders() const {
     return mapheaders;
   }
@@ -132,11 +128,9 @@ public:
 };
 std::vector<std::string> splitstring(const std::string &str);
 void checkHeaders(std::string &str, std::map<std::string, std::string> &headersMap);
-void printNonPrintableChars(const std::string &str);
 LocationConfig getValueMap(std::map<std::string, LocationConfig> &configNormal,
                            std::map<std::string, LocationConfig>::const_iterator it);
 // void    checkHeaders(string& str, map<string, string>& headersMap);
-void printNonPrintableChars(const std::string &str);
 char characterEncodeing(std::string &tmp);
 std::string encodeUrl(std::string &str);
 ServerConfig validServerConfig();

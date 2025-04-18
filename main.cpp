@@ -67,5 +67,5 @@ int main(int arc, char **arv) {
   }
   server.closeAllSockets();
   close(server.getKqueue_fd());
-  puts("Server stopped");
+  // puts("Server stopped");
 }
