@@ -282,7 +282,6 @@ void WebServer::respond_to_client(int event_fd) {
 
     try {
       if (request->typeConnection == "keep-alive") {
-        cout << "fd--->" << request->getfd() << " keep-alive" << endl;
         keepClientConnectionOpen(request, response, iter_req, it);
       } else {
         terminateClientConnection(request, response, iter_req, it);
@@ -563,7 +562,6 @@ HttpRequest *WebServer::getRequest(int fd) {
 void WebServer::run() {
   puts("\033[1;34m[SERVER] Running...\033[0m");
   try {
-
     int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
     if (nev == 0) {
       puts("\033[1;34m[SERVER] No events detected...\033[0m");

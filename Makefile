@@ -1,5 +1,5 @@
 NAME = webserver
-CPP = c++ -std=c++98 -fsanitize=address -g
+CPP = c++ -std=c++98 #-fsanitize=address -g
 CPPFLAGS =  -Wall -Wextra -Werror
 RM = rm -f
 

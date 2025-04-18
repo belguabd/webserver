@@ -9,11 +9,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-#define MAX_EVENTS (1024 * 2)
 #include "../conf/ServerConfig.hpp"
 #include "../request/HttpRequest.hpp"
 #include "../response/HttpResponse.hpp"
 #include "ServerSocket.hpp"
+#define MAX_EVENTS (1024 * 2)
 
 #include "WebServer.hpp"
 #include "ServerSocket.hpp"

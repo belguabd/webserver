@@ -18,7 +18,7 @@ BoundaryChunked::~BoundaryChunked()
 void BoundaryChunked::setFileName(std::string extention)
 {
 	struct stat b;
-	std::string name = UPLOAD_FOLDER + std::string("filePost");
+	std::string name = "UPLOAD_FOLDER" + std::string("filePost");
 	while (stat((std::string(name + extention)).c_str(), &b) != -1)
 		name.append("_");
 	_fileName = name + extention;

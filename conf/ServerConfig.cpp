@@ -77,11 +77,16 @@ std::string removeComments(std::string& input) {
 
 std::string removeLocationBlocks(std::string& configData) {
 	std::string result = configData;
-    // std::cout<<configData;
-	// Regex pattern to match "location { ... }" blocks
-	std::string locationRegexPattern = "\\s*location\\s+[^}]*\\{[^}]*\\}\\s*";
-	std::regex locationRegex(locationRegexPattern);
-	result = regex_replace(result, locationRegex, "");  
+    size_t pos = result.find("location");
+    if (pos ==std::string::npos) {
+        result.pop_back();
+        return result ;
+    }
+    while ((pos = result.find("location", pos)) != std::string::npos) {
+        size_t firstEndbarkets = result.find_first_of("}", pos);
+        result.replace(pos,firstEndbarkets + 1 - pos,"");
+    }
+    result.pop_back();
 	return result;
 }
 
@@ -345,6 +350,10 @@ void ServerConfig :: setVal(std::string &str,std::string &val)
         this->ports.push_back(a);
         
     } else if (str == "server_name") {
+        if (splitstring(val).size()!=1) {
+            std::cout<<REDCOLORE<< "ERROR : invalid \"server_name\" argument "<<std::endl;
+            exit(0);
+        }
         this->serverName = val;
     } else if (str == "error_page") {
         std::vector <std::string > words;
@@ -439,7 +448,6 @@ void ServerConfig :: checkGlobalConfig(std::string strConfig) {
     std::string line;
     std::set <std::string> words;
     std::vector <std::string> valid;
-    strConfig.pop_back();
     std::istringstream stream(strConfig);
     while (getline(stream, line)) {
         std::istringstream linestream(line);
@@ -453,7 +461,7 @@ void ServerConfig :: checkGlobalConfig(std::string strConfig) {
         if (firstWord != "listen" && firstWord != "error_page" && !firstWord.empty()) {
             if (words.find(firstWord) != words.end()) {
                 std::cout<<REDCOLORE<< "ERROR : unknown directive " <<"\"" <<firstWord <<"\""<< std::endl;
-                exit(1);
+                exit(0);
             }
             words.insert(firstWord);
         }
