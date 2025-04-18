@@ -1,30 +1,5 @@
-
 #include "WebServer.hpp"
-#include "ServerSocket.hpp"
-#include <algorithm>
-#include <cctype>
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <iterator>
-#include <ostream>
-#include <signal.h>
-#include <stdexcept>
-#include <string>
-#include <sys/_types/_pid_t.h>
-#include <sys/_types/_ssize_t.h>
-#include <sys/event.h>
-#include <sys/fcntl.h>
-#include <sys/signal.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <utility>
-#include <vector>
-enum { PHP = 1, PYTHON = 2 };
 
-#define TIMEOUT_INTERVAL 5000
 void WebServer::initialize_kqueue() {
   kqueue_fd = kqueue();
   if (kqueue_fd < 0) {
@@ -73,7 +48,7 @@ WebServer::WebServer(std::string &str) : max_events(MAX_EVENTS) {
   std::ifstream file(str);
   std::stringstream fileContent;
   if (!file.is_open())
-    std::cout<< "error file not opened " << std::endl;
+    std::cout << "error file not opened " << std::endl;
   fileContent << file.rdbuf();
   this->_data = fileContent.str();
   this->dataConfigFile();
@@ -91,9 +66,8 @@ void WebServer::handle_new_connection(int server_fd) {
   }
   struct kevent changes[2]; // Two events: READ + TIMER
   EV_SET(&changes[0], client_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-  EV_SET(&changes[1], client_fd, EVFILT_TIMER, EV_ADD | EV_ENABLE,
-  NOTE_SECONDS,
-         30, NULL); // 10-second timeout
+  EV_SET(&changes[1], client_fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS,
+         30, NULL);
 
   if (kevent(kqueue_fd, changes, 2, NULL, 0, NULL) == -1) {
     close(client_fd);
@@ -132,7 +106,7 @@ void WebServer::receive_from_client(int event_fd) {
       break;
     }
   }
-
+  request->setTimeout(std::time(NULL));
   request->is_client_disconnected = false;
   request->setRequestStatus(0);
   ssize_t bytes_read = request->readData();
@@ -212,7 +186,10 @@ void WebServer::keepClientConnectionOpen(
   response = NULL;
   request = NULL;
   try {
-    connected_clients.push_back(new HttpRequest(fd, server_socket));
+
+    HttpRequest *new_request = new HttpRequest(fd, server_socket);
+    new_request->setTimeout(std::time(NULL));
+    connected_clients.push_back(new_request);
   } catch (std::exception &e) {
     throw std::runtime_error("Error creating HttpRequest object: " +
                              std::string(strerror(errno)));
@@ -289,22 +266,27 @@ void WebServer::respond_to_client(int event_fd) {
       break;
     }
   }
+  request->setTimeout(std::time(NULL));
   if (request->getCheckCgi() && request->Is_open) {
     request->setBodyCgi(response->extractBodyFromFile(request->filename));
     request->Is_open = 0;
   }
   ssize_t bytes_written = response->writeData();
   if (bytes_written == -1 || bytes_written == 0) {
-    terminateClientConnection(request, response, iter_req, it);  
+    terminateClientConnection(request, response, iter_req, it);
+    shutdown(event_fd, SHUT_RDWR);
+    close(event_fd);
     return;
   }
   if (response->complete == 1) {
+
     try {
       if (request->typeConnection == "keep-alive") {
         keepClientConnectionOpen(request, response, iter_req, it);
       } else {
         terminateClientConnection(request, response, iter_req, it);
-        // shutdown(event_fd, SHUT_RDWR);
+        puts("\033[1;32mClient disconnected...\033[0m");
+        shutdown(event_fd, SHUT_RDWR);
         close(event_fd);
       }
     } catch (std::exception &e) {
@@ -336,7 +318,7 @@ void WebServer::separateServer() {
   std::string strserv = this->_data;
   validbrackets(strserv);
   if (strserv.empty()) {
-    std::cout<< REDCOLORE << "Error: configuration file is empty" << std::endl;
+    std::cout << REDCOLORE << "Error: configuration file is empty" << std::endl;
     exit(0);
   }
   size_t pos = 0;
@@ -346,13 +328,14 @@ void WebServer::separateServer() {
          (pos = strserv.find("server", pos)) != std::string::npos) {
     sig = false;
     if (beforStart(strserv.substr(0, pos)) == 1) {
-      std::cout<< REDCOLORE << "Error: unexpected data before server block" << std::endl;
+      std::cout << REDCOLORE << "Error: unexpected data before server block"
+                << std::endl;
       exit(0);
     }
     size_t start = strserv.find("{", pos);
     if (start == std::string::npos) {
-      std::cout<< REDCOLORE << "Error: missing opening '{' for server block"
-           << std::endl;
+      std::cout << REDCOLORE << "Error: missing opening '{' for server block"
+                << std::endl;
       exit(0);
     }
     size_t end = start;
@@ -375,7 +358,7 @@ void WebServer::separateServer() {
       if (config[i].getHost() == conf.getHost()) {
         if (config[i].serverName == conf.serverName) {
           if (checkports(config[i].ports, conf.ports) == 1) {
-            std::cout<< "Error: same ports host servername" << std::endl;
+            std::cout << "Error: same ports host servername" << std::endl;
             exit(0);
           }
         }
@@ -387,7 +370,7 @@ void WebServer::separateServer() {
   }
 
   if (!found) {
-    std::cout<< REDCOLORE << "Error: no server blocks defined" << std::endl;
+    std::cout << REDCOLORE << "Error: no server blocks defined" << std::endl;
     exit(0);
   }
   checkContentServer(strserv);
@@ -497,7 +480,8 @@ void WebServer::handleCGIRequest(int client_fd) {
     if ((*it)->getfd() == client_fd)
       client = *it;
   }
-  std::map<std::string, std::string>::iterator iter_headers = client->mapheaders.begin();
+  std::map<std::string, std::string>::iterator iter_headers =
+      client->mapheaders.begin();
 
   std::map<std::string, std::string> env;
   for (; iter_headers != client->mapheaders.end(); iter_headers++) {
@@ -565,10 +549,24 @@ bool WebServer::is_request(int fd) {
     return false;
   return true;
 }
+HttpRequest *WebServer::getRequest(int fd) {
+  HttpRequest *request = NULL;
+  std::vector<HttpRequest *>::iterator it = connected_clients.begin();
+  for (; it != connected_clients.end(); it++) {
+    if ((*it)->getfd() == fd)
+      request = *it;
+  }
+  return request;
+}
+
 void WebServer::run() {
   puts("\033[1;34m[SERVER] Running...\033[0m");
   try {
     int nev = kevent(kqueue_fd, NULL, 0, events, MAX_EVENTS, NULL);
+    if (nev == 0) {
+      puts("\033[1;34m[SERVER] No events detected...\033[0m");
+      return;
+    }
     if (nev == -1)
       throw std::runtime_error("kevent failed: " +
                                std::string(strerror(errno)));
@@ -621,7 +619,7 @@ void WebServer::run() {
               throw std::runtime_error("Null request pointer");
             }
             req->setRequestStatus(504);
-            std::cout<< "[SERVER] CGI process " << pid
+            std::cout << "[SERVER] CGI process " << pid
                       << " timed out! Killing..." << std::endl;
             if (kill(pid, SIGKILL) == -1) {
               std::string error_message = "Error sending SIGKILL to process " +
@@ -637,22 +635,34 @@ void WebServer::run() {
               throw std::runtime_error(error_message);
             }
           } else {
-            puts("\033[1;34m[SERVER] Timer event for client...\033[0m");
-            if (!is_request(events[i].ident)) {
-              struct kevent changes[1];
-              close(events[i].ident);
-              EV_SET(&changes[0], events[i].ident, EVFILT_TIMER, EV_DELETE, 0,
-                     0, NULL);
-              if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
-                close(events[i].ident);
-                throw std::runtime_error(
-                    "Error removing timer event for client socket: " +
-                    std::string(strerror(errno)));
+            puts("\033[1;32m[SERVER] Timer event for client...\033[0m");
+            HttpRequest *req = getRequest(events[i].ident);
+            if (req) {
+              puts("\033[1;32m[SERVER] Timer event for client...\033[0m");
+              std::time_t now = std::time(0);
+              if (std::difftime(now, req->getTimeout()) > TIMEOUT) {
+                for (size_t i = 0; i < connected_clients.size(); i++) {
+                  if (connected_clients[i]->getfd() == req->getfd()) {
+                    struct kevent changes[1];
+                    EV_SET(&changes[0], req->getfd(), EVFILT_READ, EV_DELETE, 0,
+                           0, NULL);
+                    if (kevent(kqueue_fd, changes, 1, NULL, 0, NULL) == -1) {
+                      std::string error_message =
+                          "Error deleting read event: " +
+                          std::string(strerror(errno));
+                      throw std::runtime_error(error_message);
+                    }
+                    close(req->getfd());
+                    connected_clients.erase(connected_clients.begin() + i);
+                    delete req;
+                    req = NULL;
+                    break;
+                  }
+                }
               }
             }
           }
         } else if (filter == EVFILT_READ) {
-
           puts("\033[1;34m[SERVER] Reading data from client...\033[0m");
           receive_from_client(event_fd);
           if (isCGIRequest(event_fd)) {

@@ -20,7 +20,6 @@
 #define DEFAULTROOT "default/html"
 #define UPLOADSUCESSE "default/html/uploadsucsse.html"
 #define DELETESUCESSE "default/html/deletesucess.html"
-// using namespace std;
 class HttpResponse {
 private:
 public:

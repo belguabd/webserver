@@ -1,3 +1,4 @@
+#pragma once
 #include <fcntl.h>
 #include <map>
 #include <stdio.h>
@@ -14,6 +15,34 @@
 #include "ServerSocket.hpp"
 #define MAX_EVENTS (1024 * 2)
 
+#include "WebServer.hpp"
+#include "ServerSocket.hpp"
+#include <algorithm>
+#include <cctype>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <iterator>
+#include <ostream>
+#include <signal.h>
+#include <stdexcept>
+#include <string>
+#include <sys/_types/_pid_t.h>
+#include <sys/_types/_ssize_t.h>
+#include <sys/event.h>
+#include <sys/fcntl.h>
+#include <sys/signal.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <utility>
+
+#include <vector>
+enum { PHP = 1, PYTHON = 2 };
+#define TIMEOUT_INTERVAL 5000
+#define TIMEOUT 30
 class WebServer {
 private:
   int kqueue_fd;
@@ -50,6 +79,7 @@ public:
   bool isRequest(int fd);
   bool isCGIRequest(int client_fd);
   void pipe_read(int fd);
+  HttpRequest *getRequest(int fd);
   void keepClientConnectionOpen(HttpRequest *request, HttpResponse *response,
                                 std::vector<HttpRequest *>::iterator iter_req,
                                 std::vector<HttpResponse *>::iterator it);
