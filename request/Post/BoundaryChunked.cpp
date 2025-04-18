@@ -6,7 +6,6 @@ BoundaryChunked::BoundaryChunked(std::map<std::string, std::string> &queryParam,
 {
     _boundary = new Boundary(queryParam, _boundaryBuffer, _remainingBoundaryBuffer, _headers, _status, uploadStore);
 	_chunkSize = 0;
-    setFileName("filePost");
 	// initializeMimeTypes();
 }
 
@@ -15,40 +14,18 @@ BoundaryChunked::~BoundaryChunked()
 	delete _boundary;
 }
 
-void BoundaryChunked::setFileName(std::string extention)
-{
-	struct stat b;
-	std::string name = UPLOAD_FOLDER + std::string("filePost");
-	while (stat((std::string(name + extention)).c_str(), &b) != -1)
-		name.append("_");
-	_fileName = name + extention;
-}
-
 int BoundaryChunked::handleChunkedBoundary()
 {
     return handleChunkedRec();
 }
 
 int BoundaryChunked::boundaryPart()
-{
-	// std::string buffer = 
-	// size_t pos = buffer.rfind("\n");
-	// if (pos == std::string::npos)
-	// {
-	// 	_remainingBuffer += buffer;
-	// 	return 1;
-	// }
-	// _remainingBuffer = buffer.substr(pos + 1);
-	// _bufferBody += buffer.substr(0, pos + 1);
-	
+{	
 	_boundaryBuffer = _bufferBody.substr(0, _chunkSize);
 	_bufferBody.erase(0, _chunkSize);
 	_chunkSize -= (long)_boundaryBuffer.size();
 	_boundaryBuffer.insert(0, _remainingBoundaryBuffer);
 	_remainingBoundaryBuffer  = "";
-	// std::cout << "{{{{{{{{{{_buffer in boundaryChunked}}}}}}}}\n";
-    // printNonPrintableChars(_boundaryBuffer);
-    // std::cout << "{{{{{{{{{{end _buffer in boundaryChunked}}}}}}}}}\n";
     _boundary->handleBoundary();
 	return 1;
 }
@@ -65,11 +42,7 @@ int BoundaryChunked::handleChunkedRec()
 
 	
 	boundaryPart();
-	// pasteInFile(_fileName, _boundaryBuffer);
     // _boundary.handleBoundary();
-    // std::cout << _boundaryBuffer << std::endl;
-
-	// std::cout << "_chunkSize: " << _chunkSize << std::endl;
     if (_chunkSize > 0)
 	{
 		// std::cout << "uncompleted request\n";
@@ -96,27 +69,30 @@ size_t BoundaryChunked::getChunkSize(std::string &buffer)
 	}
 	if (std::string(buffer + _remainingBuffer) == std::string("\r\n0\r\n\r\n"))
 	{
-		std::cout << "end of req" << std::endl;
-		_status = 1;
-		std::cout << "check file: " << _fileName << std::endl;
+		// std::cout << "end of req" << std::endl;
+		_status = 201;
+		// std::cout << "check file: " << _fileName << std::endl;
 		return 0;
 	}
 
 	if (buffer.substr(0,2) != std::string("\r\n"))
 	{
-		std::cout << "throw invalid head chunk1" << std::endl;
+		_status = 400;
+		// std::cout << "throw invalid head chunk1" << std::endl;
 		return 0;
 	}
 	size_t pos = buffer.find("\r\n", 2);
 	if (pos == std::string::npos)
 	{
-		std::cout << "throw invalid head chunk2\n" << std::endl;
+		_status = 400;
+		// std::cout << "throw invalid head chunk2\n" << std::endl;
 		return 0;
 	}
 	for (size_t i = 2; i < pos; i++)
 		if (!std::isxdigit(buffer[i]))
 		{
-			std::cout << "throw invalid head chunk3\n" << std::endl;
+			// std::cout << "throw invalid head chunk3\n" << std::endl;
+			_status = 400;
 			return 0;
 		}
     size_t n = strtol(buffer.substr(2, pos).c_str(), NULL, 16);

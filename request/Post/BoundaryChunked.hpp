@@ -1,5 +1,4 @@
 #pragma once
-#include "./Macros.hpp"
 #include <string>
 #include <map>
 #include <cstdlib>
@@ -28,7 +27,6 @@ public:
     // BoundaryChunked &operator=(const BoundaryChunked &);
     int handleChunkedBoundary();
     size_t getChunkSize(std::string &buffer);
-    void setFileName(std::string extention);
     int handleChunkedRec();
     int boundaryPart();
     void initializeMimeTypes();
