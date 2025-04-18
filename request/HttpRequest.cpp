@@ -80,7 +80,7 @@ void HttpRequest::handleRequest() {
     }
   }
   parsePartRequest(str_parse);
-  if (getendHeaders() == 1) {
+  if (getendHeaders() == 1&&this->requestStatus == 0) {
     setServerConfig(validServerConfig());
     checkPathIscgi(this->dataFirstLine[1]); /////
   }
