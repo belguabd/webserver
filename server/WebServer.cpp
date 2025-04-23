@@ -47,7 +47,7 @@ WebServer::WebServer(std::string &str) : max_events(MAX_EVENTS) {
   initialize_kqueue();
   std::ifstream file(str);
   if (!file.is_open()) {
-    std::cout<<REDCOLORE<< "ERROR : path config not valid "<<std::endl;
+    std::cout << REDCOLORE << "ERROR : path config not valid " << std::endl;
     exit(0);
   }
   std::stringstream fileContent;
@@ -360,7 +360,8 @@ void WebServer::separateServer() {
       if (config[i].getHost() == conf.getHost()) {
         if (config[i].serverName == conf.serverName) {
           if (checkports(config[i].ports, conf.ports) == 1) {
-            std::cout << REDCOLORE <<  "Error: same ports host servername" << std::endl;
+            std::cout << REDCOLORE << "Error: same ports host servername"
+                      << std::endl;
             exit(0);
           }
         }
@@ -395,7 +396,7 @@ void WebServer ::dataConfigFile() {
 void WebServer::run_script(HttpRequest *request, std::vector<char *> args,
                            std::vector<char *> envp) {
   std::stringstream ss;
-  ss << "cgi" << request->getfd();
+  ss << "/tmp/cgi" << request->getfd();
   request->filename = ss.str();
   this->fileNamesCgi.push_back(request->filename);
 
@@ -598,6 +599,14 @@ void WebServer::run() {
           if (!req) {
             throw std::runtime_error("Null request pointer");
           }
+          int status;
+          waitpid(pid, &status, 0);
+          if (WIFEXITED(status)) {
+            if (WEXITSTATUS(status) != 0) {
+              if (req)
+                req->setRequestStatus(500);
+            }
+          }
           struct kevent changes[1];
           EV_SET(&changes[0], req->getfd(), EVFILT_WRITE, EV_ADD | EV_ENABLE, 0,
                  0, NULL);
@@ -679,43 +688,25 @@ void WebServer::run() {
     }
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
-    for (size_t i = 0; i < connected_clients.size(); i++) {
-      struct kevent change;
-      EV_SET(&change, connected_clients[i]->getfd(), EVFILT_READ, EV_DELETE, 0,
-             0, NULL);
-      kevent(kqueue_fd, &change, 1, NULL, 0, NULL);
-      EV_SET(&change, connected_clients[i]->getfd(), EVFILT_WRITE, EV_DELETE, 0,
-             0, NULL);
-      kevent(kqueue_fd, &change, 1, NULL, 0, NULL);
-      EV_SET(&change, connected_clients[i]->getfd(), EVFILT_TIMER, EV_DELETE, 0,
-             0, NULL);
-      kevent(kqueue_fd, &change, 1, NULL, 0, NULL);
-      EV_SET(&change, connected_clients[i]->getfd(), EVFILT_PROC, EV_DELETE, 0,
-             0, NULL);
-      kevent(kqueue_fd, &change, 1, NULL, 0, NULL);
-      std::vector<HttpRequest *>::iterator it =
-          std::find(connected_clients.begin(), connected_clients.end(),
-                    connected_clients[i]);
-      if (it != connected_clients.end()) {
-        close(connected_clients[i]->getfd());
-        delete *it;
-        connected_clients.erase(it);
+    for (std::vector<HttpRequest *>::iterator it = connected_clients.begin();
+         it != connected_clients.end();) {
+      int filters[] = {EVFILT_READ, EVFILT_WRITE, EVFILT_TIMER, EVFILT_PROC};
+      for (int f = 0; f < 4; ++f) {
+        struct kevent change;
+        EV_SET(&change, (*it)->getfd(), filters[f], EV_DELETE, 0, 0, NULL);
+        kevent(kqueue_fd, &change, 1, NULL, 0, NULL);
       }
+      close((*it)->getfd());
+      delete *it;
+      connected_clients.erase(it);
     }
     for (size_t i = 0; i < fileNamesCgi.size(); i++) {
       unlink(fileNamesCgi[i].c_str());
     }
-
-    for (size_t i = 0; i < responses_clients.size(); i++) {
-      std::vector<HttpResponse *>::iterator it =
-          std::find(responses_clients.begin(), responses_clients.end(),
-                    responses_clients[i]);
-      if (it != responses_clients.end()) {
-        delete *it;
-        responses_clients.erase(it);
-      }
+    for (std::vector<HttpResponse *>::iterator it = responses_clients.begin();
+         it != responses_clients.end();) {
+      delete *it;
+      it = responses_clients.erase(it);
     }
-    close(kqueue_fd);
-    kqueue_fd = kqueue();
   }
 }

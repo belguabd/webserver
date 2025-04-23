@@ -14,7 +14,8 @@
 #include "../response/HttpResponse.hpp"
 #include "ServerSocket.hpp"
 #define MAX_EVENTS (1024 * 2)
-
+#include <sys/wait.h>
+#include <unistd.h>
 #include "WebServer.hpp"
 #include "ServerSocket.hpp"
 #include <algorithm>
