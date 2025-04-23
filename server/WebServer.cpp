@@ -46,6 +46,10 @@ void WebServer::addServerSocket(ServerConfig &conf) {
 WebServer::WebServer(std::string &str) : max_events(MAX_EVENTS) {
   initialize_kqueue();
   std::ifstream file(str);
+  if (!file.is_open()) {
+    std::cout<<REDCOLORE<< "ERROR : path config not valid "<<std::endl;
+    exit(0);
+  }
   std::stringstream fileContent;
   fileContent << file.rdbuf();
   this->_data = fileContent.str();

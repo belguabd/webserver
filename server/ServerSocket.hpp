@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../conf/ServerConfig.hpp"
+#include "../serverConf/ServerConfig.hpp"
 #include <arpa/inet.h>
 #include <iostream>
 #include <netdb.h>

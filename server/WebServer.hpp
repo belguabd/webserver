@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-#include "../conf/ServerConfig.hpp"
+#include "../serverConf/ServerConfig.hpp"
 #include "../request/HttpRequest.hpp"
 #include "../response/HttpResponse.hpp"
 #include "ServerSocket.hpp"

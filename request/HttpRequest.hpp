@@ -1,5 +1,5 @@
 #pragma once
-#include "../conf/ServerConfig.hpp"
+#include "../serverConf/ServerConfig.hpp"
 #include "../server/ServerSocket.hpp"
 #include "./Post/Post.hpp"
 #include <algorithm>

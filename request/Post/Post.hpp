@@ -9,7 +9,7 @@
 #include "Chunked.hpp"
 #include "Boundary.hpp"
 #include "BoundaryChunked.hpp"
-#include "../../conf/ServerConfig.hpp"
+#include "../../serverConf/ServerConfig.hpp"
 
 
 class Post
