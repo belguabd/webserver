@@ -10,13 +10,13 @@ getMatchedLocationUpload(const std::string &path,
 
   if (pos == std::string::npos)
     pos = path.size() + 1;
-  // keyLocationUpload = path.substr(0, pos);
   keyLocationUpload = findMatchingLocation(path, configUploads);
   if (configUploads.find(keyLocationUpload) == configUploads.end())
     configUploads[keyLocationUpload] =
-        (LocationConfig){._upload_store = DEFAULTUPLOAD,
-                         ._client_max_body_size = 1000000000,
-                         ._allowed_methods = "POST GET"}; //
+        (LocationConfig){
+                        ._upload_store = DEFAULTUPLOAD,
+                        ._client_max_body_size = 0,
+                        ._allowed_methods = "404"}; 
   return (configUploads.find(keyLocationUpload))->second;
 }
 
@@ -47,7 +47,10 @@ int HttpRequest::handleDeleteRequest(std::string filePath) {
   filePath.insert(lc._root.size(), "/");
   if (stat(filePath.c_str(), &meteData) != 0)
     return 404;
-  if (access(filePath.c_str(), R_OK | W_OK) != 0)
+  size_t pos = filePath.rfind("/");
+  if (pos == std::string::npos)
+    pos = filePath.size() - 1;
+  if (access((filePath.substr(0, pos-1)).c_str(), W_OK) != 0) // check parent directory
     return 403;
   if (unlink(filePath.c_str()) == 0)
     return 204;
@@ -174,8 +177,9 @@ int HttpRequest:: setDataCgi(std::string data,ServerConfig &config,LocationConfi
   }
   if (!s.empty()) {
     size_t pos = root.find(s);
+    if (root[pos+s.length()] != '/')
+      return 0;
     this->rootcgi = root.substr(0, pos + s.length());
-    // cout <<rootcgi<<endl;
     if (!fileExists(this->rootcgi)) {
       return 0;
     }
@@ -439,40 +443,14 @@ int HttpRequest::parseFiledLine(std::string &filedLine) {
   }
   std::string filedLineValue = filedLine.substr(pos + 1, filedLine.length());
   trimSpaces(filedLineValue);
-  // std::cout << "filedLineValue->>" << filedLineValue << "---------\n";
   mapheaders[filedLineName] = filedLineValue;
   return 0;
 }
 
-void HttpRequest ::parsePartRequest(std::string str_parse) {
-  if (this->endHeaders == 1)
-    return;
-  if (str_parse == "\r\n") {
-    requestStatus = 400;
-    return;
-  }
-  // std::cout << "str_parse :"; printNonPrintableChars(str_parse);
-  // std::cout << "\\\\\\\n";
-
-  size_t pos1 = 0;
-  size_t pos2 = str_parse.find("\r\n");
-  std::string filedLine;
-
-  //
-  while (pos2 != std::string::npos && requestStatus == 0) {
-    filedLine = str_parse.substr(pos1, pos2 - pos1 + 2);
-    requestStatus = parseFiledLine(filedLine);
-    pos1 = pos2 + 2;
-    pos2 = str_parse.find("\r\n", pos1);
-  }
-
-  if (str_parse.find("\r\n\r\n") != std::string::npos) {
-    this->endHeaders = 1;
-    if (mapheaders.find("HOST") == mapheaders.end())
+void HttpRequest::checkHeadersEnd()
+{
+  if (mapheaders.find("HOST") == mapheaders.end())
       requestStatus = 400;
-    // else if (mapheaders["HOST"].empty() )
-    // || std::find_if(mapheaders["HOST"].begin(), mapheaders["HOST"].end(),
-    // isAllowedUriChar) == mapheaders["HOST"].end())
     else {
       std::string host = mapheaders["HOST"];
       size_t pos = host.find(":");
@@ -505,6 +483,31 @@ void HttpRequest ::parsePartRequest(std::string str_parse) {
         return;
       }
     }
+}
+
+void HttpRequest ::parsePartRequest(std::string str_parse) {
+  if (this->endHeaders == 1)
+    return;
+  if (str_parse == "\r\n") {
+    this->endHeaders = 1;
+    checkHeadersEnd();
+    return;
+  }
+
+  size_t pos1 = 0;
+  size_t pos2 = str_parse.find("\r\n");
+  std::string filedLine;
+
+  while (pos2 != std::string::npos && requestStatus == 0) {
+    filedLine = str_parse.substr(pos1, pos2 - pos1 + 2);
+    requestStatus = parseFiledLine(filedLine);
+    pos1 = pos2 + 2;
+    pos2 = str_parse.find("\r\n", pos1);
+  }
+
+  if (str_parse.find("\r\n\r\n") != std::string::npos) {
+    this->endHeaders = 1;
+    checkHeadersEnd();
   }
 }
 

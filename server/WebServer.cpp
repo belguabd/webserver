@@ -36,9 +36,7 @@ void WebServer::addServerSocket(ServerConfig &conf) {
       serverSockets[serverSockets.size() - 1].configs.push_back(conf);
 
     } catch (std::exception &e) {
-      closeAllSockets();
       std::cerr << "Error: " << e.what() << std::endl;
-      std::exit(EXIT_FAILURE);
     }
   }
 }

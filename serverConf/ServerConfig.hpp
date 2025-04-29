@@ -33,7 +33,6 @@ class ServerConfig
     public:
         std::map<std::string,std::string> errorpage;
         std::map<std::string, LocationConfig> location;
-        int typeUrl;
         std::string serverName;
         std::vector<int> ports; //d
         ServerConfig(){};

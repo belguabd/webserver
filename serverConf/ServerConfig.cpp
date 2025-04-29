@@ -304,16 +304,6 @@ void ServerConfig :: setValLocation(std::string &str,std::string &val,LocationCo
             std::cout<<REDCOLORE<< "ERROR : invalid return "<<std::endl;
             exit(0);
         }
-        if (words[0].length()>8)
-            tmp = words[0].substr(0,8);
-        if (words[0][0]=='/') {
-            this->typeUrl = 1;
-        } else if (tmp=="http://"||tmp=="https://") { //
-            this->typeUrl = 2;
-        } else {
-            std::cout<<REDCOLORE<< "ERROR : invalid return "<<std::endl;
-            exit(0);
-        }
         config._return = words[0];
     } else if (str== "client_max_body_size") {
         config._client_max_body_size = checkValidBadySise(val);

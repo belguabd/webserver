@@ -50,6 +50,7 @@ private:
   void handleRequest();
   int handleDeleteRequest(std::string filePath);
   void handlePost();
+  void checkHeadersEnd();
 
 public:
   ServerSocket server_socket;

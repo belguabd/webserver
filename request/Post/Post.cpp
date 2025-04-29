@@ -22,22 +22,24 @@ std::string &Post::getFileName()
 		return chunk->_fileName;
 	return _fileName;
 }
-Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer, LocationConfig &configUpload, int isCgi)
+Post::Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, std::string &buffer, LocationConfig &configUpload, int &isCgi)
 :_headers(headers), _queryParam(queryParam)
-, _configUpload(configUpload)
+, _configUpload(configUpload), _isCgi(isCgi)
 {
-	_isCgi = isCgi;
+	chunk = NULL;
+	bound = NULL;
+	boundChunk = NULL;
 	setContentLengthSize();
 	_status = 0;
-	if (configUpload._allowed_methods.find("POST") == std::string::npos)
+	if (_configUpload._allowed_methods.find("404") != std::string::npos)
 	{
-		_status = 405; // 405
-		return;	
+		_status = 404; // ?
+		return ;
 	}
 	if (_contentLengthSize > _configUpload._client_max_body_size)
 	{
-		// std::cout << "body limits\n";
 		_status = 413; // ?
+		_isCgi = 0;
 		return ;
 	}
 	initializeMimeTypes();
@@ -147,12 +149,9 @@ size_t Post::manipulateBuffer(std::string &buffer)
 
 Post::~Post()
 {
-	if (_bodyType == chunked)
-		delete chunk;
-	else if (_bodyType == boundary)
-		delete bound;
-	else if (_bodyType == boundaryChunked)
-		delete boundChunk;
+	delete chunk;
+	delete bound;
+	delete boundChunk;
 }
 
 void Post::initializeMimeTypes()

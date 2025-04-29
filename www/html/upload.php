@@ -62,6 +62,7 @@ echo "<style>
 if (isset($_FILES['file'])) {
     $file = $_FILES['file'];
     $targetDir = "upload/";
+    
     $targetFile = $targetDir . basename($file["name"]);
     
     // Try to move the uploaded file

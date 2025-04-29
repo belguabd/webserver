@@ -46,7 +46,10 @@ std::string HttpResponse:: headersSending() {
   header += "Date: ";
   header += buffer;
   header += "Server: ";
-  header += config.serverName + "\r\n";
+  if (!config.serverName.empty())
+    header += config.serverName + "\r\n";
+  else
+    header += "localhost \r\n";
   return header;
 }
 /*---------------------- Get method------------------------------------------*/
@@ -192,21 +195,11 @@ void HttpResponse::getLocationResponse(LocationConfig &normal, std::string &str,
     }
 }
 void HttpResponse::redirectionResponse(std::string &str,ServerConfig &config) {
-  std::string data;
   config = this->request->getServerConfig();
-  if (config.typeUrl == 1) {
-    if (this->request->mapheaders.find("HOST") != this->request->mapheaders.end()) { // Host HOST
-      std::string host = this->request->mapheaders["HOST"];
-      data = host;
-      data += str;
-    }
-  } else {
-    data = str;
-  }
   std::stringstream response1;
   response1 << status_line(301);
   response1 << headersSending();
-  response1 << "Location:" << data << "\r\n\r\n";
+  response1 << "Location:" << str << "\r\n\r\n";
   std::string responseStr = response1.str();
   this->bytesSend = send(this->request->getfd(), responseStr.c_str(), responseStr.size(), 0);
   this->complete =1;
@@ -276,7 +269,6 @@ void HttpResponse::getResponse() {
     }
     return ;
   }
-  path += words[1];
   this->sendErrorPage(config, 404);
 }
 

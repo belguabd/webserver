@@ -39,16 +39,16 @@ private:
     std::string _uploadStore;
     size_t _contentLengthSize;
     size_t _bodySize;
+    LocationConfig &_configUpload;
+    int &_isCgi;
     void setFileName(std::string extention);
     void initializeMimeTypes();
     size_t manipulateBuffer(std::string &buffer);
     void setContentLengthSize();
-    LocationConfig &_configUpload;
     void createBodyTypeObject(std::string& buffer);
-    int _isCgi;
 public:
     Post(std::map<std::string, std::string> &headers, std::map<std::string, std::string> &queryParam, 
-    std::string &buffer, LocationConfig &configUpload, int isCgi);
+    std::string &buffer, LocationConfig &configUpload, int &isCgi);
     std::string &getFileName();
     int getStatus() {return _status;}
     int handleKeyVal(std::string &buffer);

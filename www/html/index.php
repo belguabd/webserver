@@ -134,7 +134,7 @@
 </head>
 <body>
 
-    <form action="./upload.php" method="POST" enctype="multipart/form-data">
+    <form action="./form-cgi/upload.php" method="POST" enctype="multipart/form-data">
         <div class="upload-box">
             <h2><i class="fas fa-cloud-upload-alt"></i> Upload Your File</h2>
             <div class="drop-area" id="drop-area">
@@ -151,10 +151,6 @@
             </div>
         </div>
     </form>
-
-
-
-
     <script>
         const dropArea = document.getElementById("drop-area");
         const fileInput = document.getElementById("file");
