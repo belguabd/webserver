@@ -4,6 +4,11 @@
 #include <netdb.h>
 #include <unistd.h>
 
+#define RESET   "\033[0m"
+#define BOLD    "\033[1m"
+#define GREEN   "\033[1;32m"
+#define CYAN    "\033[1;36m"
+
 ServerSocket::ServerSocket(int port, ServerConfig conf) {
   int status;
   std::memset(&hints, 0, sizeof(hints));
@@ -27,6 +32,11 @@ ServerSocket::ServerSocket(int port, ServerConfig conf) {
     throw std::runtime_error("Failed to set SO_REUSEPORT: " +
                              std::string(strerror(errno)));
   }
+
+  std::cout << BOLD << GREEN << "◎ Server listening on " 
+              << CYAN << "http://" << _host << ":" << _port 
+              << RESET << std::endl;
+
 }
 
 int ServerSocket::getPort() const { return _port; }

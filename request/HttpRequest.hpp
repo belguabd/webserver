@@ -35,7 +35,6 @@ private:
   std::string body_cgi;
   int cgi_fd;
   int requestStatus;
-  std::vector<std::string> dataFirstLine;
   std::map<std::string, std::string> queryParam;
   std::string queryString;
   std::string readBuffer;
@@ -53,6 +52,8 @@ private:
   void checkHeadersEnd();
 
 public:
+  std::string client_ip ;
+  std::vector<std::string> dataFirstLine;
   ServerSocket server_socket;
   std::vector<ServerConfig> server_configs;
   std::string getBodyCgi() const { return body_cgi; }
@@ -103,6 +104,7 @@ public:
   int getendHeaders() const { return this->endHeaders; }
   void setFirstTimeFlag(int i) { this->firsttime = i; }
   void setRequestStatus(int i) { this->requestStatus = i; }
+  
   const std::string &getbuffer() const { return this->_buffer; }
   std::string getreadbuffer() const { return this->readBuffer; }
   std::string getFileName();

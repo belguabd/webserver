@@ -554,6 +554,7 @@ void HttpResponse::sendErrorPage(ServerConfig &config, int status) {
   std::string ContentType;
   std::string val;
   std::string data;
+  request->setRequestStatus(status);
   if (firstTimeResponse == 0) {
     std::string root = config.getRoot();
     std::ostringstream s;

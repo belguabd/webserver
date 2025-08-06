@@ -1,40 +1,1920 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Page</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Webserv - Custom HTTP Server</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            animation: {
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'bounce-slow': 'bounce 3s infinite',
+              'spin-slow': 'spin 8s linear infinite',
+              'ring-pulse': 'ring-pulse 5s ease-out infinite',
+              'fade-in': 'fadeIn 1s ease-out',
+              'slide-up': 'slideUp 0.8s ease-out',
+              float: 'float 6s ease-in-out infinite',
+              glow: 'glow 2s ease-in-out infinite alternate',
+              shimmer: 'shimmer 2.5s linear infinite',
+            },
+            keyframes: {
+              'ring-pulse': {
+                '0%': { transform: 'scale(0.3)', opacity: '0' },
+                '40%': { opacity: '0.7' },
+                '100%': { transform: 'scale(1.5)', opacity: '0' },
+              },
+              fadeIn: {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              slideUp: {
+                '0%': { opacity: '0', transform: 'translateY(30px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              float: {
+                '0%, 100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-20px)' },
+              },
+              glow: {
+                '0%': { boxShadow: '0 0 20px rgba(168, 85, 247, 0.4)' },
+                '100%': { boxShadow: '0 0 40px rgba(168, 85, 247, 0.8)' },
+              },
+              shimmer: {
+                '0%': { backgroundPosition: '-200% center' },
+                '100%': { backgroundPosition: '200% center' },
+              },
+            },
+          },
+        },
+      };
+    </script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, #ece9e6, #ffffff);
-            color: #333;
+      .glass-strong {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .text-gradient-simple {
+        background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-fill-color: transparent;
+      }
+      @keyframes glow {
+        0%,
+        100% {
+          box-shadow: 0 0 5px currentColor, 0 0 10px currentColor,
+            0 0 15px currentColor;
         }
+        50% {
+          box-shadow: 0 0 10px currentColor, 0 0 20px currentColor,
+            0 0 30px currentColor;
+        }
+      }
+      .animate-glow {
+        animation: glow 4s ease-in-out infinite;
+      }
+      .from-blue-500 {
+        color: #3b82f6;
+      }
+      .from-green-500 {
+        color: #22c55e;
+      }
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .animate-fade-in {
+        animation: fade-in 1s ease-out forwards;
+      }
+      @keyframes slide-up {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      .animate-slide-up {
+        animation: slide-up 0.8s ease-out forwards;
+      }
+      /* Style for when a file is being dragged over the drop zone */
+      #dropZone.drag-over {
+        border-color: #22c55e;
+        background-color: rgba(34, 197, 94, 0.1);
+      }
+      .hero-bg {
+        background: radial-gradient(
+            circle at 30% 20%,
+            rgba(120, 119, 198, 0.3) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 80%,
+            rgba(255, 119, 198, 0.3) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 40% 60%,
+            rgba(147, 51, 234, 0.2) 0%,
+            transparent 50%
+          ),
+          linear-gradient(135deg, #0c0a18 0%, #1a0b2e 50%, #0f0c1a 100%);
+        position: relative;
+      }
 
-        .container {
-            text-align: center;
-            padding: 20px 40px;
-            border: 2px solid #ccc;
-            border-radius: 10px;
-            background-color: #f9f9f9;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
+      .hero-bg::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-conic-gradient(
+          from 45deg,
+          transparent 0% 3%,
+          rgba(255, 255, 255, 0.03) 3% 6%
+        );
+        background-size: 60px 60px;
+      }
 
-        .text {
-            font-size: 2em;
-            font-weight: bold;
+      .glass {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .glass-strong {
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .text-gradient {
+        background: linear-gradient(
+          135deg,
+          #a78bfa 0%,
+          #ec4899 25%,
+          #06b6d4 50%,
+          #10b981 75%,
+          #f59e0b 100%
+        );
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      .text-gradient-simple {
+        background: linear-gradient(135deg, #a78bfa, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .hover-scale {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .hover-scale:hover {
+        transform: scale(1.05) translateY(-5px);
+      }
+
+      .code-block {
+        background: linear-gradient(
+          135deg,
+          rgba(20, 20, 40, 0.9),
+          rgba(30, 30, 60, 0.8)
+        );
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .code-block::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.1),
+          transparent
+        );
+        animation: shimmer 3s infinite;
+      }
+
+      .feature-card {
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .feature-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(
+          from 0deg,
+          transparent,
+          rgba(139, 92, 246, 0.1),
+          transparent
+        );
+        animation: spin-slow 20s linear infinite;
+        z-index: -1;
+      }
+
+      .feature-card:hover {
+        transform: translateY(-15px) scale(1.02);
+        box-shadow: 0 25px 60px rgba(139, 92, 246, 0.3);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+        background-size: 200% 200%;
+        animation: shimmer 4s ease-in-out infinite;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        transition: left 0.6s;
+      }
+
+      .btn-primary:hover::before {
+        left: 100%;
+      }
+
+      .floating-element {
+        animation: float 8s ease-in-out infinite;
+      }
+
+      .floating-element:nth-child(2n) {
+        animation-delay: -2s;
+      }
+
+      .floating-element:nth-child(3n) {
+        animation-delay: -4s;
+      }
+
+      .progress-bar {
+        background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b);
+        animation: shimmer 2s ease-in-out infinite;
+        background-size: 200% 100%;
+      }
+
+      .tech-icon {
+        transition: all 0.3s ease;
+      }
+
+      .tech-icon:hover {
+        transform: scale(1.1) rotate(5deg);
+      }
+
+      .scroll-indicator {
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        20%,
+        53%,
+        80%,
+        100% {
+          transform: translate3d(0, 0, 0);
         }
+        40%,
+        43% {
+          transform: translate3d(0, -30px, 0);
+        }
+        70% {
+          transform: translate3d(0, -15px, 0);
+        }
+        90% {
+          transform: translate3d(0, -4px, 0);
+        }
+      }
+
+      .team-member {
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .team-member:hover {
+        transform: translateY(-20px) scale(1.05);
+      }
+
+      .stats-counter {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .section-divider {
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(139, 92, 246, 0.5),
+          transparent
+        );
+        height: 1px;
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <div class="text">>> for test</div>
+  </head>
+  <body class="bg-gray-900 text-white overflow-x-hidden">
+    <!-- Hero Section -->
+    <section
+      class="hero-bg min-h-screen flex items-center justify-center relative"
+    >
+      <!-- Floating Elements -->
+      <div class="absolute inset-0 overflow-hidden">
+        <div
+          class="floating-element absolute top-20 left-10 w-4 h-4 bg-blue-500 rounded-full opacity-70"
+        ></div>
+        <div
+          class="floating-element absolute top-40 right-20 w-6 h-6 bg-purple-500 rounded-full opacity-60"
+        ></div>
+        <div
+          class="floating-element absolute bottom-40 left-20 w-3 h-3 bg-pink-500 rounded-full opacity-80"
+        ></div>
+        <div
+          class="floating-element absolute top-60 right-40 w-5 h-5 bg-green-500 rounded-full opacity-70"
+        ></div>
+        <div
+          class="floating-element absolute bottom-60 right-10 w-2 h-2 bg-yellow-500 rounded-full opacity-90"
+        ></div>
+      </div>
+
+      <div
+        class="relative z-10 text-center px-6 max-w-6xl mx-auto animate-fade-in"
+      >
+        <h1
+          class="text-7xl md:text-9xl font-black mb-8 tracking-tighter leading-none"
+        >
+          <span class="text-gradient">Webserv</span>
+        </h1>
+
+        <p
+          class="text-2xl md:text-3xl text-gray-300 mb-6 max-w-4xl mx-auto font-light animate-slide-up"
+          style="animation-delay: 0.2s"
+        >
+          A powerful, custom HTTP server built from scratch in C++98
+        </p>
+
+        <p
+          class="text-lg md:text-xl text-gray-400 mb-12 max-w-5xl mx-auto leading-relaxed animate-slide-up"
+          style="animation-delay: 0.4s"
+        >
+          Experience the magic of non-blocking I/O, CGI execution, and
+          bulletproof architecture designed for performance and reliability
+        </p>
+
+        <div
+          class="flex flex-col sm:flex-row gap-6 justify-center items-center animate-slide-up"
+          style="animation-delay: 0.6s"
+        >
+          <button
+            class="btn-primary px-12 py-5 rounded-2xl font-bold text-xl hover-scale shadow-2xl shadow-purple-500/25"
+          >
+            🚀 Get Started
+          </button>
+          <button
+            class="glass px-12 py-5 rounded-2xl font-semibold text-xl hover-scale border border-gray-600 hover:border-purple-400 transition-all duration-300"
+          >
+            📖 View on GitHub
+          </button>
+        </div>
+      </div>
+
+      <!-- Enhanced Scroll Indicator -->
+      <div
+        class="absolute bottom-8 left-1/2 transform -translate-x-1/2 scroll-indicator"
+      >
+        <div class="flex flex-col items-center">
+          <div
+            class="w-6 h-10 border-2 border-gray-500 rounded-full flex justify-center"
+          >
+            <div
+              class="w-1 h-3 bg-purple-500 rounded-full mt-2 animate-bounce"
+            ></div>
+          </div>
+          <span class="text-gray-500 text-xs mt-2">Scroll</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Divider -->
+    <div class="section-divider"></div>
+
+    <!-- What is Webserv Section -->
+
+    <section class="py-24 bg-gray-900 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto px-6">
+        <!-- Section Header -->
+        <div class="text-center mb-20 animate-fade-in">
+          <h2 class="text-6xl md:text-7xl font-black mb-8">
+            <span class="text-gradient-simple">What is Webserv?</span>
+          </h2>
+          <p class="text-2xl text-gray-400 max-w-4xl mx-auto">
+            Discover the architecture behind our lightning-fast HTTP server
+          </p>
+        </div>
+
+        <!-- Alternating Feature Blocks -->
+        <div class="space-y-24">
+          <!-- Feature 1: Built for Performance -->
+          <div class="grid lg:grid-cols-2 gap-16 items-center">
+            <div class="space-y-6 animate-slide-up">
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center"
+                >
+                  <!-- SVG Icon for Performance -->
+                  <svg
+                    class="w-10 h-10 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7.C14.05 1 16.957 1.222 17.657 5c.7 3.778-2.657 6.657-2.657 6.657s2 3 4.657 3c2.657 0 5-2.343 5-5s-4.657-9-4.657-9"
+                    ></path>
+                  </svg>
+                </div>
+                <h3 class="text-4xl font-black text-white">
+                  Built for Performance
+                </h3>
+              </div>
+              <p class="text-gray-300 text-xl leading-relaxed">
+                Webserv is a high-performance HTTP server crafted entirely in
+                C++98, designed with modern web standards in mind. Our server
+                handles thousands of concurrent connections using advanced
+                non-blocking I/O techniques.
+              </p>
+            </div>
+            <div
+              class="relative animate-slide-up"
+              style="animation-delay: 0.2s"
+            ></div>
+          </div>
+
+          <!-- Feature 2: Key Features -->
+          <div class="grid lg:grid-cols-2 gap-16 items-center">
+            <div class="relative animate-slide-up order-last lg:order-first">
+              <div
+                class="code-block rounded-2xl p-8 text-sm font-mono shadow-2xl bg-gray-800/80 border border-gray-700"
+              >
+                <div class="flex items-center space-x-2 mb-4">
+                  <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <div class="space-y-2 text-base">
+                  <div><span class="text-purple-400">server</span> {</div>
+                  <div class="ml-4">
+                    <span class="text-blue-400">listen</span>
+                    <span class="text-green-400">8080</span>;
+                  </div>
+                  <div class="ml-4">
+                    <span class="text-blue-400">server_name</span>
+                    <span class="text-green-400">example.com</span>;
+                  </div>
+                  <div class="ml-4">
+                    <span class="text-blue-400">root</span>
+                    <span class="text-green-400">/var/www/html</span>;
+                  </div>
+
+                  <div class="ml-4">
+                    <span class="text-purple-400">location</span> / {
+                  </div>
+                  <div class="ml-8">
+                    <span class="text-blue-400">allowed_methods</span>
+                    <span class="text-green-400">GET POST</span>;
+                  </div>
+                  <div class="ml-4">}</div>
+                  <div>}</div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="space-y-6 animate-slide-up"
+              style="animation-delay: 0.2s"
+            >
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center"
+                >
+                  <!-- SVG Icon for Features -->
+                  <svg
+                    class="w-10 h-10 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 001.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"
+                    ></path>
+                    <path
+                      d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"
+                    ></path>
+                  </svg>
+                </div>
+                <h3 class="text-4xl font-black text-white">
+                  Powerful Features
+                </h3>
+              </div>
+              <p class="text-gray-300 text-xl leading-relaxed mb-6">
+                Our server is packed with features to handle any modern web
+                application's needs.
+              </p>
+              <ul class="space-y-4 text-gray-300 text-lg">
+                <li class="flex items-center gap-3">
+                  <svg
+                    class="w-6 h-6 text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                  <span>Non-blocking I/O with kqueue/select/ekqueue</span>
+                </li>
+                <li class="flex items-center gap-3">
+                  <svg
+                    class="w-6 h-6 text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                  <span>Multi-port listening and virtual hosts</span>
+                </li>
+                <li class="flex items-center gap-3">
+                  <svg
+                    class="w-6 h-6 text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                  <span>Full CGI execution (PHP, Python, etc.)</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Feature 3: Server Architecture -->
+          <div class="grid lg:grid-cols-2 gap-16 items-center">
+            <div class="space-y-6 animate-slide-up">
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center"
+                >
+                  <svg
+                    class="w-10 h-10 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    ></path>
+                  </svg>
+                </div>
+                <h3 class="text-4xl font-black text-white">
+                  Robust Architecture
+                </h3>
+              </div>
+              <p class="text-gray-300 text-xl leading-relaxed">
+                Designed for stability and efficiency, our server's architecture
+                ensures reliable request handling and seamless integration with
+                backend scripts.
+              </p>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-6 animate-slide-up"
+              style="animation-delay: 0.2s"
+            >
+              <div
+                class="bg-gray-800 p-6 rounded-xl text-center border border-gray-700 hover:border-blue-500 transition-colors"
+              >
+                <h4 class="text-xl font-bold mb-2">Request Processing</h4>
+                <p class="text-gray-400">Fast parsing and routing.</p>
+              </div>
+              <div
+                class="bg-gray-800 p-6 rounded-xl text-center border border-gray-700 hover:border-green-500 transition-colors"
+              >
+                <h4 class="text-xl font-bold mb-2">Event Loop</h4>
+                <p class="text-gray-400">Non-blocking and efficient.</p>
+              </div>
+              <div
+                class="bg-gray-800 p-6 rounded-xl text-center border border-gray-700 hover:border-purple-500 transition-colors"
+              >
+                <h4 class="text-xl font-bold mb-2">CGI Integration</h4>
+                <p class="text-gray-400">Seamless script execution.</p>
+              </div>
+              <div
+                class="bg-gray-800 p-6 rounded-xl text-center border border-gray-700 hover:border-pink-500 transition-colors"
+              >
+                <h4 class="text-xl font-bold mb-2">File I/O</h4>
+                <p class="text-gray-400">Handles uploads & downloads.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Divider -->
+
+    <!-- Enhanced CGI Testing Section -->
+
+    <div class="section-divider"></div>
+    <section
+      class="py-24 bg-gradient-to-b from-gray-800 to-gray-900 relative font-sans"
+    >
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16 animate-fade-in">
+          <h2 class="text-5xl md:text-7xl font-extrabold mb-6">
+            <span class="text-gradient-simple">Image Server Testing</span>
+          </h2>
+          <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+            Use the modules below to test GET and POST requests to the server.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-1 gap-12">
+          <!-- Concurrent Fetch Test (GET) -->
+          <div class="glass-strong rounded-3xl p-8 md:p-12 animate-slide-up">
+            <div
+              class="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8"
+            >
+              <div
+                class="w-20 h-20 flex-shrink-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full p-1 animate-glow"
+              >
+                <div
+                  class="w-full h-full bg-gray-800 rounded-full flex items-center justify-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-10 w-10 text-blue-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-grow">
+                <h3 class="text-3xl font-bold text-white">
+                  Concurrent Fetch Test
+                </h3>
+                <p class="text-gray-300 mt-1 text-lg">
+                  This will fetch the same image multiple times concurrently.
+                </p>
+              </div>
+            </div>
+            <button
+              id="fetchImagesBtn"
+              class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-400 transition-all duration-300 ease-in-out transform hover:-translate-y-1 shadow-2xl"
+            >
+              Fetch Images Concurrently
+            </button>
+            <div class="mt-10">
+              <h4 class="text-xl font-semibold mb-4 text-gray-200">
+                Server Response Gallery:
+              </h4>
+              <div
+                id="imageGallery"
+                class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 p-6 bg-gray-900/50 rounded-lg border border-gray-700 min-h-[150px] flex items-center justify-center"
+              >
+                <p class="text-gray-500 col-span-full text-center">
+                  Waiting for test to start...
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- File Upload Test (POST) -->
+          <div
+            class="glass-strong rounded-3xl p-8 md:p-12 animate-slide-up"
+            style="animation-delay: 0.2s"
+          >
+            <div
+              class="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8"
+            >
+              <div
+                class="w-20 h-20 flex-shrink-0 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-full p-1 animate-glow"
+              >
+                <div
+                  class="w-full h-full bg-gray-800 rounded-full flex items-center justify-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-10 w-10 text-green-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-grow">
+                <h3 class="text-3xl font-bold text-white">Test POST Request</h3>
+                <p class="text-gray-300 mt-1 text-lg">
+                  Upload an image to the server using a POST request.
+                </p>
+              </div>
+            </div>
+
+            <div
+              id="dropZone"
+              class="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:border-green-400 transition-colors"
+            >
+              <div id="uploadPrompt">
+                <p class="text-gray-400">
+                  Drag & drop an image here, or
+                  <span class="font-semibold text-green-400"
+                    >click to select</span
+                  >
+                </p>
+              </div>
+              <div id="fileInfo" class="hidden items-center text-left">
+                <svg
+                  class="w-8 h-8 text-green-400 mr-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
+                <p class="text-gray-300" id="fileName"></p>
+              </div>
+              <input
+                type="file"
+                id="fileInput"
+                class="hidden"
+                accept="image/*"
+              />
+            </div>
+
+            <button
+              id="uploadBtn"
+              class="w-full mt-6 bg-gradient-to-r from-green-600 to-teal-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:from-green-700 hover:to-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-400 transition-all duration-300 ease-in-out transform hover:-translate-y-1 shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled
+            >
+              Upload Image
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+    <!-- Enhanced CGI Testing Section -->
+<div class="section-divider"></div>
+<section class="py-24 bg-gradient-to-b from-gray-800 to-gray-900 relative font-sans">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-16 animate-fade-in">
+      <h2 class="text-5xl md:text-7xl font-extrabold mb-6">
+        <span class="text-gradient-simple">CGI Testing (GET & POST)</span>
+      </h2>
+      <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+        Use the forms below to interact with our CGI scripts.
+      </p>
     </div>
-</body>
+
+    <div class="grid lg:grid-cols-2 gap-12">
+      <!-- CGI GET Test -->
+      <div class="glass-strong rounded-3xl p-8 md:p-12 animate-slide-up">
+        <div class="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8">
+          <div class="w-20 h-20 flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full p-1 animate-glow">
+            <div class="w-full h-full bg-gray-800 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+          <div class="flex-grow">
+            <h3 class="text-3xl font-bold text-white">Test GET Request</h3>
+            <p class="text-gray-300 mt-1 text-lg">
+              Submit data to a CGI script using the GET method.
+            </p>
+          </div>
+        </div>
+        <form id="cgiGetForm">
+          <div class="mb-6">
+            <label for="getName" class="block text-gray-300 text-lg font-semibold mb-2">Your Name:</label>
+            <input type="text" id="getName" name="name" class="w-full bg-gray-900/50 border border-gray-600 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 transition" placeholder="e.g., John Doe" required />
+          </div>
+          <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:from-cyan-700 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-400 transition-all duration-300 ease-in-out transform hover:-translate-y-1 shadow-2xl">
+            Submit GET
+          </button>
+        </form>
+        <div class="mt-8">
+          <h4 class="text-xl font-semibold mb-4 text-gray-200">GET Response:</h4>
+          <pre id="getResponse" class="bg-gray-900/50 rounded-lg p-4 border border-gray-700 min-h-[100px] text-gray-300 whitespace-pre-wrap">Waiting for GET submission...</pre>
+        </div>
+      </div>
+
+      <!-- CGI POST Test -->
+      <div class="glass-strong rounded-3xl p-8 md:p-12 animate-slide-up" style="animation-delay: 0.2s">
+        <div class="flex flex-col md:flex-row items-start md:items-center gap-6 mb-8">
+          <div class="w-20 h-20 flex-shrink-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full p-1 animate-glow">
+            <div class="w-full h-full bg-gray-800 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+          <div class="flex-grow">
+            <h3 class="text-3xl font-bold text-white">Test POST Request</h3>
+            <p class="text-gray-300 mt-1 text-lg">
+              Submit data to a CGI script using the POST method.
+            </p>
+          </div>
+        </div>
+        <form id="cgiPostForm">
+          <div class="mb-6">
+            <label for="postEmail" class="block text-gray-300 text-lg font-semibold mb-2">Your Email:</label>
+            <input type="email" id="postEmail" name="email" class="w-full bg-gray-900/50 border border-gray-600 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 transition" placeholder="e.g., user@example.com" required />
+          </div>
+          <div class="mb-6">
+            <label for="postMessage" class="block text-gray-300 text-lg font-semibold mb-2">Message:</label>
+            <textarea id="postMessage" name="message" rows="4" class="w-full bg-gray-900/50 border border-gray-600 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 transition" placeholder="Enter your message..."></textarea>
+          </div>
+          <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-4 focus:ring-pink-400 transition-all duration-300 ease-in-out transform hover:-translate-y-1 shadow-2xl">
+            Submit POST
+          </button>
+        </form>
+        <div class="mt-8">
+          <h4 class="text-xl font-semibold mb-4 text-gray-200">POST Response:</h4>
+          <pre id="postResponse" class="bg-gray-900/50 rounded-lg p-4 border border-gray-700 min-h-[100px] text-gray-300 whitespace-pre-wrap">Waiting for POST submission...</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const cgiGetForm = document.getElementById('cgiGetForm');
+    const getResponseContainer = document.getElementById('getResponse');
+    const cgiPostForm = document.getElementById('cgiPostForm');
+    const postResponseContainer = document.getElementById('postResponse');
+
+    // --- IMPORTANT ---
+    // Replace with the actual paths to your CGI scripts
+    const GET_CGI_URL = '/cgi-get/get.php';
+    const POST_CGI_URL = '/cgi-post/post.php';
+    // -----------------
+
+    cgiGetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(cgiGetForm);
+      const params = new URLSearchParams(formData);
+    
+      getResponseContainer.textContent = 'Fetching...';
+
+      try {
+        const response = await fetch(`http://localhost:8080${GET_CGI_URL}?${params.toString()}`, {
+          method: 'GET',
+        });
+        const text = await response.text();
+        getResponseContainer.textContent = text;
+      } catch (error) {
+        console.error('CGI GET Error:', error);
+        getResponseContainer.textContent = `Error: ${error.message}`;
+      }
+    });
+
+    cgiPostForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(cgiPostForm);
+      postResponseContainer.textContent = 'Posting...';
+
+      try {
+        const response = await fetch(POST_CGI_URL, {
+          method: 'POST',
+          body: new URLSearchParams(formData),
+        });
+        const text = await response.text();
+        postResponseContainer.innerHTML = text;
+      } catch (error) {
+        console.error('CGI POST Error:', error);
+        postResponseContainer.textContent = `Error: ${error.message}`;
+      }
+    });
+  });
+</script>
+
+    <!-- Section Divider -->
+
+    <!-- Enhanced Team Section -->
+    <section class="py-24 bg-gradient-to-b from-gray-800 to-gray-900 relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-20 animate-fade-in">
+          <h2 class="text-6xl md:text-7xl font-black mb-8">
+            <span class="text-gradient-simple">Meet The Team</span>
+          </h2>
+          <p class="text-2xl text-gray-400 max-w-4xl mx-auto">
+            The students behind this HTTP server project for 1337 school
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-10 mb-20">
+          <!-- Team Member 1 -->
+          <div
+            class="team-member glass-strong rounded-3xl p-10 text-center group animate-slide-up"
+          >
+            <div class="relative mb-8">
+              <div
+                class="w-40 h-40 mx-auto bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full p-1 animate-glow"
+              >
+                <div
+                  class="w-full h-full bg-gray-800 rounded-full flex items-center justify-center"
+                >
+                  <img
+                    src="https://cdn.intra.42.fr/users/b0cbe0ed203768124ddd1675a904757b/ataoufik.jpg"
+                    alt="Student Developer"
+                    class="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
+                  />
+                </div>
+              </div>
+              <div
+                class="absolute inset-0 w-40 h-40 mx-auto bg-blue-400 rounded-full opacity-20 animate-ping group-hover:animate-pulse"
+              ></div>
+            </div>
+            <h3 class="text-3xl font-bold mb-3">Student Developer</h3>
+            <p class="text-blue-400 font-bold mb-4 text-xl">
+              Response & Config
+            </p>
+            <p class="text-gray-300 text-lg leading-relaxed">
+              Engineered the server's response generation and handled the
+              intricate configuration file parsing.
+            </p>
+            <div class="mt-6 flex justify-center space-x-6">
+              <a
+                href="#"
+                class="text-gray-400 hover:text-blue-400 transition-colors transform hover:scale-110"
+              >
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z"
+                    clip-rule="evenodd"
+                  ></path>
+                </svg>
+              </a>
+              <a
+                href="#"
+                class="text-gray-400 hover:text-blue-400 transition-colors transform hover:scale-110"
+              >
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84"
+                  ></path>
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Team Member 2 -->
+          <div
+            class="team-member glass-strong rounded-3xl p-10 text-center group animate-slide-up"
+            style="animation-delay: 0.2s"
+          >
+            <div class="relative mb-8">
+              <div
+                class="w-40 h-40 mx-auto bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-full p-1 animate-glow"
+              >
+                <div
+                  class="w-full h-full bg-gray-800 rounded-full flex items-center justify-center"
+                >
+                  <img
+                    src="https://cdn.intra.42.fr/users/6669992fa69a36a0e8bbfc7cb65f3bec/belguabd.jpg"
+                    alt="Student Developer"
+                    class="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
+                  />
+                </div>
+              </div>
+              <div
+                class="absolute inset-0 w-40 h-40 mx-auto bg-green-400 rounded-full opacity-20 animate-ping group-hover:animate-pulse"
+              ></div>
+            </div>
+            <h3 class="text-3xl font-bold mb-3">Student Developer</h3>
+            <p class="text-green-400 font-bold mb-4 text-xl">
+              CGI & Core Server
+            </p>
+            <p class="text-gray-300 text-lg leading-relaxed">
+              Built the core server logic and integrated the Common Gateway
+              Interface (CGI) for dynamic content.
+            </p>
+            <div class="mt-6 flex justify-center space-x-6">
+              <a
+                href="#"
+                class="text-gray-400 hover:text-green-400 transition-colors transform hover:scale-110"
+              >
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z"
+                    clip-rule="evenodd"
+                  ></path>
+                </svg>
+              </a>
+              <a
+                href="#"
+                class="text-gray-400 hover:text-green-400 transition-colors transform hover:scale-110"
+              >
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84"
+                  ></path>
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Team Member 3 -->
+          <div
+            class="team-member glass-strong rounded-3xl p-10 text-center group animate-slide-up"
+            style="animation-delay: 0.4s"
+          >
+            <div class="relative mb-8">
+              <div
+                class="w-40 h-40 mx-auto bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 rounded-full p-1 animate-glow"
+              >
+                <div
+                  class="w-full h-full bg-gray-800 rounded-full flex items-center justify-center"
+                >
+                  <img
+                    src="https://cdn.intra.42.fr/users/fdc4ab88bacf16f859712a34c4886ebd/emagueri.jpg"
+                    alt="Student Developer"
+                    class="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
+                  />
+                </div>
+              </div>
+              <div
+                class="absolute inset-0 w-40 h-40 mx-auto bg-purple-400 rounded-full opacity-20 animate-ping group-hover:animate-pulse"
+              ></div>
+            </div>
+            <h3 class="text-3xl font-bold mb-3">Student Developer</h3>
+            <p class="text-purple-400 font-bold mb-4 text-xl">
+              Request Handling
+            </p>
+            <p class="text-gray-300 text-lg leading-relaxed">
+              Mastered the art of HTTP request parsing and validation, ensuring
+              robust input handling.
+            </p>
+            <div class="mt-6 flex justify-center space-x-6">
+              <a
+                href="#"
+                class="text-gray-400 hover:text-purple-400 transition-colors transform hover:scale-110"
+              >
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z"
+                    clip-rule="evenodd"
+                  ></path>
+                </svg>
+              </a>
+              <a
+                href="#"
+                class="text-gray-400 hover:text-purple-400 transition-colors transform hover:scale-110"
+              >
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84"
+                  ></path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Stats -->
+        <div class="grid md:grid-cols-4 gap-8 animate-fade-in">
+          <div class="text-center glass rounded-2xl p-8 hover-scale">
+            <div
+              class="text-5xl font-black text-gradient-simple mb-4 stats-counter"
+            >
+              3
+            </div>
+            <div class="text-gray-400 text-lg">Core Modules</div>
+          </div>
+          <div class="text-center glass rounded-2xl p-8 hover-scale">
+            <div
+              class="text-5xl font-black text-gradient-simple mb-4 stats-counter"
+            >
+              100%
+            </div>
+            <div class="text-gray-400 text-lg">Project Scope</div>
+          </div>
+          <div class="text-center glass rounded-2xl p-8 hover-scale">
+            <div
+              class="text-5xl font-black text-gradient-simple mb-4 stats-counter"
+            >
+              125%
+            </div>
+            <div class="text-gray-400 text-lg">Evaluation Score</div>
+          </div>
+          <div class="text-center glass rounded-2xl p-8 hover-scale">
+            <div
+              class="text-5xl font-black text-gradient-simple mb-4 stats-counter"
+            >
+              &infin;
+            </div>
+            <div class="text-gray-400 text-lg">Future Potential</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Divider -->
+    <div class="section-divider"></div>
+
+    <!-- Enhanced Technical Specifications Section -->
+    <section class="py-24 bg-gray-900 relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-20 animate-fade-in">
+          <h2
+            class="text-6xl md:text-7xl font-black mb-8 flex items-center justify-center gap-4"
+          >
+            <span class="text-gradient-simple">Technical Breakdown</span>
+          </h2>
+          <p class="text-2xl text-gray-400 max-w-4xl mx-auto">
+            A look at the core features of our C++98 web server, built from the
+            ground up.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-12 mb-20">
+          <!-- Core Architecture -->
+          <div class="glass-strong rounded-3xl p-10 animate-slide-up">
+            <h3
+              class="text-3xl font-bold mb-8 text-blue-400 flex items-center gap-3"
+            >
+              <!-- SVG Icon for Architecture -->
+              <svg
+                class="w-8 h-8"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-2.433 1.216a6 6 0 01-3.86.517L4.571 16.571a2 2 0 00-1.685.945l-1.428 2.857a1 1 0 00.945 1.685l2.857-1.428a2 2 0 00.945-1.685l.547-1.022a6 6 0 013.86-.517l2.433-1.216a6 6 0 003.86-.517l2.387.477a2 2 0 001.022.547l2.857 1.428a1 1 0 001.685-.945l-1.428-2.857a2 2 0 00-.945-1.685z"
+                />
+              </svg>
+              Core Architecture
+            </h3>
+            <div class="space-y-8">
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <span class="text-gray-300 text-lg"
+                    >I/O Multiplexing Model</span
+                  >
+                  <span class="text-white font-bold text-xl">kqueue()</span>
+                </div>
+                <div
+                  class="w-full bg-gray-700 rounded-full h-3 overflow-hidden"
+                >
+                  <div
+                    class="progress-bar h-3 rounded-full"
+                    style="width: 100%"
+                  ></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <span class="text-gray-300 text-lg">HTTP/1.1 Methods</span>
+                  <span class="text-white font-bold text-xl"
+                    >GET, POST, DELETE</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-gray-700 rounded-full h-3 overflow-hidden"
+                >
+                  <div
+                    class="progress-bar h-3 rounded-full"
+                    style="width: 100%"
+                  ></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <span class="text-gray-300 text-lg"
+                    >Non-Blocking Sockets</span
+                  >
+                  <span class="text-white font-bold text-xl">Implemented</span>
+                </div>
+                <div
+                  class="w-full bg-gray-700 rounded-full h-3 overflow-hidden"
+                >
+                  <div
+                    class="progress-bar h-3 rounded-full"
+                    style="width: 90%"
+                  ></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <span class="text-gray-300 text-lg"
+                    >Single Request Logic</span
+                  >
+                  <span class="text-white font-bold text-xl"
+                    >One Request at a time</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-gray-700 rounded-full h-3 overflow-hidden"
+                >
+                  <div
+                    class="progress-bar h-3 rounded-full"
+                    style="width: 80%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Features -->
+          <div
+            class="glass-strong rounded-3xl p-10 animate-slide-up"
+            style="animation-delay: 0.2s"
+          >
+            <h3
+              class="text-3xl font-bold mb-8 text-green-400 flex items-center gap-3"
+            >
+              <!-- SVG Icon for Features -->
+              <svg
+                class="w-8 h-8"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                />
+              </svg>
+              Key Features
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
+              <!-- CGI Execution -->
+              <div
+                class="tech-icon flex flex-col items-center justify-center bg-gray-800/50 rounded-2xl p-6 text-center hover:bg-blue-500/10 border border-transparent hover:border-blue-500 transition-all duration-300 cursor-pointer"
+              >
+                <svg
+                  class="h-12 w-auto mb-3 text-indigo-400"
+                  fill="currentColor"
+                  viewBox="0 0 208 128"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m154.5 128c29.5 0 53.5-24 53.5-53.5s-24-53.5-53.5-53.5h-47.5v107h47.5zm-28-85.5h15c13.2 0 24 10.8 24 24s-10.8 24-24 24h-15v-48z"
+                  />
+                  <path
+                    d="m84.5 21.5c-29.5 0-53.5 24-53.5 53.5s24 53.5 53.5 53.5h47.5v-22h-47.5c-17.4 0-31.5-14.1-31.5-31.5s14.1-31.5 31.5-31.5h47.5v-22h-47.5z"
+                  />
+                  <path
+                    d="m28.5 0c-15.7 0-28.5 12.8-28.5 28.5s12.8 28.5 28.5 28.5h20v-57h-20z"
+                  />
+                </svg>
+                <div class="font-bold text-lg">CGI (PHP/Py)</div>
+              </div>
+              <!-- Static File Serving -->
+              <div
+                class="tech-icon flex flex-col items-center justify-center bg-gray-800/50 rounded-2xl p-6 text-center hover:bg-yellow-500/10 border border-transparent hover:border-yellow-500 transition-all duration-300 cursor-pointer"
+              >
+                <svg
+                  class="h-12 w-12 mb-3 text-yellow-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                  ></path>
+                </svg>
+                <div class="font-bold text-lg">Static Files</div>
+              </div>
+              <!-- HTTP/1.1 -->
+              <div
+                class="tech-icon flex flex-col items-center justify-center bg-gray-800/50 rounded-2xl p-6 text-center hover:bg-purple-500/10 border border-transparent hover:border-purple-500 transition-all duration-300 cursor-pointer"
+              >
+                <svg
+                  class="h-12 w-12 mb-3 text-purple-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9M3 12a9 9 0 019-9"
+                  />
+                </svg>
+                <div class="font-bold text-lg">HTTP/1.1</div>
+              </div>
+              <!-- File Upload -->
+              <div
+                class="tech-icon flex flex-col items-center justify-center bg-gray-800/50 rounded-2xl p-6 text-center hover:bg-orange-500/10 border border-transparent hover:border-orange-500 transition-all duration-300 cursor-pointer"
+              >
+                <svg
+                  class="h-12 w-12 mb-3 text-orange-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
+                </svg>
+                <div class="font-bold text-lg">File Upload</div>
+              </div>
+              <!-- Config Files -->
+              <div
+                class="tech-icon flex flex-col items-center justify-center bg-gray-800/50 rounded-2xl p-6 text-center hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500 transition-all duration-300 cursor-pointer"
+              >
+                <svg
+                  class="h-12 w-12 mb-3 text-cyan-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.096 2.572-1.065z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                <div class="font-bold text-lg">Config File</div>
+              </div>
+              <!-- Error Handling -->
+              <div
+                class="tech-icon flex flex-col items-center justify-center bg-gray-800/50 rounded-2xl p-6 text-center hover:bg-red-500/10 border border-transparent hover:border-red-500 transition-all duration-300 cursor-pointer"
+              >
+                <svg
+                  class="h-12 w-12 mb-3 text-red-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                  />
+                </svg>
+                <div class="font-bold text-lg">Error Pages</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Divider -->
+    <div class="section-divider"></div>
+
+    <!-- Enhanced Getting Started Section -->
+    <section class="py-24 bg-gradient-to-b from-gray-900 to-gray-800">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center mb-20 animate-fade-in">
+          <h2 class="text-6xl md:text-7xl font-black mb-8">
+            <span class="text-gradient-simple">Get Started in Minutes</span>
+          </h2>
+          <p class="text-2xl text-gray-400 max-w-4xl mx-auto">
+            Deploy your own high-performance HTTP server with just a few
+            commands
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-10 mb-20">
+          <!-- Enhanced Steps -->
+          <div
+            class="glass-strong rounded-3xl p-10 text-center relative hover-scale animate-slide-up"
+          >
+            <div
+              class="absolute -top-6 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-black text-xl shadow-lg"
+            >
+              1
+            </div>
+            <div class="mt-8">
+              <h3 class="text-2xl font-bold mb-6">Clone & Build</h3>
+              <div class="code-block rounded-2xl p-6 text-left text-lg">
+                <div class="text-green-400 mb-2">$ git clone repository</div>
+                <div class="text-yellow-400">$ make all</div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="glass-strong rounded-3xl p-10 text-center relative hover-scale animate-slide-up"
+            style="animation-delay: 0.2s"
+          >
+            <div
+              class="absolute -top-6 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-black text-xl shadow-lg"
+            >
+              2
+            </div>
+            <div class="mt-8">
+              <h3 class="text-2xl font-bold mb-6">Configure</h3>
+              <div class="code-block rounded-2xl p-6 text-left text-lg">
+                <div class="text-blue-400">server {</div>
+                <div class="ml-6 text-white">listen 8080;</div>
+                <div class="ml-6 text-white">root /var/www;</div>
+                <div class="text-blue-400">}</div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="glass-strong rounded-3xl p-10 text-center relative hover-scale animate-slide-up"
+            style="animation-delay: 0.4s"
+          >
+            <div
+              class="absolute -top-6 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-black text-xl shadow-lg"
+            >
+              3
+            </div>
+            <div class="mt-8">
+              <h3 class="text-2xl font-bold mb-6">Launch</h3>
+              <div class="code-block rounded-2xl p-6 text-left text-lg">
+                <div class="text-green-400 mb-2">$ ./webserv config.conf</div>
+                <div class="text-gray-400">🚀 Server running on port 8080!</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Enhanced CTA Buttons -->
+        <div class="text-center animate-fade-in">
+          <div
+            class="flex flex-col sm:flex-row gap-8 justify-center items-center"
+          >
+            <button
+              class="btn-primary px-16 py-6 rounded-3xl font-black text-2xl hover-scale shadow-2xl transform transition-all duration-300"
+            >
+              🔥 Download Now
+            </button>
+            <button
+              class="glass-strong px-16 py-6 rounded-3xl font-bold text-2xl hover-scale border-2 border-gray-600 hover:border-blue-400 transition-all duration-300"
+            >
+              📖 View Documentation
+            </button>
+          </div>
+          <p class="text-gray-500 mt-8 text-lg">
+            Join thousands of developers already using Webserv
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Enhanced Footer -->
+    <footer class="bg-gradient-to-b from-gray-800 to-black py-20">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="grid md:grid-cols-4 gap-12 mb-16">
+          <!-- Enhanced Brand -->
+          <div class="col-span-2">
+            <h3 class="text-4xl font-black text-gradient-simple mb-6">
+              Webserv
+            </h3>
+            <p class="text-gray-400 mb-8 max-w-md text-lg leading-relaxed">
+              The future of HTTP server implementation. Built with passion,
+              performance, and precision for the modern web.
+            </p>
+            <div class="flex space-x-6">
+              <a
+                href="#"
+                class="w-12 h-12 bg-gradient-to-r from-gray-800 to-gray-700 rounded-full flex items-center justify-center hover:from-blue-600 hover:to-blue-700 transition-all duration-300 hover-scale"
+              >
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </a>
+              <a
+                href="#"
+                class="w-12 h-12 bg-gradient-to-r from-gray-800 to-gray-700 rounded-full flex items-center justify-center hover:from-blue-500 hover:to-cyan-500 transition-all duration-300 hover-scale"
+              >
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.954 4.569c-.885.389-1.83.654-2.825.775 1.014-.611 1.794-1.574 2.163-2.723-.951.555-2.005.959-3.127 1.184-.896-.959-2.173-1.559-3.591-1.559-2.717 0-4.92 2.203-4.92 4.917 0 .39.045.765.127 1.124C7.691 8.094 4.066 6.13 1.64 3.161c-.427.722-.666 1.561-.666 2.475 0 1.71.87 3.213 2.188 4.096-.807-.026-1.566-.248-2.228-.616v.061c0 2.385 1.693 4.374 3.946 4.827-.413.111-.849.171-1.296.171-.314 0-.615-.03-.916-.086.631 1.953 2.445 3.377 4.604 3.417-1.68 1.319-3.809 2.105-6.102 2.105-.39 0-.779-.023-1.17-.067 2.189 1.394 4.768 2.209 7.557 2.209 9.054 0 14.01-7.496 14.01-14.01 0-.213-.005-.426-.015-.638.961-.689 1.8-1.56 2.46-2.548l-.001-.001z"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Quick Links -->
+          <div>
+            <h4 class="text-2xl font-bold mb-6 text-gray-300">Quick Links</h4>
+            <ul class="space-y-4 text-gray-400">
+              <li>
+                <a
+                  href="#"
+                  class="hover:text-pink-400 transition-colors duration-300 text-lg"
+                  >Features</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="hover:text-pink-400 transition-colors duration-300 text-lg"
+                  >Architecture</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="hover:text-pink-400 transition-colors duration-300 text-lg"
+                  >Team</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="hover:text-pink-400 transition-colors duration-300 text-lg"
+                  >Get Started</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <!-- Resources -->
+          <div>
+            <h4 class="text-2xl font-bold mb-6 text-gray-300">Resources</h4>
+            <ul class="space-y-4 text-gray-400">
+              <li>
+                <a
+                  href="#"
+                  class="hover:text-green-400 transition-colors duration-300 text-lg"
+                  >Documentation</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="hover:text-green-400 transition-colors duration-300 text-lg"
+                  >GitHub Repository</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="hover:text-green-400 transition-colors duration-300 text-lg"
+                  >Support</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="hover:text-green-400 transition-colors duration-300 text-lg"
+                  >Changelog</a
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div class="text-center pt-12">
+          <p class="text-gray-500 text-lg">
+            &copy; 2024 Webserv. All Rights Reserved. Built with C++98 & ❤️.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // CGI Form Submission
+
+      // Animated Stats Counter
+      const animateCounters = () => {
+        const counters = document.querySelectorAll('.stats-counter');
+        const speed = 200; // The lower the number, the faster the count
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                const counter = entry.target;
+                const updateCount = () => {
+                  const targetText = counter.textContent;
+                  // Extract number and suffix (like %, k+, +)
+                  const match = targetText.match(/([\d\.]+)(.*)/);
+                  if (!match) return;
+
+                  const target = +match[1];
+                  const suffix = match[2];
+                  let count = +counter.innerText
+                    .replace(suffix, '')
+                    .match(/([\d\.]+)/)[0];
+
+                  const inc = target / speed;
+
+                  if (count < target) {
+                    count += inc;
+                    if (target.toString().includes('.')) {
+                      counter.innerText = count.toFixed(1) + suffix;
+                    } else {
+                      counter.innerText = Math.ceil(count) + suffix;
+                    }
+                    setTimeout(updateCount, 15);
+                  } else {
+                    counter.innerText = targetText;
+                  }
+                };
+                updateCount();
+                observer.unobserve(counter); // Stop observing after animation starts
+              }
+            });
+          },
+          {
+            threshold: 0.5,
+          }
+        );
+
+        counters.forEach((counter) => {
+          observer.observe(counter);
+        });
+      };
+      document.addEventListener('DOMContentLoaded', () => {
+        const fetchImagesBtn = document.getElementById('fetchImagesBtn');
+        const imageGallery = document.getElementById('imageGallery');
+
+        // --- Test Configuration ---
+        const BASE_IMAGE_URL = 'http://localhost:8080/images/image.png';
+        const NUMBER_OF_REQUESTS = 50; // Set how many concurrent requests to send
+        // --------------------------
+
+        fetchImagesBtn.addEventListener('click', () => {
+          console.log(`Sending ${NUMBER_OF_REQUESTS} concurrent requests...`);
+
+          // 1. Clear the gallery and show an initial loading message
+          imageGallery.innerHTML = `<p id="loading-message" class="text-yellow-400 col-span-full">Fetching ${NUMBER_OF_REQUESTS} images... please wait.</p>`;
+
+          let successCount = 0;
+          let settledCount = 0;
+
+          // 2. Loop to FIRE all requests concurrently
+          for (let i = 0; i < NUMBER_OF_REQUESTS; i++) {
+            // **CACHE BUSTING**: Add a unique query parameter to each URL
+            const uniqueUrl = `${BASE_IMAGE_URL}?request=${i}&t=${new Date().getTime()}`;
+
+            // 3. Handle each promise INDIVIDUALLY
+            fetch(uniqueUrl)
+              .then((response) => {
+                // If the HTTP response is not OK, throw an error to be caught by .catch()
+                if (!response.ok) {
+                  throw new Error(`HTTP Status ${response.status}`);
+                }
+                // If successful, continue the chain by returning the blob promise
+                return response.blob();
+              })
+              .then((imageBlob) => {
+                // --- SUCCESS HANDLER ---
+                // This block runs as soon as an individual image has downloaded
+                successCount++;
+
+                // Create a temporary local URL for the downloaded image data
+                const objectURL = URL.createObjectURL(imageBlob);
+
+                // Create and display the new image element immediately
+                const img = document.createElement('img');
+                img.src = objectURL;
+                img.className =
+                  'w-full h-auto rounded-lg shadow-md animate-fade-in';
+                imageGallery.appendChild(img);
+              })
+              .catch((error) => {
+                // --- ERROR HANDLER ---
+                // This block runs if an individual fetch fails
+                console.error(`Request ${i + 1} failed:`, error);
+                const errorBox = document.createElement('div');
+                errorBox.className =
+                  'w-full h-full bg-red-800/50 rounded-lg flex items-center justify-center text-red-300 font-bold';
+                errorBox.innerText = 'ERR';
+                imageGallery.appendChild(errorBox);
+              })
+              .finally(() => {
+                // --- SETTLED HANDLER ---
+                // This block runs after each promise settles (either success or error)
+                settledCount++;
+
+                // On the very first response that comes back, remove the initial "Fetching..." message
+                const loadingMessage =
+                  document.getElementById('loading-message');
+                if (loadingMessage) {
+                  loadingMessage.remove();
+                }
+
+                // When ALL requests are finally settled, add the summary
+                if (settledCount === NUMBER_OF_REQUESTS) {
+                  console.log('All requests have settled.');
+                  const summary = document.createElement('p');
+                  summary.className =
+                    'col-span-full text-lg font-bold mb-4 text-center order-first'; // Use 'order-first' to put it at the top
+                  summary.innerHTML = `Test Complete. <span class="text-lime-400">${successCount} successful</span> / <span class="text-red-400">${
+                    NUMBER_OF_REQUESTS - successCount
+                  } failed</span>.`;
+
+                  // To make the summary appear at the top in a grid layout, we use a flexbox trick or insert it as the first child
+                  imageGallery.prepend(summary);
+                }
+              });
+          }
+        });
+      });
+      // --- All the variables from before ---
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+      const uploadPrompt = document.getElementById('uploadPrompt');
+      const fileInfo = document.getElementById('fileInfo');
+      const fileName = document.getElementById('fileName');
+      const uploadBtn = document.getElementById('uploadBtn');
+
+      // --- All the event listeners from before ---
+      dropZone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) handleFile(fileInput.files[0]);
+      });
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+      });
+      dropZone.addEventListener('dragleave', () =>
+        dropZone.classList.remove('drag-over')
+      );
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        if (e.dataTransfer.files.length > 0) {
+          fileInput.files = e.dataTransfer.files;
+          handleFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      function handleFile(file) {
+        uploadPrompt.classList.add('hidden');
+        fileInfo.classList.remove('hidden');
+        fileInfo.classList.add('flex');
+        fileName.textContent = `File selected: ${file.name}`;
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = 'Upload Image'; // Reset button text
+      }
+
+      // --- [START] UPDATED UPLOAD LOGIC ---
+
+      uploadBtn.addEventListener('click', async () => {
+        if (fileInput.files.length === 0) {
+          alert('Please select a file first.');
+          return;
+        }
+
+        const file = fileInput.files[0];
+        // Create a FormData object to send the file
+        const formData = new FormData();
+        formData.append('file', file); // 'file' is the key the server will look for
+
+        // Disable the button and show a loading state
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Uploading...';
+
+        try {
+          // --- IMPORTANT ---
+          // Replace '/upload' with the actual endpoint URL on your server
+          // that is designed to handle file uploads.
+          const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (response.ok) {
+            // Success! The server responded with a 2xx status code.
+            const result = await response.text();
+
+            uploadBtn.textContent = 'Upload Complete!';
+          } else {
+            // Error: The server responded with an error status code.
+            const errorText = await response.text();
+            uploadBtn.textContent = 'Upload Failed';
+            uploadBtn.disabled = false; // Re-enable button on failure
+          }
+        } catch (error) {
+          // Network error or other issue with the fetch call itself.
+          console.error('Upload failed:', error);
+          alert(`A network error occurred. See the console for details.`);
+          uploadBtn.textContent = 'Upload Failed';
+          uploadBtn.disabled = false; // Re-enable button on failure
+        }
+      });
+    </script>
+  </body>
 </html>
